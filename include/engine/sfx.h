@@ -1,0 +1,18 @@
+#ifndef ENGINE_SFX_H_
+#define ENGINE_SFX_H_
+
+#include <libdragon.h>
+
+enum sfx_channels {
+	SFXC_MUSIC0,
+	SFXC_MUSIC1,
+	SFXC_MUSIC2,
+	SFXC_MUSIC3,
+	SFXC_MUSIC4,
+	SFXC_COUNT,
+};
+
+extern wav64_t title_music0, title_music1, title_music2,
+       title_music3, title_music4;
+
+#endif /* ENGINE_SFX_H_ */

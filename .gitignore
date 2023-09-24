@@ -1,0 +1,4 @@
+build/
+filesystem/
+res/
+*.z64
