@@ -5,10 +5,12 @@
 
 #include "engine/smesh.h"
 
-smesh_t *smesh_create_data(uint16_t num_verts, uint16_t num_indis,
-		const vertex_t *verts, const uint16_t *indis)
+smesh_t *smesh_create_data(const char *name, uint16_t num_verts,
+		uint16_t num_indis, const vertex_t *verts,
+		const uint16_t *indis)
 {
 	smesh_t *m = malloc(sizeof(smesh_t));
+	strcpy(m->name, name);
 	const size_t verts_size = sizeof(vertex_t) * num_verts;
 	const size_t indis_size = sizeof(uint16_t) * num_indis;
 	m->verts = malloc(verts_size);

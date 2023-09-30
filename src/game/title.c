@@ -70,7 +70,7 @@ void _title_load(void)
 	};
 
 	const uint16_t indis[6] = {0, 1, 2, 2, 1, 3};
-	text_mesh = smesh_create_data(4, 6, verts, indis);
+	text_mesh = smesh_create_data("UI", 4, 6, verts, indis);
 
 	is_loaded = true;
 }

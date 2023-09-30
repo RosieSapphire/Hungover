@@ -72,8 +72,7 @@ int main(void)
 		long ticks_delta = TICKS_DISTANCE(ticks_last, ticks_now);
 		ticks_last = ticks_now;
 
-		enum scene_index
-		(*update_funcs[SCENE_COUNT])(update_parms_t) = {
+		enum scene_index (*update_funcs[SCENE_COUNT])(update_parms_t) = {
 			title_update, testroom_update,
 		};
 

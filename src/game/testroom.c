@@ -32,6 +32,7 @@ static void _testroom_load(void)
 
 enum scene_index testroom_update(update_parms_t uparms)
 {
+	scene_update(scene);
 	player_update(&p, uparms);
 
 	return SCENE_TESTROOM;
@@ -47,7 +48,7 @@ void testroom_draw(float subtick)
 
 	glMatrixMode(GL_MODELVIEW);
 	player_view_matrix_setup(&p, subtick);
-	scene_draw(scene, test_tex.id);
+	scene_draw(scene, subtick, test_tex.id);
 
 	gl_context_end();
 }

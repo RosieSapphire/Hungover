@@ -4,15 +4,15 @@ BUILD_DIR=build
 include $(N64_INST)/include/n64.mk
 
 src = $(wildcard src/*.c src/*/*.c)
-assets_wav   = $(wildcard assets/*.wav)
-assets_png   = $(wildcard assets/*.png)
-assets_ttf   = $(wildcard assets/*.ttf)
-assets_blend = $(wildcard assets/*.blend)
+assets_wav = $(wildcard assets/*.wav)
+assets_png = $(wildcard assets/*.png)
+assets_ttf = $(wildcard assets/*.ttf)
+assets_glb = $(wildcard assets/*.glb)
 
 assets_conv = $(addprefix filesystem/,$(notdir $(assets_wav:%.wav=%.wav64))) \
               $(addprefix filesystem/,$(notdir $(assets_png:%.png=%.sprite))) \
               $(addprefix filesystem/,$(notdir $(assets_ttf:%.ttf=%.font64))) \
-              $(addprefix filesystem/,$(notdir $(assets_blend:%.blend=%.scene)))
+              $(addprefix filesystem/,$(notdir $(assets_glb:%.glb=%.scene)))
 
 AUDIOCONV_FLAGS=#--ym-compress true
 MKSPRITE_FLAGS=-c 1
@@ -31,7 +31,7 @@ filesystem/%.sprite: assets/%.png
 	@echo "    [SPRITE] $@"
 	@$(N64_MKSPRITE) $(MKSPRITE_FLAGS) -o filesystem "$<"
 
-filesystem/%.scene: assets/%.blend
+filesystem/%.scene: assets/%.glb
 	@mkdir -p $(dir $@)
 	@echo "    [SCENE] $@"
 	@$(SCENEIMP) $< $@

@@ -1,5 +1,6 @@
 default:
-	gcc sceneimp.c -o sceneimp -lassimp
+	gcc -O2 -Wall -Wextra -Werror -g3 -Wno-uninitialized \
+		-Wno-strict-aliasing sceneimp.c -o sceneimp -lassimp -lm
 
 clean:
-	rm -rf sceneimp *.scn *.blend1
+	rm -rf sceneimp *.scene *.blend1

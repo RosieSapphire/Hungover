@@ -1,20 +1,21 @@
 #ifndef ENGINE_CONFIG_H_
 #define ENGINE_CONFIG_H_
 
-#define CONF_WIDTH      320
-#define CONF_HEIGHT     240
-#define CONF_ASPECT     ((float)CONF_WIDTH / (float)CONF_HEIGHT)
-#define CONF_RESOLUTION (resolution_t){CONF_WIDTH, CONF_HEIGHT, false}
-#define CONF_BITDEPTH   DEPTH_16_BPP
-#define CONF_NUMBUF     3
-#define CONF_GAMMA      GAMMA_NONE
-#define CONF_ANTIALIAS  ANTIALIAS_RESAMPLE
+#define CONF_WIDTH        320
+#define CONF_HEIGHT       240
+#define CONF_ASPECT       ((float)CONF_WIDTH / (float)CONF_HEIGHT)
+#define CONF_RESOLUTION   (resolution_t){CONF_WIDTH, CONF_HEIGHT, false}
+#define CONF_BITDEPTH     DEPTH_16_BPP
+#define CONF_NUMBUF       3
+#define CONF_GAMMA        GAMMA_NONE
+#define CONF_ANTIALIAS    ANTIALIAS_RESAMPLE
 
-#define CONF_TICKRATE   24
-#define CONF_DELTATIME  (1.0f / (float)CONF_TICKRATE)
-#define CONF_DELTATICKS (CONF_DELTATIME * TICKS_PER_SECOND)
+#define CONF_TICKRATE     24
+#define CONF_DELTATIME    (1.0f / (float)CONF_TICKRATE)
+#define CONF_DELTATICKS   (CONF_DELTATIME * TICKS_PER_SECOND)
 
-#define CONF_NEAR_PLANE 0.1f
-#define CONF_FAR_PLANE  64.0f
+#define CONF_NEAR_PLANE   0.1f
+#define CONF_FAR_PLANE    64.0f
+#define CONF_NAME_MAX_LEN 32
 
 #endif /* ENGINE_CONFIG_H_ */
