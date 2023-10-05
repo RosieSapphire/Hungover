@@ -21,11 +21,11 @@ typedef struct {
 	vec3_key_t *pos;
 	vec4_key_t *rot;
 	vec3_key_t *sca;
-	uint16_t frame_last, frame;
+	uint16_t frame;
 	bool is_playing;
 } animation_t;
 
-void animation_debug(const animation_t *a);
+// void animation_debug(const animation_t *a);
 void animation_update(animation_t *a);
 void animation_setup_matrix(const animation_t *a, float subtick);
 

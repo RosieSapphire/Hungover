@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <assert.h>
+#include <errno.h>
 
 #include <assimp/scene.h>
 #include <assimp/cimport.h>
@@ -24,6 +26,7 @@ typedef struct node_t node_t;
 struct node_t {
 	char name[NAME_MAX_LEN];
 	uint16_t mesh_index;
+	float mat[4 * 4];
 	uint16_t num_children;
 	node_t *children;
 };
@@ -73,360 +76,411 @@ static void _print_usage(char *argv0)
 	exit(EXIT_FAILURE);
 }
 
-static vertex_t *_mesh_process_verts(const struct aiMesh *mesh)
+static void _mesh_process(mesh_t *mo, const struct aiMesh *mi)
 {
-	const uint16_t num_verts = mesh->mNumVertices;
-	vertex_t *verts = malloc(sizeof(*verts) * num_verts);
-
-	for(int i = 0; i < num_verts; i++) {
-		const struct aiVector3D pos = mesh->mVertices[i];
-		const struct aiVector3D uv = mesh->mTextureCoords[0][i];
-		verts[i].pos[0] = pos.x;
-		verts[i].pos[1] = pos.y;
-		verts[i].pos[2] = pos.z;
-		verts[i].uv[0] = uv.x;
-		verts[i].uv[1] = uv.y;
+	strncpy(mo->name, mi->mName.data, mi->mName.length + 1);
+	mo->num_verts = mi->mNumVertices;
+	mo->verts = malloc(mo->num_verts * sizeof(vertex_t));
+	for(uint16_t i = 0; i < mo->num_verts; i++) {
+		vertex_t *v = mo->verts + i;
+		memcpy(v->pos, &mi->mVertices[i].x, sizeof(float) * 3);
+		memcpy(v->uv, &mi->mTextureCoords[0][i], sizeof(float) * 3);
 	}
 
-	return verts;
+	mo->num_indis = mi->mNumFaces * 3;
+	mo->indis = malloc(mo->num_indis * sizeof(uint16_t));
+	for(uint16_t i = 0; i < mi->mNumFaces; i++)
+		for(uint16_t j = 0; j < mi->mFaces[i].mNumIndices; j++)
+			mo->indis[i * 3 + j] = mi->mFaces[i].mIndices[j];
 }
 
-static uint16_t *_mesh_process_indis(const struct aiMesh *mesh)
+static uint16_t _mesh_index_from_name(const char *name, const mesh_t *meshes,
+		const uint16_t num_meshes)
 {
-	const int num_faces = mesh->mNumFaces;
-	uint16_t *indis = malloc(sizeof(*indis) * num_faces * 3);
+	for(uint16_t i = 0; i < num_meshes; i++)
+		if(strcmp(name, meshes[i].name) == 0)
+			return i;
 
-	for(int i = 0; i < num_faces; i++) {
-		const struct aiFace face = mesh->mFaces[i];
-		for(unsigned int j = 0; j < face.mNumIndices; j++) {
-			indis[i * 3 + j] = face.mIndices[j];
-		}
+	return 0xFFFF;
+}
+
+static void _anim_process(animation_t *ao, const scene_t *so,
+		const struct aiAnimation *ai)
+{
+	/* acting */
+	strncpy(ao->name, ai->mName.data, ai->mName.length + 1);
+	ao->mesh_index = _mesh_index_from_name(
+	        	ai->mChannels[0]->mNodeName.data,
+	        	so->meshes, so->num_meshes);
+	ao->length = (roundf(ai->mDuration / ai->mTicksPerSecond) * 24) + 1;
+	ao->num_pos = ai->mChannels[0]->mNumPositionKeys;
+	ao->num_rot = ai->mChannels[0]->mNumRotationKeys;
+	ao->num_sca = ai->mChannels[0]->mNumScalingKeys;
+
+	ao->pos = malloc(sizeof(vec3_key_t) * ao->num_pos);
+	for(uint16_t i = 0; i < ao->num_pos; i++) {
+		ao->pos[i].frame = (uint16_t)roundf(
+				(ai->mChannels[0]->mPositionKeys[i].mTime
+				 / ai->mTicksPerSecond) * 24);
+		ao->pos[i].vec[0] = ai->mChannels[0]->mPositionKeys[i].mValue.x;
+		ao->pos[i].vec[1] = ai->mChannels[0]->mPositionKeys[i].mValue.y;
+		ao->pos[i].vec[2] = ai->mChannels[0]->mPositionKeys[i].mValue.z;
 	}
 
-	return indis;
-}
-
-static mesh_t *_meshes_process(const struct aiScene *scene)
-{
-	mesh_t *meshes_conv = malloc(sizeof(*meshes_conv) * scene->mNumMeshes);
-	for(uint16_t i = 0; i < scene->mNumMeshes; i++) {
-		const struct aiMesh *mesh = scene->mMeshes[i];
-		strncpy(meshes_conv[i].name, mesh->mName.data,
-				mesh->mName.length + 1);
-		vertex_t *verts = _mesh_process_verts(mesh);
-		uint16_t *indis = _mesh_process_indis(mesh);
-
-		meshes_conv[i].num_verts = mesh->mNumVertices;
-		const int verts_size = sizeof(vertex_t) * mesh->mNumVertices;
-		meshes_conv[i].verts = malloc(verts_size);
-		memcpy(meshes_conv[i].verts, verts, verts_size);
-
-		meshes_conv[i].num_indis = mesh->mNumFaces * 3;
-		const int indis_size =
-			sizeof(unsigned int) * mesh->mNumFaces * 3;
-		meshes_conv[i].indis = malloc(indis_size);
-		memcpy(meshes_conv[i].indis, indis, indis_size);
+	ao->rot = malloc(sizeof(vec4_key_t) * ao->num_rot);
+	for(uint16_t i = 0; i < ao->num_rot; i++) {
+		ao->rot[i].frame = (uint16_t)roundf(
+				(ai->mChannels[0]->mRotationKeys[i].mTime
+				 / ai->mTicksPerSecond) * 24);
+		ao->rot[i].vec[0] = ai->mChannels[0]->mRotationKeys[i].mValue.x;
+		ao->rot[i].vec[1] = ai->mChannels[0]->mRotationKeys[i].mValue.y;
+		ao->rot[i].vec[2] = ai->mChannels[0]->mRotationKeys[i].mValue.z;
+		ao->rot[i].vec[3] = ai->mChannels[0]->mRotationKeys[i].mValue.w;
 	}
 
-	return meshes_conv;
-}
-
-static void _meshes_write(const scene_t *scene, FILE *file)
-{
-	uint16_t num_meshes_flip = uint16_endian_flip(scene->num_meshes);
-	fwrite(&num_meshes_flip, sizeof(num_meshes_flip), 1, file);
-
-	for(uint16_t i = 0; i < scene->num_meshes; i++) {
-		mesh_t *mesh = scene->meshes + i;
-
-		fwrite(mesh->name, sizeof(char), NAME_MAX_LEN, file);
-
-		/* flipping and storing the verts */
-		const uint16_t num_verts_flip =
-			uint16_endian_flip(mesh->num_verts);
-		fwrite(&num_verts_flip, sizeof(uint16_t), 1, file);
-		for(int j = 0; j < mesh->num_verts; j++) {
-			vertex_t vert = mesh->verts[j];
-			for(int k = 0; k < 3; k++)
-				vert.pos[k] = float_endian_flip(vert.pos[k]);
-
-			for(int k = 0; k < 2; k++)
-				vert.uv[k] = float_endian_flip(vert.uv[k]);
-
-			fwrite(&vert, sizeof(vertex_t), 1, file);
-		}
-
-		/* flipping and storing the indis */
-		const uint16_t num_indis_flip =
-			uint16_endian_flip(mesh->num_indis);
-		fwrite(&num_indis_flip, sizeof(uint16_t), 1, file);
-		for(int j = 0; j < mesh->num_indis; j++) {
-			mesh->indis[j] = uint16_endian_flip(mesh->indis[j]);
-			fwrite(mesh->indis + j, sizeof(uint16_t), 1, file);
-		}
-	}
-
-}
-
-static void _anims_write(const scene_t *scene, FILE *file)
-{
-	uint16_t num_anims_flip = uint16_endian_flip(scene->num_anims);
-	fwrite(&num_anims_flip, sizeof(num_anims_flip), 1, file);
-
-	for(uint16_t i = 0; i < scene->num_anims; i++) {
-		animation_t *anim = scene->anims + i;
-		fwrite(anim->name, sizeof(char), NAME_MAX_LEN, file);
-		uint16_t mesh_index_flip = uint16_endian_flip(anim->mesh_index);
-		fwrite(&mesh_index_flip, sizeof(uint16_t), 1, file);
-		uint16_t length_flip = uint16_endian_flip(anim->length);
-		fwrite(&length_flip, sizeof(uint16_t), 1, file);
-		uint16_t num_pos_flip = uint16_endian_flip(anim->num_pos);
-		fwrite(&num_pos_flip, sizeof(uint16_t), 1, file);
-		uint16_t num_rot_flip = uint16_endian_flip(anim->num_rot);
-		fwrite(&num_rot_flip, sizeof(uint16_t), 1, file);
-		uint16_t num_sca_flip = uint16_endian_flip(anim->num_sca);
-		fwrite(&num_sca_flip, sizeof(uint16_t), 1, file);
-
-		for(int j = 0; j < anim->num_pos; j++) {
-			uint16_t frame_flip =
-				uint16_endian_flip(anim->pos[j].frame);
-			fwrite(&frame_flip, sizeof(uint16_t), 1, file);
-			float vec_flip[3] = {
-				float_endian_flip(anim->pos[j].vec[0]),
-				float_endian_flip(anim->pos[j].vec[1]),
-				float_endian_flip(anim->pos[j].vec[2]),
-			};
-			fwrite(vec_flip, sizeof(float), 3, file);
-		}
-
-		for(int j = 0; j < anim->num_rot; j++) {
-			uint16_t frame_flip =
-				uint16_endian_flip(anim->pos[j].frame);
-			fwrite(&frame_flip, sizeof(uint16_t), 1, file);
-			float vec_flip[4] = {
-				float_endian_flip(anim->rot[j].vec[0]),
-				float_endian_flip(anim->rot[j].vec[1]),
-				float_endian_flip(anim->rot[j].vec[2]),
-				float_endian_flip(anim->rot[j].vec[3]),
-			};
-			fwrite(vec_flip, sizeof(float), 4, file);
-		}
-
-		for(int j = 0; j < anim->num_sca; j++) {
-			uint16_t frame_flip =
-				uint16_endian_flip(anim->pos[j].frame);
-			fwrite(&frame_flip, sizeof(uint16_t), 1, file);
-			float vec_flip[3] = {
-				float_endian_flip(anim->sca[j].vec[0]),
-				float_endian_flip(anim->sca[j].vec[1]),
-				float_endian_flip(anim->sca[j].vec[2]),
-			};
-			fwrite(vec_flip, sizeof(float), 3, file);
-		}
+	ao->sca = malloc(sizeof(vec4_key_t) * ao->num_sca);
+	for(uint16_t i = 0; i < ao->num_sca; i++) {
+		ao->sca[i].frame = (uint16_t)roundf(
+				(ai->mChannels[0]->mScalingKeys[i].mTime
+				 / ai->mTicksPerSecond) * 24);
+		ao->sca[i].vec[0] = ai->mChannels[0]->mScalingKeys[i].mValue.x;
+		ao->sca[i].vec[1] = ai->mChannels[0]->mScalingKeys[i].mValue.y;
+		ao->sca[i].vec[2] = ai->mChannels[0]->mScalingKeys[i].mValue.z;
 	}
 }
 
-static void _node_write(node_t *node, FILE *file)
+static void _matrix_transpose(float *in, float *out)
 {
-	fwrite(node->name, sizeof(char), NAME_MAX_LEN, file);
-	node->mesh_index = uint16_endian_flip(node->mesh_index);
-	fwrite(&node->mesh_index, sizeof(uint16_t), 1, file);
-	node->num_children = uint16_endian_flip(node->num_children);
-	fwrite(&node->num_children, sizeof(uint16_t), 1, file);
-	for(int i = 0; i < uint16_endian_flip(node->num_children); i++)
-		_node_write(&node->children[i], file);
+	for (int i = 0; i < 4; i++)
+        	for (int j = 0; j < 4; j++)
+			out[j * 4 + i] = in[i * 4 + j];
 }
 
-static void _scene_write(scene_t *scene, const char *outpath)
+static void _node_process(node_t *no, const struct aiNode *ni)
+{
+	strncpy(no->name, ni->mName.data, ni->mName.length + 1);
+	no->mesh_index = ni->mNumMeshes ? ni->mMeshes[0] : 0xFFFF;
+	_matrix_transpose((float *)&ni->mTransformation, no->mat);
+	no->num_children = ni->mNumChildren;
+	no->children = malloc(sizeof(node_t) * no->num_children);
+	for(int i = 0; i < no->num_children; i++)
+		_node_process(no->children + i, ni->mChildren[i]);
+}
+
+static void _scene_process(scene_t *so, const struct aiScene *si)
+{
+	so->num_meshes = si->mNumMeshes;
+	so->meshes = malloc(so->num_meshes * sizeof(mesh_t));
+	for(uint16_t i = 0; i < so->num_meshes; i++)
+		_mesh_process(so->meshes + i, si->mMeshes[i]);
+
+	so->num_anims = si->mNumAnimations;
+	so->anims = malloc(so->num_anims * sizeof(animation_t));
+	for(uint16_t i = 0; i < so->num_anims; i++)
+		_anim_process(so->anims + i, so, si->mAnimations[i]);
+
+	_node_process(&so->root_node, si->mRootNode);
+}
+
+static void _mesh_write(const mesh_t *m, FILE *file)
+{
+	fwrite(m->name, sizeof(char), NAME_MAX_LEN, file);
+	uint16_t num_verts_flip = uint16_endian_flip(m->num_verts);
+	fwrite(&num_verts_flip, sizeof(uint16_t), 1, file);
+	for(uint16_t i = 0; i < m->num_verts; i++) {
+		float pflip[3] = {
+			float_endian_flip(m->verts[i].pos[0]),
+			float_endian_flip(m->verts[i].pos[1]),
+			float_endian_flip(m->verts[i].pos[2])
+		};
+		fwrite(pflip, sizeof(float), 3, file);
+
+		float uflip[2] = {
+			float_endian_flip(m->verts[i].uv[0]),
+			float_endian_flip(m->verts[i].uv[1]),
+		};
+		fwrite(uflip, sizeof(float), 2, file);
+	}
+
+	uint16_t num_indis_flip = uint16_endian_flip(m->num_indis);
+	fwrite(&num_indis_flip, sizeof(uint16_t), 1, file);
+	for(uint16_t i = 0; i < m->num_indis; i++) {
+		uint16_t iflip = uint16_endian_flip(m->indis[i]);
+		fwrite(&iflip, sizeof(uint16_t), 1, file);
+	}
+}
+
+static void _anim_write(const animation_t *a, FILE *file)
+{
+	fwrite(a->name, sizeof(char), NAME_MAX_LEN, file);
+	uint16_t mesh_index_flip = uint16_endian_flip(a->mesh_index);
+	fwrite(&mesh_index_flip, sizeof(uint16_t), 1, file);
+	uint16_t length_flip = uint16_endian_flip(a->length);
+	fwrite(&length_flip, sizeof(uint16_t), 1, file);
+	uint16_t num_pos_flip = uint16_endian_flip(a->num_pos);
+	fwrite(&num_pos_flip, sizeof(uint16_t), 1, file);
+	uint16_t num_rot_flip = uint16_endian_flip(a->num_rot);
+	fwrite(&num_rot_flip, sizeof(uint16_t), 1, file);
+	uint16_t num_sca_flip = uint16_endian_flip(a->num_sca);
+	fwrite(&num_sca_flip, sizeof(uint16_t), 1, file);
+
+	for(uint16_t i = 0; i < a->num_pos; i++) {
+		uint16_t frame_flip = uint16_endian_flip(a->pos[i].frame);
+		fwrite(&frame_flip, sizeof(uint16_t), 1, file);
+		float v[3] = {
+			float_endian_flip(a->pos[i].vec[0]),
+			float_endian_flip(a->pos[i].vec[1]),
+			float_endian_flip(a->pos[i].vec[2])
+		};
+		fwrite(v, sizeof(float), 3, file);
+	}
+
+	for(uint16_t i = 0; i < a->num_rot; i++) {
+		uint16_t frame_flip = uint16_endian_flip(a->rot[i].frame);
+		fwrite(&frame_flip, sizeof(uint16_t), 1, file);
+		float v[4] = {
+			float_endian_flip(a->rot[i].vec[0]),
+			float_endian_flip(a->rot[i].vec[1]),
+			float_endian_flip(a->rot[i].vec[2]),
+			float_endian_flip(a->rot[i].vec[3])
+		};
+		fwrite(v, sizeof(float), 4, file);
+	}
+
+	for(uint16_t i = 0; i < a->num_sca; i++) {
+		uint16_t frame_flip = uint16_endian_flip(a->sca[i].frame);
+		fwrite(&frame_flip, sizeof(uint16_t), 1, file);
+		float v[3] = {
+			float_endian_flip(a->sca[i].vec[0]),
+			float_endian_flip(a->sca[i].vec[1]),
+			float_endian_flip(a->sca[i].vec[2])
+		};
+		fwrite(v, sizeof(float), 3, file);
+	}
+}
+
+static void _node_write(const node_t *n, FILE *file)
+{
+	fwrite(n->name, sizeof(char), NAME_MAX_LEN, file);
+	uint16_t mesh_index_flip = uint16_endian_flip(n->mesh_index);
+	fwrite(&mesh_index_flip, sizeof(uint16_t), 1, file);
+	float mat_flip[4 * 4];
+	for(int i = 0; i < 16; i++)
+		mat_flip[i] = float_endian_flip(n->mat[i]);
+
+	fwrite(mat_flip, sizeof(float), 4 * 4, file);
+	uint16_t num_children_flip = uint16_endian_flip(n->num_children);
+	fwrite(&num_children_flip, sizeof(uint16_t), 1, file);
+	for(int i = 0; i < n->num_children; i++)
+		_node_write(n->children + i, file);
+}
+
+static void _scene_write(const scene_t *s, const char *outpath)
 {
 	FILE *file = fopen(outpath, "wb");
 	if(file) {
 		fclose(file);
 		remove(outpath);
 		file = fopen(outpath, "wb");
-	} else
-		fprintf(stderr, "Failed to write to file '%s'\n", outpath);
+	} else {
+		fprintf(stderr, "Failed to write to file '%s' (%d) %s\n",
+				outpath, errno, strerror(errno));
+		exit(1);
+	}
 
-	_meshes_write(scene, file);
-	_anims_write(scene, file);
-	_node_write(&scene->root_node, file);
+	int num_meshes_flip = uint16_endian_flip(s->num_meshes);
+	fwrite(&num_meshes_flip, sizeof(uint16_t), 1, file);
+	for(uint16_t i = 0; i < s->num_meshes; i++)
+		_mesh_write(s->meshes + i, file);
+
+	int num_anims_flip = uint16_endian_flip(s->num_anims);
+	fwrite(&num_anims_flip, sizeof(uint16_t), 1, file);
+	for(uint16_t i = 0; i < s->num_anims; i++)
+		_anim_write(s->anims + i, file);
+
+	_node_write(&s->root_node, file);
 
 	fclose(file);
 }
 
-static void _node_import(scene_t *s, node_t *n, FILE *file)
+static void _mesh_read(mesh_t *m, FILE *file)
+{
+	fread(m->name, sizeof(char), NAME_MAX_LEN, file);
+	fread(&m->num_verts, sizeof(uint16_t), 1, file);
+	m->num_verts = uint16_endian_flip(m->num_verts);
+	m->verts = malloc(sizeof(vertex_t) * m->num_verts);
+	for(int i = 0; i < m->num_verts; i++) {
+		fread(m->verts[i].pos, sizeof(float), 3, file);
+		for(int j = 0; j < 3; j++)
+			m->verts[i].pos[j] =
+				float_endian_flip(m->verts[i].pos[j]);
+
+		fread(m->verts[i].uv, sizeof(float), 2, file);
+		for(int j = 0; j < 2; j++)
+			m->verts[i].uv[j] = float_endian_flip(m->verts[i].uv[j]);
+	}
+
+	fread(&m->num_indis, sizeof(uint16_t), 1, file);
+	m->num_indis = uint16_endian_flip(m->num_indis);
+	m->indis = malloc(sizeof(uint16_t) * m->num_indis);
+	for(int i = 0; i < m->num_indis; i++) {
+		fread(m->indis + i, sizeof(uint16_t), 1, file);
+		m->indis[i] = uint16_endian_flip(m->indis[i]);
+	}
+
+	/* debugging */
+	printf("\tname=%s, num_verts=%d, num_indis=%d\n",
+			m->name, m->num_verts, m->num_indis);
+
+	for(uint16_t i = 0; i < m->num_verts; i++) {
+		vertex_t *v = m->verts + i;
+		printf("\t\t%d: pos=(%f, %f, %f), uv=(%f, %f)\n", i,
+				v->pos[0], v->pos[1], v->pos[2],
+				v->uv[0], v->uv[1]);
+	}
+
+	printf("\n");
+
+	for(uint16_t i = 0; i < m->num_indis / 3; i++)
+		printf("\t\t%d\t%d\t%d\n",
+				m->indis[i * 3 + 0],
+				m->indis[i * 3 + 1],
+				m->indis[i * 3 + 2]);
+
+	printf("\n");
+}
+
+static void _anim_read(animation_t *a, FILE *file)
+{
+	fread(a->name, sizeof(char), NAME_MAX_LEN, file);
+	fread(&a->mesh_index, sizeof(uint16_t), 1, file);
+	a->mesh_index = uint16_endian_flip(a->mesh_index);
+	fread(&a->length, sizeof(uint16_t), 1, file);
+	a->length = uint16_endian_flip(a->length);
+	fread(&a->num_pos, sizeof(uint16_t), 1, file);
+	a->num_pos = uint16_endian_flip(a->num_pos);
+	fread(&a->num_rot, sizeof(uint16_t), 1, file);
+	a->num_rot = uint16_endian_flip(a->num_rot);
+	fread(&a->num_sca, sizeof(uint16_t), 1, file);
+	a->num_sca = uint16_endian_flip(a->num_sca);
+
+	a->pos = malloc(sizeof(vec3_key_t) * a->num_pos);
+	for(uint16_t i = 0; i < a->num_pos; i++) {
+		fread(&a->pos[i].frame, sizeof(uint16_t), 1, file);
+		a->pos[i].frame = uint16_endian_flip(a->pos[i].frame);
+		fread(a->pos[i].vec, sizeof(float), 3, file);
+		for(uint16_t j = 0; j < 3; j++)
+			a->pos[i].vec[j] = float_endian_flip(a->pos[i].vec[j]);
+	}
+
+	a->rot = malloc(sizeof(vec4_key_t) * a->num_rot);
+	for(uint16_t i = 0; i < a->num_rot; i++) {
+		fread(&a->rot[i].frame, sizeof(uint16_t), 1, file);
+		a->rot[i].frame = uint16_endian_flip(a->rot[i].frame);
+		fread(a->rot[i].vec, sizeof(float), 4, file);
+		for(uint16_t j = 0; j < 4; j++)
+			a->rot[i].vec[j] = float_endian_flip(a->rot[i].vec[j]);
+	}
+
+	a->sca = malloc(sizeof(vec3_key_t) * a->num_sca);
+	for(uint16_t i = 0; i < a->num_sca; i++) {
+		fread(&a->sca[i].frame, sizeof(uint16_t), 1, file);
+		a->sca[i].frame = uint16_endian_flip(a->sca[i].frame);
+		fread(a->sca[i].vec, sizeof(float), 3, file);
+		for(uint16_t j = 0; j < 3; j++)
+			a->sca[i].vec[j] = float_endian_flip(a->sca[i].vec[j]);
+	}
+
+	/* debugging */
+	printf("\tname=%s, mesh_index=%d, length=%d, "
+			"npos=%d, nrot=%d, nsca=%d\n",
+			a->name, a->mesh_index, a->length,
+			a->num_pos, a->num_rot, a->num_sca);
+
+	for(uint16_t i = 0; i < a->num_pos; i++)
+		printf("\t\tpos%d=(%f, %f, %f)\n", a->pos[i].frame,
+				a->pos[i].vec[0], a->pos[i].vec[1],
+				a->pos[i].vec[2]);
+
+	printf("\n");
+
+	for(uint16_t i = 0; i < a->num_rot; i++)
+		printf("\t\trot%d=(%f, %f, %f, %f)\n", a->rot[i].frame,
+				a->rot[i].vec[0], a->rot[i].vec[1],
+				a->rot[i].vec[2], a->rot[i].vec[3]);
+
+	printf("\n");
+
+	for(uint16_t i = 0; i < a->num_sca; i++)
+		printf("\t\tsca%d=(%f, %f, %f)\n", a->sca[i].frame,
+				a->sca[i].vec[0], a->sca[i].vec[1],
+				a->sca[i].vec[2]);
+
+	printf("\n");
+}
+
+static void _matrix_print(float *mat, int indents)
+{
+	for(int i = 0; i < 4; i++) {
+		for(int j = 0; j < 4; j++) {
+			for(int k = 0; k < indents; k++)
+				printf("\t");
+			printf("%f ", mat[j * 4 + i]);
+		}
+		printf("\n");
+	}
+	printf("\n");
+}
+
+static void _node_read(node_t *n, FILE *file, int depth)
 {
 	fread(n->name, sizeof(char), NAME_MAX_LEN, file);
 	fread(&n->mesh_index, sizeof(uint16_t), 1, file);
+	n->mesh_index = uint16_endian_flip(n->mesh_index);
+	fread(n->mat, sizeof(float), 4 * 4, file);
+	for(int i = 0; i < 16; i++)
+		n->mat[i] = float_endian_flip(n->mat[i]);
+
 	fread(&n->num_children, sizeof(uint16_t), 1, file);
-	for(int i = 0; i < uint16_endian_flip(n->num_children); i++)
-		_node_import(s, n->children + i, file);
+	n->num_children = uint16_endian_flip(n->num_children);
+	for(int i = 0; i < depth; i++)
+		printf("\t");
+	printf("name=%s, mesh_index=%d num_children=%d\n",
+			n->name, n->mesh_index, n->num_children);
+	_matrix_print(n->mat, depth);
+
+	n->children = malloc(sizeof(node_t) * n->num_children);
+	for(int i = 0; i < n->num_children; i++)
+		_node_read(n->children + i, file, depth + 1);
 }
 
-static void _import_test(const char *path)
+static void _scene_read_test(const char *path_out)
 {
-	FILE *file = fopen(path, "rb");
+	FILE *file = fopen(path_out, "rb");
+	if(!file) {
+		fprintf(stderr, "Failed to read file from '%s'\n", path_out);
+		exit(1);
+	}
+
 	scene_t scene;
+
 	fread(&scene.num_meshes, sizeof(uint16_t), 1, file);
 	scene.num_meshes = uint16_endian_flip(scene.num_meshes);
 	scene.meshes = malloc(sizeof(mesh_t) * scene.num_meshes);
-	for(int i = 0; i < scene.num_meshes; i++) {
-		mesh_t *mesh = scene.meshes + i;
-		fread(&mesh->name, sizeof(char), NAME_MAX_LEN, file);
-		fread(&mesh->num_verts, sizeof(uint16_t), 1, file);
-		mesh->num_verts = uint16_endian_flip(mesh->num_verts);
-		mesh->verts = malloc(sizeof(vertex_t) * mesh->num_verts);
-		for(int j = 0; j < mesh->num_verts; j++) {
-			vertex_t *vert = mesh->verts + j;
-			fread(vert, sizeof(vertex_t), 1, file);
-			for(int k = 0; k < 3; k++)
-				vert->pos[k] = float_endian_flip(vert->pos[k]);
-
-			for(int k = 0; k < 2; k++)
-				vert->uv[k] = float_endian_flip(vert->uv[k]);
-		}
-
-		fread(&mesh->num_indis, sizeof(uint16_t), 1, file);
-		mesh->num_indis = uint16_endian_flip(mesh->num_indis);
-		mesh->indis = malloc(sizeof(uint16_t) * mesh->num_indis);
-		for(int j = 0; j < mesh->num_indis; j++) {
-			fread(mesh->indis + j, sizeof(uint16_t), 1, file);
-			mesh->indis[j] = uint16_endian_flip(mesh->indis[j]);
-		}
-	}
+	printf("num_meshes=%d\n", scene.num_meshes);
+	for(int i = 0; i < scene.num_meshes; i++)
+		_mesh_read(scene.meshes + i, file);
 
 	fread(&scene.num_anims, sizeof(uint16_t), 1, file);
 	scene.num_anims = uint16_endian_flip(scene.num_anims);
 	scene.anims = malloc(sizeof(animation_t) * scene.num_anims);
-	for(int i = 0; i < scene.num_anims; i++) {
-		animation_t *anim = scene.anims + i;
-		fread(&anim->name, sizeof(char), NAME_MAX_LEN, file);
-		fread(&anim->length, sizeof(uint16_t), 1, file);
-		anim->length = uint16_endian_flip(anim->length);
-		fread(&anim->num_pos, sizeof(uint16_t), 1, file);
-		anim->num_pos = uint16_endian_flip(anim->num_pos);
-		fread(&anim->num_rot, sizeof(uint16_t), 1, file);
-		anim->num_rot = uint16_endian_flip(anim->num_rot);
-		fread(&anim->num_sca, sizeof(uint16_t), 1, file);
-		anim->num_sca = uint16_endian_flip(anim->num_sca);
+	printf("num_anims=%d\n", scene.num_anims);
+	for(int i = 0; i < scene.num_anims; i++)
+		_anim_read(scene.anims + i, file);
 
-		anim->pos = malloc(sizeof(vec3_key_t) * anim->num_pos);
-		for(int j = 0; j < anim->num_pos; j++) {
-			fread(&anim->pos[j].frame, sizeof(uint16_t), 1, file);
-			anim->pos[j].frame =
-				uint16_endian_flip(anim->pos[j].frame);
-			fread(anim->pos[j].vec, sizeof(float), 3, file);
-			for(int k = 0; k < 3; k++)
-				anim->pos[j].vec[k] = 
-					float_endian_flip(anim->pos[j].vec[k]);
-		}
-
-		anim->rot = malloc(sizeof(vec4_key_t) * anim->num_rot);
-		for(int j = 0; j < anim->num_rot; j++) {
-			fread(&anim->rot[j].frame, sizeof(uint16_t), 1, file);
-			anim->rot[j].frame =
-				uint16_endian_flip(anim->rot[j].frame);
-			fread(anim->rot[j].vec, sizeof(float), 4, file);
-			for(int k = 0; k < 4; k++)
-				anim->rot[j].vec[k] = 
-					float_endian_flip(anim->rot[j].vec[k]);
-		}
-
-		anim->sca = malloc(sizeof(vec3_key_t) * anim->num_sca);
-		for(int j = 0; j < anim->num_sca; j++) {
-			fread(&anim->sca[j].frame, sizeof(uint16_t), 1, file);
-			anim->sca[j].frame =
-				uint16_endian_flip(anim->sca[j].frame);
-			fread(anim->sca[j].vec, sizeof(float), 3, file);
-			for(int k = 0; k < 3; k++)
-				anim->sca[j].vec[k] = 
-					float_endian_flip(anim->sca[j].vec[k]);
-		}
-	}
-
-	_node_import(&scene, &scene.root_node, file);
+	_node_read(&scene.root_node, file, 0);
 
 	fclose(file);
-}
-
-static node_t _node_process(const struct aiNode *n)
-{
-	node_t node;
-	strncpy(node.name, n->mName.data, n->mName.length + 1);
-	node.mesh_index = n->mNumMeshes ? n->mMeshes[0] : 0xFFFF;
-	node.num_children = n->mNumChildren;
-	node.children = malloc(sizeof(node) * node.num_children);
-	for(int i = 0; i < node.num_children; i++)
-		node.children[i] = _node_process(n->mChildren[i]);
-
-	return node;
-}
-
-static uint16_t _mesh_name_to_index(const char *name,
-		mesh_t *meshes, int num_meshes)
-{
-	for(int i = 0; i < num_meshes; i++) {
-		printf("Trying '%s'...\n", meshes[i].name);
-		if(strcmp(meshes[i].name, name) == 0) {
-			printf("\tFound '%s'!\n", name);
-			return i;
-		}
-	}
-
-	fprintf(stderr, "Mesh wasn't found with name '%s'\n", name);
-	return -1;
-}
-
-static void _anim_process(animation_t *anim, const struct aiAnimation *a,
-		mesh_t *meshes, uint16_t num_meshes, uint16_t index)
-{
-	const struct aiNodeAnim *n = a->mChannels[index];
-	strncpy(anim->name, a->mName.data, a->mName.length + 1);
-	anim->mesh_index = _mesh_name_to_index(n->mNodeName.data,
-			meshes, num_meshes);
-	anim->length = roundf((a->mDuration / a->mTicksPerSecond) * 24);
-
-	anim->num_pos = n->mNumPositionKeys;
-	anim->pos = malloc(sizeof(vec3_key_t) * anim->num_pos);
-	for(uint16_t i = 0; i < anim->num_pos; i++) {
-		const struct aiVectorKey pi = n->mPositionKeys[i];
-		vec3_key_t *po = anim->pos + i;
-		po->frame = roundf((pi.mTime / a->mTicksPerSecond) * 24);
-		memcpy(po->vec, &pi.mValue.x, sizeof(float) * 3);
-	}
-
-	anim->num_rot = n->mNumRotationKeys;
-	anim->rot = malloc(sizeof(vec4_key_t) * anim->num_rot);
-	for(uint16_t i = 0; i < anim->num_rot; i++) {
-		const struct aiQuatKey ri = n->mRotationKeys[i];
-		vec4_key_t *ro = anim->rot + i;
-		ro->frame = roundf((ri.mTime / a->mTicksPerSecond) * 24);
-		ro->vec[0] = ri.mValue.x;
-		ro->vec[1] = ri.mValue.y;
-		ro->vec[2] = ri.mValue.z;
-		ro->vec[3] = ri.mValue.w;
-	}
-
-	anim->num_sca = n->mNumScalingKeys;
-	anim->sca = malloc(sizeof(vec3_key_t) * anim->num_rot);
-	for(uint16_t i = 0; i < anim->num_sca; i++) {
-		const struct aiVectorKey si = n->mScalingKeys[i];
-		vec3_key_t *so = anim->sca + i;
-		so->frame = roundf((si.mTime / a->mTicksPerSecond) * 24);
-		memcpy(so->vec, &si.mValue.x, sizeof(float) * 3);
-	}
-}
-
-static animation_t *_anims_process(const struct aiScene *s,
-		mesh_t *meshes, uint16_t num_meshes)
-{
-	animation_t *anims = malloc(sizeof(animation_t) * s->mNumAnimations);
-	for(uint16_t i = 0; i < s->mNumAnimations; i++)
-		for(uint16_t j = 0; j < s->mAnimations[i]->mNumChannels; j++)
-			_anim_process(anims + i, s->mAnimations[i],
-					meshes, num_meshes, j);
-
-	return anims;
 }
 
 int main(int argc, char **argv)
@@ -435,27 +489,21 @@ int main(int argc, char **argv)
 		_print_usage(argv[0]);
 
 	const char *path_in = argv[1];
-	const int ppflags = aiProcess_JoinIdenticalVertices |
-		aiProcess_Triangulate | aiProcess_ImproveCacheLocality |
-		aiProcess_RemoveRedundantMaterials;
-	const struct aiScene *scene = aiImportFile(path_in, ppflags);
-	if(!scene) {
+	const struct aiScene *scenein = aiImportFile(path_in,
+			aiProcess_JoinIdenticalVertices | aiProcess_Triangulate
+			| aiProcess_ImproveCacheLocality
+			| aiProcess_RemoveRedundantMaterials);
+	if(!scenein) {
 		fprintf(stderr, "Assimp Error (%s): %s\n", path_in,
 				aiGetErrorString());
-		exit(EXIT_FAILURE);
+		exit(1);
 	}
 
-	scene_t sceneout;
-	sceneout.num_meshes = scene->mNumMeshes;
-	sceneout.meshes = _meshes_process(scene);
-	sceneout.num_anims = scene->mNumAnimations;
-	sceneout.anims = _anims_process(scene,
-			sceneout.meshes, sceneout.num_meshes);
-	sceneout.root_node = _node_process(scene->mRootNode);
-
 	const char *path_out = argv[2];
+	scene_t sceneout;
+	_scene_process(&sceneout, scenein);
 	_scene_write(&sceneout, path_out);
-	_import_test(path_out);
+	_scene_read_test(path_out);
 
 	return 0;
 }

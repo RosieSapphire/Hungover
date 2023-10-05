@@ -33,7 +33,7 @@ static void _testroom_load(void)
 enum scene_index testroom_update(update_parms_t uparms)
 {
 	scene_update(scene);
-	player_update(&p, uparms);
+	player_update(&p, scene, uparms);
 
 	return SCENE_TESTROOM;
 }

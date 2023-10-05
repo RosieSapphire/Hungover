@@ -5,7 +5,7 @@
 #define CONF_HEIGHT       240
 #define CONF_ASPECT       ((float)CONF_WIDTH / (float)CONF_HEIGHT)
 #define CONF_RESOLUTION   (resolution_t){CONF_WIDTH, CONF_HEIGHT, false}
-#define CONF_BITDEPTH     DEPTH_16_BPP
+#define CONF_BITDEPTH     DEPTH_32_BPP
 #define CONF_NUMBUF       3
 #define CONF_GAMMA        GAMMA_NONE
 #define CONF_ANTIALIAS    ANTIALIAS_RESAMPLE

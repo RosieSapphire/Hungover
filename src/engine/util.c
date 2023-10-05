@@ -1,9 +1,21 @@
 #include <GL/gl.h>
 
 #include "engine/config.h"
+#include "engine/vector.h"
 #include "engine/util.h"
 
 float clampf(float x, float min, float max)
+{
+	if(x > max)
+		return max;
+
+	if(x < min)
+		return min;
+
+	return x;
+}
+
+int clampi(int x, int min, int max)
 {
 	if(x > max)
 		return max;
@@ -40,4 +52,20 @@ void projection_setup(void)
 			CONF_NEAR_PLANE * CONF_ASPECT,
 			-CONF_NEAR_PLANE, CONF_NEAR_PLANE,
 			CONF_NEAR_PLANE, CONF_FAR_PLANE);
+}
+
+void quat_lerp(const float *a, const float *b, float *c, const float t)
+{
+	float out_scale = (vector_dot(a, b, 4) >= 0) ? 1.0f : -1.0f;
+	for(int i = 0; i < 4; i++)
+		c[i] = ((1 - t) * a[i]) + (out_scale * t * b[i]);
+
+	vector_normalize(c, 4);
+}
+
+void pos_from_mat(const float *mat, float *pos)
+{
+	pos[0] = mat[12];
+	pos[1] = mat[13];
+	pos[2] = mat[14];
 }

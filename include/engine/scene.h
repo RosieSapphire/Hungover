@@ -26,5 +26,6 @@ scene_t *scene_load(const char *path);
 void scene_unload(scene_t *s);
 void scene_update(scene_t *s);
 void scene_draw(const scene_t *s, float subtick, const uint32_t tid);
+node_t *scene_node_from_name(node_t *n, const char *name);
 
 #endif /* ENGINE_SCENE_H_ */

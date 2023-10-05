@@ -7,8 +7,10 @@ typedef struct node_t node_t;
 struct node_t {
 	char name[CONF_NAME_MAX_LEN];
 	uint16_t mesh_index;
+	float mat[4 * 4];
 	uint16_t num_children;
 	node_t *children;
+	bool is_active;
 };
 
 #endif /* ENGINE_NODE_H_ */

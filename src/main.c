@@ -28,7 +28,7 @@ int main(void)
 	dfs_init(DFS_DEFAULT_LOCATION);
 	audio_init(32000, 1);
 	mixer_init(SFXC_COUNT);
-	controller_init();
+	joypad_init();
 
 	debug_init_isviewer();
 	debug_init_usblog();
@@ -82,10 +82,10 @@ int main(void)
 
 		ticks_accum += ticks_delta;
 		while(ticks_accum >= CONF_DELTATICKS) {
-			controller_scan();
+			joypad_poll();
 			update_parms_t uparms = {
 				get_keys_down(),
-				get_keys_held()
+				get_keys_held(),
 			};
 
 			scene_index = (*update_funcs[scene_index])(uparms);

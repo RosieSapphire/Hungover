@@ -43,9 +43,9 @@ void _title_load(void)
 	if(is_loaded)
 		return;
 
-	hungover_text = texture_create_file("rom:/title_text.ia4.sprite");
+	hungover_text = texture_create_file("rom:/title_text.ia8.sprite");
 	new_game_text = texture_create_file("rom:/new_game.ia4.sprite");
-	continue_text = texture_create_file("rom:/continue.ia4.sprite");
+	continue_text = texture_create_file("rom:/continue.ia8.sprite");
 	options_text = texture_create_file("rom:/options.ia4.sprite");
 	press_start_text= texture_create_file("rom:/press_start.ia4.sprite");
 
@@ -202,7 +202,7 @@ static void _title_logo_draw(float music_t, float t, float subtick)
 			beats_lerp = clampf(beats_lerp - 29.5f, 0, 2) / 2.0f;
 			if(beats_lerp <= 0.0f)
 				return;
-			vector_lerp(a, b, beats_lerp * beats_lerp, c);
+			vector_lerp(a, b, beats_lerp * beats_lerp, c, 3);
 			glTranslatef(c[0], c[1], c[2]);
 			glRotatef(beats_lerp * 720 * beats_lerp, 0, 0, 1);
 			break;
@@ -214,8 +214,8 @@ static void _title_logo_draw(float music_t, float t, float subtick)
 			a[0] = 0.0f; a[1] = 0.0f; a[2] =  0.0f;
 			b[0] = 0.0f; b[1] = 1.5f; b[2] =  -1.0f;
 			if(music_ch_last == 4)
-				vector_copy(b, a);
-			vector_smooth(a, b, music_t, c);
+				vector_copy(b, a, 3);
+			vector_smooth(a, b, music_t, c, 3);
 			glTranslatef(c[0], c[1], c[2]);
 			break;
 
@@ -228,7 +228,7 @@ static void _title_logo_draw(float music_t, float t, float subtick)
 			difft = (beats_lerp - beats_start) / 3.5f;
 			difft *= difft * difft;
 			difft = clampf(difft, 0, 1);
-			vector_lerp(a, b, difft, c);
+			vector_lerp(a, b, difft, c, 3);
 
 			glTranslatef(c[0], c[1], c[2]);
 			glRotatef(smoothf(0, 720, difft), 0, 0, 1);
@@ -299,14 +299,14 @@ static void _title_menu_option_draw(int move_dir,
 			glColor3f(col, col, col);
 			b[2] = 1.0f / select_offset_bob;
 		}
-		vector_lerp(a, b, music_t, c);
+		vector_lerp(a, b, music_t, c, 3);
 		glTranslatef(c[0], c[1], c[2]);
 		break;
 
 	case 3:
 		a[0] = 0; a[1] = -ind; a[2] = -1.5f;
 		b[0] = 10 * move_dir; b[1] = 5; b[2] = 2.5f;
-		vector_lerp(a, b, music_t, c);
+		vector_lerp(a, b, music_t, c, 3);
 		glTranslatef(c[0], c[1], c[2]);
 		break;
 	}
