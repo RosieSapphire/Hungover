@@ -1,5 +1,6 @@
-#include <string.h>
 #include <math.h>
+#include <string.h>
+#include <libdragon.h>
 
 #include "engine/util.h"
 #include "engine/vector.h"
@@ -73,4 +74,11 @@ float vector_normalize(float *x, int comp)
 		x[i] /= mag;
 
 	return mag;
+}
+
+void vector_print(float *x, int comp)
+{
+	for(int i = 0; i < comp; i++)
+		debugf("%f ", x[i]);
+	debugf("\n");
 }

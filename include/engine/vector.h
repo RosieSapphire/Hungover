@@ -12,5 +12,6 @@ float vector_dot(const float *a, const float *b, const int comp);
 float vector_magnitude_sqr(float *x, int comp);
 float vector_magnitude(float *x, int comp);
 float vector_normalize(float *x, int comp);
+void vector_print(float *x, int comp);
 
 #endif /* ENGINE_VECTOR_H_ */

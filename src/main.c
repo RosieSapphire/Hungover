@@ -32,27 +32,9 @@ int main(void)
 
 	debug_init_isviewer();
 	debug_init_usblog();
-	/*
 	rdpq_debug_start();
-	*/
 
-	mixer_ch_set_vol(SFXC_MUSIC0, 1, 1);
-	mixer_ch_set_vol(SFXC_MUSIC1, 0, 0);
-	mixer_ch_set_vol(SFXC_MUSIC2, 0, 0);
-	mixer_ch_set_vol(SFXC_MUSIC3, 1, 1);
-	mixer_ch_set_vol(SFXC_MUSIC4, 0, 0);
-
-	wav64_open(&title_music0, "rom:/title_intro.wav64");
-	wav64_open(&title_music1, "rom:/title_init.wav64");
-	wav64_open(&title_music2, "rom:/title_main.wav64");
-	wav64_open(&title_music3, "rom:/title_play.wav64");
-	wav64_open(&title_music4, "rom:/title_options.wav64");
-
-	wav64_set_loop(&title_music0, false);
-	wav64_set_loop(&title_music1, true);
-	wav64_set_loop(&title_music2, true);
-	wav64_set_loop(&title_music3, false);
-	wav64_set_loop(&title_music4, true);
+	sfx_init();
 
 	if(scene_index == SCENE_TITLE) {
 		wav64_play(&title_music0, SFXC_MUSIC0);
@@ -60,8 +42,6 @@ int main(void)
 		wav64_play(&title_music2, SFXC_MUSIC2);
 		wav64_play(&title_music4, SFXC_MUSIC4);
 	}
-
-	// scene_t *test_room = scene_load("rom:/test.scn");
 
 	surface_t dep = surface_alloc(FMT_RGBA16, CONF_WIDTH, CONF_HEIGHT);
 

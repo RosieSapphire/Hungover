@@ -6,6 +6,7 @@
 void camera_init(camera_t *c)
 {
 	c->pitch = c->yaw = c->pitch_smooth = c->yaw_smooth = 0;
+	c->pitch_last = c->yaw_last = 0;
 	vector_zero(c->eye_last, 3);
 	vector_zero(c->eye, 3);
 	vector_zero(c->foc_last, 3);

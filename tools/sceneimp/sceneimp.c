@@ -138,7 +138,7 @@ static void _anim_process(animation_t *ao, const scene_t *so,
 		ao->rot[i].vec[3] = ai->mChannels[0]->mRotationKeys[i].mValue.w;
 	}
 
-	ao->sca = malloc(sizeof(vec4_key_t) * ao->num_sca);
+	ao->sca = malloc(sizeof(vec3_key_t) * ao->num_sca);
 	for(uint16_t i = 0; i < ao->num_sca; i++) {
 		ao->sca[i].frame = (uint16_t)roundf(
 				(ai->mChannels[0]->mScalingKeys[i].mTime
@@ -483,6 +483,14 @@ static void _scene_read_test(const char *path_out)
 	fclose(file);
 }
 
+static void _scene_flush(scene_t *s)
+{
+	s->num_meshes = 0;
+	s->num_anims = 0;
+	free(s->meshes);
+	free(s->anims);
+}
+
 int main(int argc, char **argv)
 {
 	if(argc != 3)
@@ -503,6 +511,7 @@ int main(int argc, char **argv)
 	scene_t sceneout;
 	_scene_process(&sceneout, scenein);
 	_scene_write(&sceneout, path_out);
+	_scene_flush(&sceneout);
 	_scene_read_test(path_out);
 
 	return 0;
