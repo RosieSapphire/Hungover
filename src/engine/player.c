@@ -122,7 +122,6 @@ static void _player_pickup_check(player_t *p, scene_t *s)
 
 			const uint16_t ind = p->num_items - 1;
 			const uint16_t ind2 = p->item_indis[ind] = i;
-			debugf("1: %d, 2: %d\n", ind, ind2);
 			p->item_selected = ind;
 			p->items[ind].scene = scene_load(item_paths[ind2]);
 			p->items[ind].anim_cur = 0;
@@ -143,7 +142,7 @@ static void _player_pickup_check(player_t *p, scene_t *s)
 
 static void _player_item_swap_check(player_t *p, update_parms_t uparms)
 {
-	if(!p->num_items)
+	if(p->num_items < 2)
 		return;
 
 	if(uparms.down.c->R) {
@@ -172,7 +171,7 @@ void player_update(player_t *p, scene_t *s, update_parms_t uparms)
 	_player_items_update(p);
 }
 
-void player_item_draw(const scene_t *s, const player_t *p, float subtick)
+void player_item_draw(const player_t *p, float subtick)
 {
 	if(p->item_selected == -1 || !p->num_items)
 		return;
@@ -199,7 +198,7 @@ void player_item_draw(const scene_t *s, const player_t *p, float subtick)
 	const item_t *item = p->items + ind;
 	animation_t *anim = item->scene->anims + item->anim_cur;
 	animation_setup_matrix(anim, subtick);
-	smesh_draw(s, &p->items[ind].scene->meshes[0]);
+	smesh_draw(item->scene, &p->items[ind].scene->meshes[0]);
 	glPopMatrix();
 }
 

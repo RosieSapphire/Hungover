@@ -47,7 +47,7 @@ void testroom_draw(float subtick)
 	glMatrixMode(GL_MODELVIEW);
 	player_view_matrix_setup(&p, subtick);
 	scene_draw(scene, subtick);
-	player_item_draw(scene, &p, subtick);
+	player_item_draw(&p, subtick);
 
 	gl_context_end();
 }

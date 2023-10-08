@@ -159,17 +159,6 @@ scene_t *scene_load(const char *path)
 	return scene;
 }
 
-/*
-smesh_t scene_load_first_mesh(const char *path)
-{
-	scene_t *scene = scene_load(path);
-	smesh_t mesh;
-	smesh_copy(scene->meshes + 0, &mesh);
-	scene_unload(scene);
-	return mesh;
-}
-*/
-
 void scene_unload(scene_t *s)
 {
 	for(int i = 0; i < s->num_meshes; i++)
@@ -182,35 +171,6 @@ void scene_unload(scene_t *s)
 
 	free(s);
 }
-
-/*
-static uint16_t _scene_anim_index_from_mesh_index(
-		const scene_t *s, uint16_t mesh_index)
-{
-	if(mesh_index == 0xFFFF)
-		return mesh_index;
-
-	for(int i = 0; i < s->num_anims; i++) {
-		int anim_ind = s->anims[i].mesh_index;
-		if(mesh_index == anim_ind)
-			return anim_ind;
-	}
-
-	return 0xFFFF;
-}
-
-static void _scene_mesh_draw(const smesh_t *m, float subtick, const uint32_t tid)
-{
-	const int anim_index = _scene_anim_index_from_mesh_index
-
-	if(anim_index != 0xFFFF) {
-		// animation_setup_matrix(s->anims + anim_index, subtick);
-		smesh_draw(s->meshes + (n->mesh_index), tid);
-	} else {
-		smesh_draw(s->meshes + (n->mesh_index), tid);
-	}
-}
-*/
 
 void scene_update(scene_t *s)
 {

@@ -50,7 +50,11 @@ void smesh_draw(const void *sc, const smesh_t *m)
 
 	if(s) {
 		const int tex_ind = s->tex_indis[m->tex_index];
-		// debugf("%s:\t%d\n", m->name, tex_ind);
+		/*
+		if(!strcmp(m->name, "Bong"))
+			debugf("name=%s, tex_ind=%d, mat_ind=%d\n",
+				m->name, tex_ind, m->tex_index);
+				*/
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, tex_objs_loaded[tex_ind].id);
 	}
