@@ -121,10 +121,18 @@ static void _anim_process(animation_t *ao, const scene_t *so,
 	ao->mesh_index = _mesh_index_from_name(
 	        	ai->mChannels[0]->mNodeName.data,
 	        	so->meshes, so->num_meshes);
-	ao->length = (roundf(ai->mDuration / ai->mTicksPerSecond) * 24) + 1;
-	ao->num_pos = ai->mChannels[0]->mNumPositionKeys;
-	ao->num_rot = ai->mChannels[0]->mNumRotationKeys;
-	ao->num_sca = ai->mChannels[0]->mNumScalingKeys;
+	// ao->length = (roundf(ai->mDuration / ai->mTicksPerSecond) * 24) + 1;
+	uint16_t nums[3] = {
+		ao->num_pos = ai->mChannels[0]->mNumPositionKeys,
+		ao->num_rot = ai->mChannels[0]->mNumRotationKeys,
+		ao->num_sca = ai->mChannels[0]->mNumScalingKeys,
+	};
+	uint16_t max = 0;
+	for(int i = 0; i < 3; i++) {
+		if(max < nums[i])
+			max = nums[i];
+		ao->length = max;
+	}
 
 	ao->pos = malloc(sizeof(vec3_key_t) * ao->num_pos);
 	for(uint16_t i = 0; i < ao->num_pos; i++) {

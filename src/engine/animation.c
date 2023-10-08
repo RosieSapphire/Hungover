@@ -5,6 +5,11 @@
 #include "engine/vector.h"
 #include "engine/animation.h"
 
+void animation_debug(const animation_t *a)
+{
+	debugf("anim='%s', frame=%d\n", a->name, a->frame);
+}
+
 void animation_update(animation_t *a)
 {
 	a->frame_last = a->frame;

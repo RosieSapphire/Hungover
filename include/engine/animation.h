@@ -26,7 +26,7 @@ typedef struct {
 	bool loops;
 } animation_t;
 
-// void animation_debug(const animation_t *a);
+void animation_debug(const animation_t *a);
 void animation_update(animation_t *a);
 void animation_setup_matrix(const animation_t *a, float subtick);
 void animation_destroy(animation_t *a);

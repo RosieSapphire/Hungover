@@ -140,6 +140,30 @@ static void _player_pickup_check(player_t *p, scene_t *s)
 	}
 }
 
+static void _player_item_use_check(player_t *p, update_parms_t uparms)
+{
+	if(!p->num_items || p->item_selected == -1)
+		return;
+
+	if(!uparms.down.c->Z)
+		return;
+
+	p->items[p->item_selected].anim_cur = 1;
+	p->items[p->item_selected].scene->anims[1].frame = 0;
+
+	switch(p->item_selected) {
+	case PISTOL:
+		wav64_play(&fire_pistol, SFXC_ITEM);
+		break;
+		
+	case BONG:
+		break;
+
+	default:
+		break;
+	}
+}
+
 static void _player_item_swap_check(player_t *p, update_parms_t uparms)
 {
 	if(p->num_items < 2)
@@ -154,10 +178,12 @@ static void _player_item_swap_check(player_t *p, update_parms_t uparms)
 
 static void _player_items_update(player_t *p)
 {
-	for(int i = 0; i < p->num_items; i++) {
-		p->items[i].scene->anims[p->items[i].anim_cur].loops = 0;
-		scene_update(p->items[i].scene);
-	}
+	const uint16_t i = p->item_selected;
+	if(i == 0xFFFF)
+		return;
+
+	p->items[i].scene->anims[p->items[i].anim_cur].loops = 0;
+	scene_update(p->items[i].scene);
 }
 
 void player_update(player_t *p, scene_t *s, update_parms_t uparms)
@@ -167,6 +193,7 @@ void player_update(player_t *p, scene_t *s, update_parms_t uparms)
 	_player_look_update(p, uparms);
 	_player_pos_and_focus_update(p);
 	_player_pickup_check(p, s);
+	_player_item_use_check(p, uparms);
 	_player_item_swap_check(p, uparms);
 	_player_items_update(p);
 }
@@ -198,6 +225,7 @@ void player_item_draw(const player_t *p, float subtick)
 	const item_t *item = p->items + ind;
 	animation_t *anim = item->scene->anims + item->anim_cur;
 	animation_setup_matrix(anim, subtick);
+	animation_debug(anim);
 	smesh_draw(item->scene, &p->items[ind].scene->meshes[0]);
 	glPopMatrix();
 }
