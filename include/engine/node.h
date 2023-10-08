@@ -13,4 +13,6 @@ struct node_t {
 	bool is_active;
 };
 
+void node_destroy(node_t *n);
+
 #endif /* ENGINE_NODE_H_ */

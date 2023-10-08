@@ -11,7 +11,6 @@
 static bool is_loaded = false;
 
 static scene_t *scene = NULL;
-static texture_t test_tex;
 static player_t p;
 
 static void _testroom_load(void)
@@ -20,7 +19,6 @@ static void _testroom_load(void)
 		return;
 
 	scene = scene_load("rom:/test.scene");
-	test_tex = texture_create_file("rom:/test.ci4.sprite");
 
 	player_init(&p);
 
@@ -48,8 +46,8 @@ void testroom_draw(float subtick)
 
 	glMatrixMode(GL_MODELVIEW);
 	player_view_matrix_setup(&p, subtick);
-	scene_draw(scene, subtick, test_tex.id);
-	player_item_draw(&p, test_tex.id);
+	scene_draw(scene, subtick);
+	player_item_draw(scene, &p, subtick);
 
 	gl_context_end();
 }

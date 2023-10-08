@@ -32,7 +32,9 @@ int main(void)
 
 	debug_init_isviewer();
 	debug_init_usblog();
+	/*
 	rdpq_debug_start();
+	*/
 
 	sfx_init();
 

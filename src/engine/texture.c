@@ -3,13 +3,13 @@
 
 #include "engine/texture.h"
 
-static unsigned int num_texs_loaded = 0;
-static const char **tex_paths_loaded = NULL;
-static texture_t *tex_objs_loaded = NULL;
+unsigned int num_texs_loaded = 0;
+char tex_paths_loaded[TEX_PATH_MAX_CNT][TEX_PATH_MAX_LEN];
+texture_t *tex_objs_loaded = NULL;
 
 void textures_init(void)
 {
-	tex_paths_loaded = malloc(0);
+	memset(tex_paths_loaded, 0, TEX_PATH_MAX_CNT * TEX_PATH_MAX_LEN);
 	tex_objs_loaded = malloc(0);
 }
 
@@ -28,20 +28,15 @@ texture_t texture_create_empty(int fmt, int width, int height)
 	return t;
 }
 
-texture_t texture_create_file(const char *path)
+uint32_t texture_create_file(const char *path)
 {
 	texture_t t;
-
 	for(unsigned int i = 0; i < num_texs_loaded; i++) {
-		if(strcmp(tex_paths_loaded[i], path))
-			continue;
-
-		return tex_objs_loaded[i];
+		if(!strcmp(path, tex_paths_loaded[i]))
+			return i;
 	}
 
 	num_texs_loaded++;
-	tex_paths_loaded = realloc(tex_paths_loaded,
-			sizeof(const char *) * num_texs_loaded);
 	tex_objs_loaded = realloc(tex_objs_loaded,
 			sizeof(texture_t) * num_texs_loaded);
 	t.spr = sprite_load(path);
@@ -59,10 +54,9 @@ texture_t texture_create_file(const char *path)
 	glSpriteTextureN64(GL_TEXTURE_2D, t.spr, &parms);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
+	strcpy(tex_paths_loaded[num_texs_loaded - 1], path);
 	tex_objs_loaded[num_texs_loaded - 1] = t;
-	tex_paths_loaded[num_texs_loaded - 1] = path;
-
-	return t;
+	return num_texs_loaded - 1;
 }
 
 void texture_destroy(texture_t *t)
@@ -70,8 +64,6 @@ void texture_destroy(texture_t *t)
 	glDeleteTextures(1, &t->id);
 	sprite_free(t->spr);
 	num_texs_loaded--;
-	tex_paths_loaded = realloc(tex_paths_loaded,
-			sizeof(const char *) * num_texs_loaded);
 	tex_objs_loaded = realloc(tex_objs_loaded,
 			sizeof(texture_t) * num_texs_loaded);
 }

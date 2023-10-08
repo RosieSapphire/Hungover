@@ -7,8 +7,12 @@
 #include <assimp/scene.h>
 #include <assimp/cimport.h>
 #include <assimp/postprocess.h>
+#include <assimp/material.h>
 
 #define NAME_MAX_LEN 32
+
+#define MAX_SCENE_TEXS 8
+#define TEX_PATH_MAX_LEN 64
 
 typedef struct {
 	float pos[3];
@@ -20,6 +24,7 @@ typedef struct {
 	uint16_t num_verts, num_indis;
 	vertex_t *verts;
 	uint16_t *indis;
+	uint16_t tex_index;
 } mesh_t;
 
 typedef struct node_t node_t;
@@ -55,6 +60,8 @@ typedef struct {
 	uint16_t num_anims;
 	animation_t *anims;
 	node_t root_node;
+	uint16_t num_tex_paths;
+	char tex_paths[MAX_SCENE_TEXS][TEX_PATH_MAX_LEN];
 } scene_t;
 
 static uint16_t uint16_endian_flip(uint16_t x)
@@ -92,6 +99,8 @@ static void _mesh_process(mesh_t *mo, const struct aiMesh *mi)
 	for(uint16_t i = 0; i < mi->mNumFaces; i++)
 		for(uint16_t j = 0; j < mi->mFaces[i].mNumIndices; j++)
 			mo->indis[i * 3 + j] = mi->mFaces[i].mIndices[j];
+
+	mo->tex_index = mi->mMaterialIndex;
 }
 
 static uint16_t _mesh_index_from_name(const char *name, const mesh_t *meshes,
@@ -180,6 +189,14 @@ static void _scene_process(scene_t *so, const struct aiScene *si)
 		_anim_process(so->anims + i, so, si->mAnimations[i]);
 
 	_node_process(&so->root_node, si->mRootNode);
+
+	so->num_tex_paths = si->mNumMaterials;
+	for(int i = 0; i < so->num_tex_paths; i++) {
+		const struct aiMaterial *mat = si->mMaterials[i];
+		struct aiString tex_path;
+		aiGetMaterialString(mat, AI_MATKEY_NAME, &tex_path);
+		memcpy(so->tex_paths[i], tex_path.data, tex_path.length + 1);
+	}
 }
 
 static void _mesh_write(const mesh_t *m, FILE *file)
@@ -208,6 +225,9 @@ static void _mesh_write(const mesh_t *m, FILE *file)
 		uint16_t iflip = uint16_endian_flip(m->indis[i]);
 		fwrite(&iflip, sizeof(uint16_t), 1, file);
 	}
+
+	uint16_t tex_index_flip = uint16_endian_flip(m->tex_index);
+	fwrite(&tex_index_flip, sizeof(uint16_t), 1, file);
 }
 
 static void _anim_write(const animation_t *a, FILE *file)
@@ -300,6 +320,11 @@ static void _scene_write(const scene_t *s, const char *outpath)
 
 	_node_write(&s->root_node, file);
 
+	int num_tex_paths_flip = uint16_endian_flip(s->num_tex_paths);
+	fwrite(&num_tex_paths_flip, sizeof(uint16_t), 1, file);
+	for(uint16_t i = 0; i < s->num_tex_paths; i++)
+		fwrite(s->tex_paths[i], sizeof(char), TEX_PATH_MAX_LEN, file);
+
 	fclose(file);
 }
 
@@ -328,9 +353,12 @@ static void _mesh_read(mesh_t *m, FILE *file)
 		m->indis[i] = uint16_endian_flip(m->indis[i]);
 	}
 
+	fread(&m->tex_index, sizeof(uint16_t), 1, file);
+	m->tex_index = uint16_endian_flip(m->tex_index);
+
 	/* debugging */
-	printf("\tname=%s, num_verts=%d, num_indis=%d\n",
-			m->name, m->num_verts, m->num_indis);
+	printf("\tname=%s, num_verts=%d, num_indis=%d, tex_index=%d\n",
+			m->name, m->num_verts, m->num_indis, m->tex_index);
 
 	for(uint16_t i = 0; i < m->num_verts; i++) {
 		vertex_t *v = m->verts + i;
@@ -479,6 +507,14 @@ static void _scene_read_test(const char *path_out)
 		_anim_read(scene.anims + i, file);
 
 	_node_read(&scene.root_node, file, 0);
+
+	fread(&scene.num_tex_paths, sizeof(uint16_t), 1, file);
+	scene.num_tex_paths = uint16_endian_flip(scene.num_tex_paths);
+	printf("num_tex_paths=%d\n", scene.num_tex_paths);
+	for(uint16_t i = 0; i < scene.num_tex_paths; i++) {
+		fread(scene.tex_paths[i], sizeof(char), TEX_PATH_MAX_LEN, file);
+		printf("\ttex_path%d='%s'\n", i, scene.tex_paths[i]);
+	}
 
 	fclose(file);
 }

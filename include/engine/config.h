@@ -18,4 +18,6 @@
 #define CONF_FAR_PLANE    64.0f
 #define CONF_NAME_MAX_LEN 32
 
+#define CONF_TEX_PATH_MAX_LEN 64
+
 #endif /* ENGINE_CONFIG_H_ */

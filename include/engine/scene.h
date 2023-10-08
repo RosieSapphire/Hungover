@@ -20,12 +20,15 @@ typedef struct {
 	uint16_t num_anims;
 	animation_t *anims;
 	node_t root_node;
+	uint16_t num_tex_indis;
+	uint32_t *tex_indis;
 } scene_t;
 
 scene_t *scene_load(const char *path);
+// smesh_t scene_load_first_mesh(const char *path);
 void scene_unload(scene_t *s);
 void scene_update(scene_t *s);
-void scene_draw(const scene_t *s, float subtick, const uint32_t tid);
+void scene_draw(const scene_t *s, float subtick);
 node_t *scene_node_from_name(node_t *n, const char *name);
 
 #endif /* ENGINE_SCENE_H_ */

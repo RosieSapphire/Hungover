@@ -13,23 +13,22 @@ enum item_index {
 };
 
 typedef struct {
-	smesh_t mesh;
-	uint16_t num_anims;
-	animation_t *anims;
+	scene_t *scene;
 	int16_t anim_cur;
 } item_t;
 
 typedef struct {
 	camera_t cam;
 	float vel[3];
-	enum item_index item_index;
+	enum item_index item_selected;
 	uint16_t num_items;
-	item_t *items;
+	uint16_t item_indis[NUM_ITEM_TYPES];
+	item_t items[NUM_ITEM_TYPES];
 } player_t;
 
 void player_init(player_t *p);
 void player_update(player_t *p, scene_t *s, update_parms_t uparms);
 void player_view_matrix_setup(const player_t *p, float subtick);
-void player_item_draw(const player_t *p, const uint32_t tid);
+void player_item_draw(const scene_t *s, const player_t *p, float subtick);
 
 #endif /* ENGINE_PLAYER_H_ */

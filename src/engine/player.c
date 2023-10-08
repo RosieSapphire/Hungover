@@ -22,9 +22,10 @@ void player_init(player_t *p)
 {
 	camera_init(&p->cam);
 	vector_zero(p->vel, 3);
-	p->item_index = NOTHING;
+	p->item_selected = NOTHING;
 	p->num_items = 0;
-	p->items = malloc(p->num_items * sizeof(item_t));
+	memset(p->item_indis, 0, sizeof(uint16_t) * NUM_ITEM_TYPES);
+	memset(p->items, 0, sizeof(item_t) * NUM_ITEM_TYPES);
 }
 
 static void _player_friction_update(player_t *p)
@@ -99,7 +100,10 @@ static void _player_pickup_check(player_t *p, scene_t *s)
 	node_t *n = NULL;
 	for(int i = 0; i < NUM_ITEM_TYPES; i++) {
 		n = scene_node_from_name(&s->root_node, PLAYER_ITEM_TYPE(i));
-		if(!n || !n->is_active)
+		if(!n)
+			continue;
+
+		if(!n->is_active)
 			continue;
 
 		float item_pos[3];
@@ -109,17 +113,22 @@ static void _player_pickup_check(player_t *p, scene_t *s)
 
 		if(!(int)vector_magnitude_sqr(item_dist, 3)) {
 			n->is_active = false;
-			p->item_index = i;
 			p->num_items++;
 
-			p->items =
-				realloc(p->items, sizeof(item_t) * p->num_items);
-			p->items[i].mesh = s->meshes[n->mesh_index];
-			p->items[i].num_anims = 0;
-			p->items[i].anims = NULL;
-			p->items[i].anim_cur = -1;
+			const char *item_paths[NUM_ITEM_TYPES] = {
+				"rom:/pistol.scene",
+				"rom:/bong.scene",
+			};
 
-			switch(i) {
+			const uint16_t ind = p->num_items - 1;
+			const uint16_t ind2 = p->item_indis[ind] = i;
+			debugf("1: %d, 2: %d\n", ind, ind2);
+			p->item_selected = ind;
+			p->items[ind].scene = scene_load(item_paths[ind2]);
+			p->items[ind].anim_cur = 0;
+			p->items[ind].scene->anims[0].frame = 0;
+
+			switch(ind2) {
 			case 0:
 				wav64_play(&pickup_pistol, SFXC_ITEM);
 				break;
@@ -138,7 +147,17 @@ static void _player_item_swap_check(player_t *p, update_parms_t uparms)
 		return;
 
 	if(uparms.down.c->R) {
-		p->item_index = (p->item_index + 1) % p->num_items;
+		p->item_selected = (p->item_selected + 1) % p->num_items;
+		p->items[p->item_selected].anim_cur = 0;
+		p->items[p->item_selected].scene->anims[0].frame = 0;
+	}
+}
+
+static void _player_items_update(player_t *p)
+{
+	for(int i = 0; i < p->num_items; i++) {
+		p->items[i].scene->anims[p->items[i].anim_cur].loops = 0;
+		scene_update(p->items[i].scene);
 	}
 }
 
@@ -150,11 +169,12 @@ void player_update(player_t *p, scene_t *s, update_parms_t uparms)
 	_player_pos_and_focus_update(p);
 	_player_pickup_check(p, s);
 	_player_item_swap_check(p, uparms);
+	_player_items_update(p);
 }
 
-void player_item_draw(const player_t *p, const uint32_t tid)
+void player_item_draw(const scene_t *s, const player_t *p, float subtick)
 {
-	if(p->item_index == -1 || !p->num_items)
+	if(p->item_selected == -1 || !p->num_items)
 		return;
 
 	static float yaw_turn = 0.0f;
@@ -175,7 +195,11 @@ void player_item_draw(const player_t *p, const uint32_t tid)
 	glTranslatef(0.8f + yaw_turn, -0.75f - pitch_turn, -1.5f);
 	glRotatef(-90, 0, 1, 0);
 	glRotatef(-90, 1, 0, 0);
-	smesh_draw(&p->items[p->item_index].mesh, tid);
+	const uint16_t ind = p->item_selected;
+	const item_t *item = p->items + ind;
+	animation_t *anim = item->scene->anims + item->anim_cur;
+	animation_setup_matrix(anim, subtick);
+	smesh_draw(s, &p->items[ind].scene->meshes[0]);
 	glPopMatrix();
 }
 

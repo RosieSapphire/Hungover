@@ -7,28 +7,26 @@
 
 void animation_update(animation_t *a)
 {
+	a->frame_last = a->frame;
 	a->frame++;
-	a->frame %= a->length;
-}
 
-static uint16_t _animation_get_frame_last(const animation_t *a)
-{
-	int16_t r = (int16_t)a->frame - 1;
-	if(r < 0)
-		r += a->length;
-	return r;
+	if(a->loops) {
+		a->frame %= a->length;
+		return;
+	}
+
+	a->frame = clampi(a->frame, 0, a->length);
 }
 
 void animation_setup_matrix(__attribute__((unused))const animation_t *a, __attribute__((unused))float subtick)
 {
-	int frame_last = _animation_get_frame_last(a);
 	float pos_lerp[3] = {0, 0, 0};
 	float rot_lerp[4] = {0, 0, 0, 1};
 	float sca_lerp[3] = {1, 1, 1};
 
 	if(a->num_pos) {
 		const float *pos_last =
-			a->pos[clampi(frame_last, 0, a->num_pos - 1)].vec;
+			a->pos[clampi(a->frame_last, 0, a->num_pos - 1)].vec;
 		const float *pos_cur =
 			a->pos[clampi(a->frame, 0, a->num_pos - 1)].vec;
 		vector_lerp(pos_last, pos_cur, subtick, pos_lerp, 3);
@@ -36,7 +34,7 @@ void animation_setup_matrix(__attribute__((unused))const animation_t *a, __attri
 
 	if(a->num_rot) {
 		const float *rot_last =
-			a->rot[clampi(frame_last, 0, a->num_rot - 1)].vec;
+			a->rot[clampi(a->frame_last, 0, a->num_rot - 1)].vec;
 		const float *rot_cur =
 			a->rot[clampi(a->frame, 0, a->num_rot - 1)].vec;
 		quat_lerp(rot_last, rot_cur, rot_lerp, subtick);
@@ -44,7 +42,7 @@ void animation_setup_matrix(__attribute__((unused))const animation_t *a, __attri
 
 	if(a->num_sca) {
 		const float *sca_last =
-			a->sca[clampi(frame_last, 0, a->num_sca - 1)].vec;
+			a->sca[clampi(a->frame_last, 0, a->num_sca - 1)].vec;
 		const float *sca_cur =
 			a->sca[clampi(a->frame, 0, a->num_sca - 1)].vec;
 		vector_lerp(sca_last, sca_cur, subtick, sca_lerp, 3);
@@ -81,4 +79,13 @@ void animation_setup_matrix(__attribute__((unused))const animation_t *a, __attri
 	mat[15] = 1.0f;
 
 	glMultMatrixf(mat);
+}
+
+void animation_destroy(animation_t *a)
+{
+	a->mesh_index = a->length = a->num_pos =
+		a->num_rot = a->num_sca = a->frame = a->is_playing = 0;
+	free(a->pos);
+	free(a->rot);
+	free(a->sca);
 }

@@ -12,12 +12,14 @@ typedef struct {
 	uint16_t num_verts, num_indis;
 	vertex_t *verts;
 	uint16_t *indis;
+	uint16_t tex_index;
 } smesh_t;
 
 smesh_t *smesh_create_data(const char *name, uint16_t num_verts,
 		uint16_t num_indis, const vertex_t *verts,
 		const uint16_t *indis);
+void smesh_copy(const smesh_t *src, smesh_t *dst);
 void smesh_destroy(smesh_t *m);
-void smesh_draw(const smesh_t *m, const uint32_t tid);
+void smesh_draw(const void *sc, const smesh_t *m);
 
 #endif /* ENGINE_SCENE_MESH_H_ */

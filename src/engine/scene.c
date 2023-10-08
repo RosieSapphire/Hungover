@@ -20,9 +20,11 @@ static void _mesh_read(smesh_t *m, FILE *file)
 	for(int i = 0; i < m->num_indis; i++)
 		fread(m->indis + i, sizeof(uint16_t), 1, file);
 
+	fread(&m->tex_index, sizeof(uint16_t), 1, file);
+
 	// debugging
-	debugf("\tname=%s, num_verts=%d, num_indis=%d\n",
-			m->name, m->num_verts, m->num_indis);
+	debugf("\tname=%s, num_verts=%d, num_indis=%d, tex_index=%d\n",
+			m->name, m->num_verts, m->num_indis, m->tex_index);
 
 	for(uint16_t i = 0; i < m->num_verts; i++) {
 		vertex_t *v = m->verts + i;
@@ -50,6 +52,8 @@ static void _anim_read(animation_t *a, FILE *file)
 	fread(&a->num_pos, sizeof(uint16_t), 1, file);
 	fread(&a->num_rot, sizeof(uint16_t), 1, file);
 	fread(&a->num_sca, sizeof(uint16_t), 1, file);
+	a->frame = a->frame_last = 0;
+	a->is_playing = a->loops = 1;
 
 	a->pos = malloc(sizeof(vec3_key_t) * a->num_pos);
 	for(uint16_t i = 0; i < a->num_pos; i++) {
@@ -117,8 +121,13 @@ static void _node_read(node_t *n, FILE *file, int depth)
 scene_t *scene_load(const char *path)
 {
 	FILE *file = fopen(path, "rb");
+	if(!file) {
+		debugf("FAILED TO LOAD SCENE FROM '%s'\n", path);
+		exit(1);
+	}
 	scene_t *scene = malloc(sizeof(scene_t));
 
+	debugf("scene_path='%s'\n", path);
 	fread(&scene->num_meshes, sizeof(uint16_t), 1, file);
 	scene->meshes = malloc(sizeof(smesh_t) * scene->num_meshes);
 	debugf("num_meshes=%d\n", scene->num_meshes);
@@ -133,20 +142,43 @@ scene_t *scene_load(const char *path)
 
 	_node_read(&scene->root_node, file, 0);
 
+	fread(&scene->num_tex_indis, sizeof(uint16_t), 1, file);
+	debugf("num_tex_indis=%d\n", scene->num_tex_indis);
+	scene->tex_indis = malloc(sizeof(uint32_t) * scene->num_tex_indis);
+	for(uint16_t i = 0; i < scene->num_tex_indis; i++) {
+		char buf[CONF_TEX_PATH_MAX_LEN];
+		fread(buf, sizeof(char), CONF_TEX_PATH_MAX_LEN, file);
+		scene->tex_indis[i] = texture_create_file(buf);
+		debugf("\ttex%d=%lu (%s)\n", i, scene->tex_indis[i], buf);
+	}
+
 	fclose(file);
+
+	debugf("\n");
 
 	return scene;
 }
+
+/*
+smesh_t scene_load_first_mesh(const char *path)
+{
+	scene_t *scene = scene_load(path);
+	smesh_t mesh;
+	smesh_copy(scene->meshes + 0, &mesh);
+	scene_unload(scene);
+	return mesh;
+}
+*/
 
 void scene_unload(scene_t *s)
 {
 	for(int i = 0; i < s->num_meshes; i++)
 		smesh_destroy(s->meshes + i);
 
-	/*
-	for(int i = 0; i < s->num_meshes; i++)
+	for(int i = 0; i < s->num_anims; i++)
 		animation_destroy(s->anims + i);
-		*/
+
+	node_destroy(&s->root_node);
 
 	free(s);
 }
@@ -186,15 +218,14 @@ void scene_update(scene_t *s)
 		animation_update(s->anims + i);
 }
 
-static void _scene_node_draw(const scene_t *s, const node_t *n,
-		float subtick, const uint32_t tid)
+static void _scene_node_draw(const scene_t *s, const node_t *n, float subtick)
 {
 	if(!n->is_active)
 		return;
 
 	if(n->mesh_index == 0xFFFF) {
 		for(int i = 0; i < n->num_children; i++) {
-			_scene_node_draw(s, n->children + i, subtick, tid);
+			_scene_node_draw(s, n->children + i, subtick);
 		}
 		return;
 	}
@@ -213,16 +244,16 @@ static void _scene_node_draw(const scene_t *s, const node_t *n,
 	else
 		glMultMatrixf(n->mat);
 
-	smesh_draw(s->meshes + n->mesh_index, tid);
+	smesh_draw(s, s->meshes + n->mesh_index);
 	for(int i = 0; i < n->num_children; i++) {
-		_scene_node_draw(s, n->children + i, subtick, tid);
+		_scene_node_draw(s, n->children + i, subtick);
 	}
 	glPopMatrix();
 }
 
-void scene_draw(const scene_t *s, float subtick, const uint32_t tid)
+void scene_draw(const scene_t *s, float subtick)
 {
-	_scene_node_draw(s, &s->root_node, subtick, tid);
+	_scene_node_draw(s, &s->root_node, subtick);
 }
 
 node_t *scene_node_from_name(node_t *n, const char *name)
