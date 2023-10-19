@@ -148,6 +148,7 @@ scene_t *scene_load(const char *path)
 	for(uint16_t i = 0; i < scene->num_tex_indis; i++) {
 		char buf[CONF_TEX_PATH_MAX_LEN];
 		fread(buf, sizeof(char), CONF_TEX_PATH_MAX_LEN, file);
+		debugf("PATH=%s, IND=%d\n", buf, i);
 		scene->tex_indis[i] = texture_create_file(buf);
 		debugf("\ttex%d=%lu (%s)\n", i, scene->tex_indis[i], buf);
 	}

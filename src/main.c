@@ -87,4 +87,6 @@ int main(void)
 		mixer_poll(audio_buf, audio_get_buffer_length());
 		audio_write_end();
 	}
+
+	return 0;
 }

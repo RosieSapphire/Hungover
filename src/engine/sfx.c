@@ -1,7 +1,8 @@
 #include "engine/sfx.h"
 
 wav64_t title_music0, title_music1, title_music2,
-       title_music3, title_music4, pickup_pistol, pickup_bong, fire_pistol;
+       title_music3, title_music4, pickup_pistol, pickup_bong, fire_pistol,
+       lighter_bong;
 
 void sfx_init(void)
 {
@@ -23,6 +24,7 @@ void sfx_init(void)
 	wav64_open(&pickup_pistol, "rom:/pickup_pistol.wav64");
 	wav64_open(&pickup_bong, "rom:/pickup_bong.wav64");
 	wav64_open(&fire_pistol, "rom:/pistol_fire.wav64");
+	wav64_open(&lighter_bong, "rom:/lighter_flick.wav64");
 
 	/* looping */
 	wav64_set_loop(&title_music0, false);
@@ -34,4 +36,5 @@ void sfx_init(void)
 	wav64_set_loop(&pickup_pistol, false);
 	wav64_set_loop(&pickup_bong, false);
 	wav64_set_loop(&fire_pistol, false);
+	wav64_set_loop(&lighter_bong, false);
 }

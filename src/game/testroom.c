@@ -22,6 +22,7 @@ static void _testroom_load(void)
 
 	player_init(&p);
 
+	glDisable(GL_BLEND);
 	glColor3f(1, 1, 1);
 	projection_setup();
 

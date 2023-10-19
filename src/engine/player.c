@@ -148,19 +148,22 @@ static void _player_item_use_check(player_t *p, update_parms_t uparms)
 	if(!uparms.down.c->Z)
 		return;
 
-	p->items[p->item_selected].anim_cur = 1;
-	p->items[p->item_selected].scene->anims[1].frame = 0;
-
-	switch(p->item_selected) {
+	item_t *item = p->items + p->item_selected;
+	switch(p->item_indis[p->item_selected]) {
 	case PISTOL:
+		item->anim_cur = 1;
+		item->scene->anims[1].frame = 0;
 		wav64_play(&fire_pistol, SFXC_ITEM);
-		break;
+		return;
 		
 	case BONG:
-		break;
+		item->anim_cur = 1;
+		item->scene->anims[1].frame = 0;
+		wav64_play(&lighter_bong, SFXC_ITEM);
+		return;
 
 	default:
-		break;
+		return;
 	}
 }
 
@@ -182,8 +185,18 @@ static void _player_items_update(player_t *p)
 	if(i == 0xFFFF)
 		return;
 
-	p->items[i].scene->anims[p->items[i].anim_cur].loops = 0;
-	scene_update(p->items[i].scene);
+	/* animations */
+	item_t *item = p->items + i;
+	animation_t *anim = item->scene->anims + item->anim_cur;
+	anim->loops = 0;
+	scene_update(item->scene);
+
+	/* logic */
+	const uint16_t item_cur = p->item_indis[p->item_selected];
+	switch(item_cur) {
+		default:
+			break;
+	}
 }
 
 void player_update(player_t *p, scene_t *s, update_parms_t uparms)

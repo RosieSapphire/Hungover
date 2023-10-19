@@ -73,3 +73,21 @@ void smesh_draw(const void *sc, const smesh_t *m)
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
 }
+
+void smesh_draw_tex(const smesh_t *m, const uint32_t tex)
+{
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glVertexPointer(3, GL_FLOAT, 5 * sizeof(float), m->verts->pos);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	glTexCoordPointer(2, GL_FLOAT, 5 * sizeof(float), m->verts->uv);
+
+	glDrawElements(GL_TRIANGLES, m->num_indis,
+			GL_UNSIGNED_SHORT, m->indis);
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+	glDisable(GL_TEXTURE_2D);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	glDisableClientState(GL_VERTEX_ARRAY);
+}

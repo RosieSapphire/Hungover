@@ -43,12 +43,11 @@ void _title_load(void)
 	if(is_loaded)
 		return;
 
-
 	texture_create_file("rom:/title_text.ia8.sprite");
-	texture_create_file("rom:/new_game.ia4.sprite");
+	texture_create_file("rom:/new_game.ia8.sprite");
 	texture_create_file("rom:/continue.ia8.sprite");
-	texture_create_file("rom:/options.ia4.sprite");
-	texture_create_file("rom:/press_start.ia4.sprite");
+	texture_create_file("rom:/options.ia8.sprite");
+	texture_create_file("rom:/press_start.ia8.sprite");
 
 	hungover_text    = tex_objs_loaded[0];
 	new_game_text    = tex_objs_loaded[1]; 
@@ -270,7 +269,7 @@ static void _title_logo_draw(float music_t, float t, float subtick)
 			glColor3f(bright, bright, bright);
 		}
 
-		smesh_draw(NULL, text_mesh);
+		smesh_draw_tex(text_mesh, hungover_text.id);
 
 		if(only_one)
 			return;
@@ -278,7 +277,7 @@ static void _title_logo_draw(float music_t, float t, float subtick)
 }
 
 static void _title_menu_option_draw(int move_dir,
-		float music_t, float t, int ind)
+		float music_t, float t, int ind, uint32_t tex)
 {
 	glLoadIdentity();
 	float a[3], b[3], c[3];
@@ -321,7 +320,7 @@ static void _title_menu_option_draw(int move_dir,
 	float to = t + (8 * ind);
 	glTranslatef(sinf(to) * 0.04f, sinf(to * 1.5f) * 0.04f, 0);
 	glRotatef(sinf(to) * 4, 0, 0, 1);
-	smesh_draw(NULL, text_mesh);
+	smesh_draw_tex(text_mesh, tex);
 }
 
 static void _title_menu_draw(float music_t, float t)
@@ -329,9 +328,9 @@ static void _title_menu_draw(float music_t, float t)
 	if(music_state < 2)
 		return;
 
-	_title_menu_option_draw(1, music_t, t, 0);
-	_title_menu_option_draw(-1, music_t, t, 1);
-	_title_menu_option_draw(1, music_t, t, 2);
+	_title_menu_option_draw(1, music_t, t, 0, new_game_text.id);
+	_title_menu_option_draw(-1, music_t, t, 1, continue_text.id);
+	_title_menu_option_draw(1, music_t, t, 2, options_text.id);
 }
 
 void title_draw(float subtick)
@@ -370,7 +369,7 @@ void title_draw(float subtick)
 		float blink = (music_beats * 0.25f) - (int)(music_beats * 0.25f);
 		blink = (int)(blink * 2) & 1;
 		glColor3f(blink, blink, blink);
-		smesh_draw(NULL, text_mesh);
+		smesh_draw_tex(text_mesh, press_start_text.id);
 	}
 
 	if(bg_is_white) {

@@ -21,5 +21,6 @@ smesh_t *smesh_create_data(const char *name, uint16_t num_verts,
 void smesh_copy(const smesh_t *src, smesh_t *dst);
 void smesh_destroy(smesh_t *m);
 void smesh_draw(const void *sc, const smesh_t *m);
+void smesh_draw_tex(const smesh_t *m, const uint32_t tex);
 
 #endif /* ENGINE_SCENE_MESH_H_ */
