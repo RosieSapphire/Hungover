@@ -5,22 +5,26 @@
 #include "engine/vector.h"
 #include "engine/animation.h"
 
-void animation_debug(__attribute__((unused))const animation_t *a)
-{
-	// debugf("anim='%s', frame=%d\n", a->name, a->frame);
-}
-
 void animation_update(animation_t *a)
 {
 	a->frame_last = a->frame;
-	a->frame++;
+
+	if(a->is_backward)
+		a->frame--;
+	else
+		a->frame++;
 
 	if(a->loops) {
-		a->frame %= a->length;
+		if((int16_t)a->frame < 0)
+			a->frame = a->length - 1;
+
+		if(a->frame >= a->length)
+			a->frame = 0;
+
 		return;
 	}
 
-	a->frame = clampi(a->frame, 0, a->length);
+	a->frame = clampi(a->frame, 0, a->length - 1);
 }
 
 void animation_setup_matrix(__attribute__((unused))const animation_t *a, __attribute__((unused))float subtick)

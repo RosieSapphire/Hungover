@@ -145,21 +145,30 @@ static void _player_item_use_check(player_t *p, update_parms_t uparms)
 	if(!p->num_items || p->item_selected == -1)
 		return;
 
-	if(!uparms.down.c->Z)
-		return;
-
 	item_t *item = p->items + p->item_selected;
 	switch(p->item_indis[p->item_selected]) {
 	case PISTOL:
+		if(!uparms.down.c->Z)
+			return;
+
 		item->anim_cur = 1;
 		item->scene->anims[1].frame = 0;
 		wav64_play(&fire_pistol, SFXC_ITEM);
 		return;
 		
 	case BONG:
-		item->anim_cur = 1;
-		item->scene->anims[1].frame = 0;
-		wav64_play(&lighter_bong, SFXC_ITEM);
+		if(!uparms.held.c->Z && item->anim_cur == 1) {
+			item->scene->anims[1].is_backward = true;
+		}
+
+		if(uparms.down.c->Z) {
+			wav64_play(&lighter_bong, SFXC_ITEM);
+			item->anim_cur = 1;
+			animation_t *anim = item->scene->anims + 1;
+			anim->is_backward = false;
+			anim->frame = 0;
+		}
+
 		return;
 
 	default:
@@ -179,24 +188,16 @@ static void _player_item_swap_check(player_t *p, update_parms_t uparms)
 	}
 }
 
-static void _player_items_update(player_t *p)
+static void _player_items_animation_update(player_t *p)
 {
 	const uint16_t i = p->item_selected;
 	if(i == 0xFFFF)
 		return;
 
-	/* animations */
 	item_t *item = p->items + i;
 	animation_t *anim = item->scene->anims + item->anim_cur;
 	anim->loops = 0;
 	scene_update(item->scene);
-
-	/* logic */
-	const uint16_t item_cur = p->item_indis[p->item_selected];
-	switch(item_cur) {
-		default:
-			break;
-	}
 }
 
 void player_update(player_t *p, scene_t *s, update_parms_t uparms)
@@ -208,7 +209,7 @@ void player_update(player_t *p, scene_t *s, update_parms_t uparms)
 	_player_pickup_check(p, s);
 	_player_item_use_check(p, uparms);
 	_player_item_swap_check(p, uparms);
-	_player_items_update(p);
+	_player_items_animation_update(p);
 }
 
 void player_item_draw(const player_t *p, float subtick)
@@ -238,7 +239,6 @@ void player_item_draw(const player_t *p, float subtick)
 	const item_t *item = p->items + ind;
 	animation_t *anim = item->scene->anims + item->anim_cur;
 	animation_setup_matrix(anim, subtick);
-	animation_debug(anim);
 	smesh_draw(item->scene, &p->items[ind].scene->meshes[0]);
 	glPopMatrix();
 }
