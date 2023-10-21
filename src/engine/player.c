@@ -125,7 +125,9 @@ static void _player_pickup_check(player_t *p, scene_t *s)
 			p->item_selected = ind;
 			p->items[ind].scene = scene_load(item_paths[ind2]);
 			p->items[ind].anim_cur = 0;
-			p->items[ind].scene->anims[0].frame = 0;
+			animation_t *anim = p->items[ind].scene->anims + 0;
+			anim->frame = anim->is_backward = anim->loops = 0;
+			anim->is_playing = 1;
 
 			switch(ind2) {
 			case 0:
@@ -148,11 +150,13 @@ static void _player_item_use_check(player_t *p, update_parms_t uparms)
 	item_t *item = p->items + p->item_selected;
 	switch(p->item_indis[p->item_selected]) {
 	case PISTOL:
-		if(!uparms.down.c->Z)
+		if(!uparms.down.c->Z || item->cooldown > 0.0f)
 			return;
 
 		item->anim_cur = 1;
 		item->scene->anims[1].frame = 0;
+		item->scene->anims[1].loops = false;
+		item->cooldown = COOLDOWN_PISTOL;
 		wav64_play(&fire_pistol, SFXC_ITEM);
 		return;
 		
@@ -169,6 +173,8 @@ static void _player_item_use_check(player_t *p, update_parms_t uparms)
 			anim->frame = 0;
 		}
 
+		item->scene->anims[1].loops = false;
+
 		return;
 
 	default:
@@ -184,7 +190,9 @@ static void _player_item_swap_check(player_t *p, update_parms_t uparms)
 	if(uparms.down.c->R) {
 		p->item_selected = (p->item_selected + 1) % p->num_items;
 		p->items[p->item_selected].anim_cur = 0;
-		p->items[p->item_selected].scene->anims[0].frame = 0;
+		animation_t *anim = p->items[p->item_selected].scene->anims + 0;
+		anim->frame = anim->loops = anim->is_backward = 0;
+		anim->is_playing = 1;
 	}
 }
 
@@ -195,9 +203,13 @@ static void _player_items_animation_update(player_t *p)
 		return;
 
 	item_t *item = p->items + i;
-	animation_t *anim = item->scene->anims + item->anim_cur;
-	anim->loops = 0;
 	scene_update(item->scene);
+
+	if(item->cooldown > 0.0f) {
+		item->cooldown -= CONF_DELTATIME;
+		if(item->cooldown < 0.0f)
+			item->cooldown = 0.0f;
+	}
 }
 
 void player_update(player_t *p, scene_t *s, update_parms_t uparms)

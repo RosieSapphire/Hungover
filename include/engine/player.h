@@ -5,6 +5,9 @@
 #include "engine/camera.h"
 #include "engine/scene.h"
 
+#define COOLDOWN_PISTOL 0.21f
+#define COOLDOWN_BONG 2.0f
+
 enum item_index {
 	NOTHING = -1,
 	PISTOL,
@@ -15,6 +18,7 @@ enum item_index {
 typedef struct {
 	scene_t *scene;
 	int16_t anim_cur;
+	float cooldown;
 } item_t;
 
 typedef struct {
