@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <malloc.h>
 
+#include "engine/util.h"
 #include "engine/scene.h"
 
 enum scene_index scene_index = SCENE_TESTROOM;
+static uint32_t pickup_spin_frame, pickup_spin_frame_last = 0;
 
 static void _mesh_read(smesh_t *m, FILE *file)
 {
@@ -177,6 +179,9 @@ void scene_update(scene_t *s)
 {
 	for(int i = 0; i < s->num_anims; i++)
 		animation_update(s->anims + i);
+
+	pickup_spin_frame_last = pickup_spin_frame;
+	pickup_spin_frame++;
 }
 
 static void _scene_node_draw(const scene_t *s, const node_t *n, float subtick)
@@ -205,7 +210,16 @@ static void _scene_node_draw(const scene_t *s, const node_t *n, float subtick)
 	else
 		glMultMatrixf(n->mat);
 
-	smesh_draw(s, s->meshes + n->mesh_index);
+	const smesh_t *mesh = s->meshes + n->mesh_index;
+	const float pickup_spin_lerp =
+		lerpf(pickup_spin_frame_last, pickup_spin_frame, subtick);
+	const bool is_pickup = !strncmp(mesh->name, "PU.", 3);
+	if(is_pickup) {
+		glRotatef(pickup_spin_lerp * 8, 0, 0, 1);
+		glTranslatef(0, 0, sinf(pickup_spin_lerp * 0.125f) * 0.25f);
+	}
+
+	smesh_draw(s, mesh);
 	for(int i = 0; i < n->num_children; i++) {
 		_scene_node_draw(s, n->children + i, subtick);
 	}
