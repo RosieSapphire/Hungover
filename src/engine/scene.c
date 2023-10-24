@@ -210,11 +210,10 @@ static void _scene_node_draw(const scene_t *s, const node_t *n, float subtick)
 	else
 		glMultMatrixf(n->mat);
 
-	const smesh_t *mesh = s->meshes + n->mesh_index;
 	const float pickup_spin_lerp =
 		lerpf(pickup_spin_frame_last, pickup_spin_frame, subtick);
-	const bool is_pickup = !strncmp(mesh->name, "PU.", 3);
-	if(is_pickup) {
+	const smesh_t *mesh = s->meshes + n->mesh_index;
+	if(!strncmp(mesh->name, "PU.", 3)) {
 		glRotatef(pickup_spin_lerp * 8, 0, 0, 1);
 		glTranslatef(0, 0, sinf(pickup_spin_lerp * 0.125f) * 0.25f);
 	}
