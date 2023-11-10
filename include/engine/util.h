@@ -1,5 +1,7 @@
-#ifndef ENGINE_UTIL_H_
-#define ENGINE_UTIL_H_
+#ifndef _ENGINE_UTIL_H_
+#define _ENGINE_UTIL_H_
+
+#include "engine/types.h"
 
 #define PI 3.14159265358979323846f
 #define PI_HALF 1.57079632679489661923f
@@ -7,13 +9,20 @@
 #define TO_RADIANS (PI / 180.0f)
 #define TO_DEGREES (180.0f / PI)
 
-float clampf(float x, float min, float max);
+/*
+ * Base
+ */
+f32 clampf(f32 x, f32 min, f32 max);
 int clampi(int x, int min, int max);
-float lerpf(float a, float b, float t);
-float smoothf(float a, float b, float t);
-float wrapf(float x, float max);
-void projection_setup(void);
-void quat_lerp(const float *a, const float *b, float *c, const float t);
-void pos_from_mat(const float *mat, float *pos);
+f32 lerpf(f32 a, f32 b, f32 t);
+f32 smoothf(f32 a, f32 b, f32 t);
+f32 wrapf(f32 x, f32 max);
 
-#endif /* ENGINE_UTIL_H_ */
+/*
+ * Trig
+ */
+void projection_setup(void);
+void quat_lerp(const f32 *a, const f32 *b, f32 *c, const f32 t);
+void pos_from_mat(const f32 *mat, f32 *pos);
+
+#endif /* _ENGINE_UTIL_H_ */

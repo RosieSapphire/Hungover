@@ -1,0 +1,31 @@
+#include <GL/gl.h>
+
+#include "engine/config.h"
+#include "engine/vector.h"
+#include "engine/util.h"
+
+void projection_setup(void)
+{
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glFrustum(-CONF_NEAR_PLANE * CONF_ASPECT,
+			CONF_NEAR_PLANE * CONF_ASPECT,
+			-CONF_NEAR_PLANE, CONF_NEAR_PLANE,
+			CONF_NEAR_PLANE, CONF_FAR_PLANE);
+}
+
+void quat_lerp(const f32 *a, const f32 *b, f32 *c, const f32 t)
+{
+	f32 out_scale = (vector_dot(a, b, 4) >= 0) ? 1.0f : -1.0f;
+	for (int i = 0; i < 4; i++)
+		c[i] = ((1 - t) * a[i]) + (out_scale * t * b[i]);
+
+	vector_normalize(c, 4);
+}
+
+void pos_from_mat(const f32 *mat, f32 *pos)
+{
+	pos[0] = mat[12];
+	pos[1] = mat[13];
+	pos[2] = mat[14];
+}
