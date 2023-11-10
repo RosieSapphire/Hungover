@@ -12,8 +12,8 @@
 #define MUSIC_BPM 178
 #define MUSIC_DELTA ((MUSIC_BPM / 60.0f) / (float)CONF_TICKRATE)
 
-static bool is_loaded = false;
-static long frame_counter = 0;
+static bool is_loaded;
+static long frame_counter;
 
 static int music_state_last;
 static int music_state;
@@ -40,7 +40,7 @@ static smesh_t *text_mesh;
 
 void _title_load(void)
 {
-	if(is_loaded)
+	if (is_loaded)
 		return;
 
 	texture_create_file("rom:/title_text.ia8.sprite");
@@ -83,7 +83,7 @@ void _title_load(void)
 
 void _title_unload(void)
 {
-	if(!is_loaded)
+	if (!is_loaded)
 		return;
 
 	texture_destroy(&press_start_text);
@@ -130,7 +130,7 @@ enum scene_index title_update(update_parms_t uparms)
 
 	static bool stick_option_change = false;
 	option_selected_last = option_selected;
-	if(music_state == 2) {
+	if (music_state == 2) {
 		/* Buttons */
 		option_selected +=
 			(uparms.down.c->C_down || uparms.down.c->down);
@@ -139,10 +139,10 @@ enum scene_index title_update(update_parms_t uparms)
 
 		/* Joystick */
 		float stick_y = (float)uparms.held.c->y / -85.0f;
-		if(fabsf(stick_y) >= 0.5f) {
-			if(!stick_option_change) {
+		if (fabsf(stick_y) >= 0.5f) {
+			if (!stick_option_change) {
 				stick_option_change = true;
-				if(stick_y > 0)
+				if (stick_y > 0)
 					option_selected++;
 				else
 					option_selected--;
@@ -151,26 +151,26 @@ enum scene_index title_update(update_parms_t uparms)
 			stick_option_change = false;
 		}
 	}
-	if(option_selected > 2)
+	if (option_selected > 2)
 		option_selected = 0;
-	if(option_selected < 0)
+	if (option_selected < 0)
 		option_selected = 2;
 
-	if(option_selected_last != option_selected)
+	if (option_selected_last != option_selected)
 		option_last_frame = frame_counter;
 
 	music_beats_last = music_beats;
 	music_beats += MUSIC_DELTA;
-	if(music_beats >= 31.5f && music_state == 0)
+	if (music_beats >= 31.5f && music_state == 0)
 		music_state = 1;
 
-	if(music_state_last != music_state) {
+	if (music_state_last != music_state) {
 		music_ch_last = music_ch_cur;
 		music_ch_cur = music_state;
 
 		music_state_timer = 0.0f;
 
-		if(music_ch_cur == SFXC_MUSIC3) {
+		if (music_ch_cur == SFXC_MUSIC3) {
 			mixer_ch_stop(SFXC_MUSIC0);
 			mixer_ch_stop(SFXC_MUSIC1);
 			mixer_ch_stop(SFXC_MUSIC2);
@@ -185,7 +185,7 @@ enum scene_index title_update(update_parms_t uparms)
 
 	frame_counter++;
 
-	if(music_state == 3 && music_state_timer >= 4.0f) {
+	if (music_state == 3 && music_state_timer >= 4.0f) {
 		_title_unload();
 		return SCENE_TESTROOM;
 	}
@@ -206,7 +206,7 @@ static void _title_logo_draw(float music_t, float t, float subtick)
 			a[0] = 0.0f; a[1] = 0.0f; a[2] = -10.0f;
 			b[0] = 0.0f; b[1] = 0.0f; b[2] =  0.0f;
 			beats_lerp = clampf(beats_lerp - 29.5f, 0, 2) / 2.0f;
-			if(beats_lerp <= 0.0f)
+			if (beats_lerp <= 0.0f)
 				return;
 			vector_lerp(a, b, beats_lerp * beats_lerp, c, 3);
 			glTranslatef(c[0], c[1], c[2]);
@@ -219,7 +219,7 @@ static void _title_logo_draw(float music_t, float t, float subtick)
 		case 2:
 			a[0] = 0.0f; a[1] = 0.0f; a[2] =  0.0f;
 			b[0] = 0.0f; b[1] = 1.5f; b[2] =  -1.0f;
-			if(music_ch_last == 4)
+			if (music_ch_last == 4)
 				vector_copy(b, a, 3);
 			vector_smooth(a, b, music_t, c, 3);
 			glTranslatef(c[0], c[1], c[2]);
@@ -227,7 +227,7 @@ static void _title_logo_draw(float music_t, float t, float subtick)
 
 		case 3:
 			static float beats_start = 0.0f;
-			if(music_state_last == 2)
+			if (music_state_last == 2)
 				beats_start = beats_lerp;
 			a[0] = 0.0f; a[1] = 1.5f; a[2] = -1.0f;
 			b[0] = 0.0f; b[1] = 0.0f; b[2] =  0.0f;
@@ -246,13 +246,13 @@ static void _title_logo_draw(float music_t, float t, float subtick)
 		}
 
 		bool only_one = difft >= 1.0f;
-		if(only_one) {
+		if (only_one) {
 			glColor3f(0, 0, 0);
 			glTranslatef(0, 0, 1.2f);
 			bg_is_white = true;
 		} else {
 			float z_trans;
-			if(i != num_it - 1)
+			if (i != num_it - 1)
 				z_trans = (i * 0.4f) -
 					wrapf(beats_lerp * 0.125f, 0.4f);
 			else
@@ -271,7 +271,7 @@ static void _title_logo_draw(float music_t, float t, float subtick)
 
 		smesh_draw_tex(text_mesh, hungover_text.id);
 
-		if(only_one)
+		if (only_one)
 			return;
 	}
 }
@@ -297,7 +297,7 @@ static void _title_menu_option_draw(int move_dir,
 		a[0] = 20 * move_dir; a[1] = -10; a[2] = -5.5f;
 		b[0] = 0; b[1] = -ind;
 		float col = select_offset + 1.5f;
-		if(option_selected == ind) {
+		if (option_selected == ind) {
 			glColor3f(col, col, col);
 			b[2] = select_offset_bob;
 		} else {
@@ -325,12 +325,23 @@ static void _title_menu_option_draw(int move_dir,
 
 static void _title_menu_draw(float music_t, float t)
 {
-	if(music_state < 2)
+	if (music_state < 2)
 		return;
 
 	_title_menu_option_draw(1, music_t, t, 0, new_game_text.id);
 	_title_menu_option_draw(-1, music_t, t, 1, continue_text.id);
 	_title_menu_option_draw(1, music_t, t, 2, options_text.id);
+}
+
+static void _title_music_volume(const float music_t)
+{
+	mixer_ch_set_vol(music_ch_last, 1.0f - music_t, 1.0f - music_t);
+	mixer_ch_set_vol(music_ch_cur, music_t, music_t);
+	if (music_ch_last == SFXC_MUSIC0 || music_ch_last == SFXC_MUSIC2)
+	{
+		mixer_ch_set_vol(music_ch_last, 0, 0);
+		mixer_ch_set_vol(music_ch_cur, 1, 1);
+	}
 }
 
 void title_draw(float subtick)
@@ -346,40 +357,36 @@ void title_draw(float subtick)
 
 	float music_beatsf = lerpf(music_beats_last, music_beats, subtick);
 	float alpha = 1.0f - (music_beatsf - (int)music_beatsf);
-	alpha *= alpha;
 
+	alpha *= alpha;
 	glMatrixMode(GL_MODELVIEW);
+
 	float music_t = lerpf(clampf(music_state_timer_last, 0, 1),
 			clampf(music_state_timer, 0, 1), subtick);
 	float t = lerpf(frame_counter - 1, frame_counter, subtick) / 12.0f;
+
 	_title_logo_draw(music_t, t, subtick);
-
-	if(music_ch_last == SFXC_MUSIC0 || music_ch_last == SFXC_MUSIC2) {
-		mixer_ch_set_vol(music_ch_last, 0, 0);
-		mixer_ch_set_vol(music_ch_cur, 1, 1);
-	} else  {
-		mixer_ch_set_vol(music_ch_last, 1.0f - music_t, 1.0f - music_t);
-		mixer_ch_set_vol(music_ch_cur, music_t, music_t);
-	}
-
-	if(music_state == 1) {
+	_title_music_volume(music_t);
+	if (music_state == 1)
+	{
 		glLoadIdentity();
 		glScalef(2, 1, 1);
 		glTranslatef(0, -2.5f, -2);
-		float blink = (music_beats * 0.25f) - (int)(music_beats * 0.25f);
+		float blink =
+			(music_beats * 0.25f) - (int)(music_beats * 0.25f);
+
 		blink = (int)(blink * 2) & 1;
 		glColor3f(blink, blink, blink);
 		smesh_draw_tex(text_mesh, press_start_text.id);
 	}
 
-	if(bg_is_white) {
+	if (bg_is_white)
+	{
 		gl_context_end();
 		return;
 	}
 
 	_title_menu_draw(music_t, t);
-
 	glDisable(GL_BLEND);
-
 	gl_context_end();
 }
