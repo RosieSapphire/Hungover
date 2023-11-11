@@ -95,7 +95,51 @@ void _title_unload(void)
 	is_loaded = false;
 }
 
-enum scene_index title_update(update_parms_t uparms)
+static void _title_option_change(update_parms_t uparms)
+{
+	static bool stick_option_change;
+
+	option_selected_last = option_selected;
+	if (music_state == 2)
+	{
+		/* Buttons */
+		option_selected +=
+			(uparms.down.c->C_down || uparms.down.c->down);
+		option_selected -=
+			(uparms.down.c->C_up || uparms.down.c->up);
+
+		/* Joystick */
+		float stick_y = (float)uparms.held.c->y / -85.0f;
+
+		if (fabsf(stick_y) >= 0.5f)
+		{
+			if (!stick_option_change)
+			{
+				stick_option_change = true;
+
+				if (stick_y > 0)
+					option_selected++;
+				else
+					option_selected--;
+			}
+		}
+		else
+		{
+			stick_option_change = false;
+		}
+	}
+
+	if (option_selected > 2)
+		option_selected = 0;
+	if (option_selected < 0)
+		option_selected = 2;
+
+	if (option_selected_last != option_selected)
+		option_last_frame = frame_counter;
+
+}
+
+static void _title_music_change(update_parms_t uparms)
 {
 	music_state_last = music_state;
 	switch (music_state)
@@ -128,49 +172,13 @@ enum scene_index title_update(update_parms_t uparms)
 		music_state -= uparms.down.c->B * 2;
 		break;
 	}
+}
 
-	static bool stick_option_change;
-
-	option_selected_last = option_selected;
-	if (music_state == 2)
-	{
-		/* Buttons */
-		option_selected +=
-			(uparms.down.c->C_down || uparms.down.c->down);
-		option_selected -=
-			(uparms.down.c->C_up || uparms.down.c->up);
-
-		/* Joystick */
-		float stick_y = (float)uparms.held.c->y / -85.0f;
-
-		if (fabsf(stick_y) >= 0.5f)
-		{
-			if (!stick_option_change)
-			{
-				stick_option_change = true;
-
-				if (stick_y > 0)
-					option_selected++;
-				else
-					option_selected--;
-			}
-		}
-		else
-		{
-			stick_option_change = false;
-		}
-	}
-	if (option_selected > 2)
-		option_selected = 0;
-	if (option_selected < 0)
-		option_selected = 2;
-
-	if (option_selected_last != option_selected)
-		option_last_frame = frame_counter;
-
+void _title_music_update(void)
+{
 	music_beats_last = music_beats;
 	music_beats += MUSIC_DELTA;
-	if (music_beats >= 31.5f && music_state == 0)
+	if (music_beats >= 33.0f && music_state == 0)
 		music_state = 1;
 
 	if (music_state_last != music_state)
@@ -187,19 +195,25 @@ enum scene_index title_update(update_parms_t uparms)
 			mixer_ch_stop(SFXC_MUSIC4);
 			wav64_play(&title_music3, SFXC_MUSIC3);
 		}
-
 	}
 
 	music_state_timer_last = music_state_timer;
 	music_state_timer += 0.06f;
+}
 
+enum scene_index title_update(update_parms_t uparms)
+{
 	frame_counter++;
+	_title_music_change(uparms);
+	_title_music_update();
 
 	if (music_state == 3 && music_state_timer >= 4.0f)
 	{
 		_title_unload();
 		return (SCENE_TESTROOM);
 	}
+
+	_title_option_change(uparms);
 
 	return (SCENE_TITLE);
 }
@@ -226,7 +240,8 @@ static void _title_logo_draw(float music_t, float t, float subtick)
 			b[0] =   0.0f;
 			b[1] =   0.0f;
 			b[2] =   0.0f;
-			beats_lerp = clampf(beats_lerp - 29.5f, 0, 2) / 2.0f;
+			beats_lerp = clampf(beats_lerp - 29.5f, 0, 3) / 3.0f;
+			debugf("%f\n", beats_lerp);
 			if (beats_lerp <= 0.0f)
 				return;
 			vector_lerp(a, b, beats_lerp * beats_lerp, c, 3);
