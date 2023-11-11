@@ -34,7 +34,7 @@ typedef struct
 } player_t;
 
 void player_init(player_t *p);
-void player_update(player_t *p, scene_t *s, update_parms_t uparms);
+void player_update(player_t *p, scene_t *s, struct update_parms uparms);
 void player_view_matrix_setup(const player_t *p, float subtick);
 void player_item_draw(const player_t *p, float subtick);
 

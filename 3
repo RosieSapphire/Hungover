@@ -17,7 +17,7 @@ static u32 ticks_accum;
 /**
  * _init - Initialization Function
  *
- * Description: Initializes N64, Libdragon, and other shit that needs to be
+ * Description: Initializes N64, Libdragon, and other shit that needs to be.
  */
 static void _init(void)
 {
@@ -60,7 +60,7 @@ static void _init(void)
 /**
  * _draw - Draw Function
  *
- * Description: Draws whatever scene needs to be drawn
+ * Description: Draws whatever scene needs to be drawn.
  */
 static void _draw(void)
 {
@@ -80,11 +80,11 @@ static void _draw(void)
  * _update - Update Function
  * @ticks_delta: Delta between ticks_last and ticks_now
  *
- * Description: Updates whatever scene needs to be updated
+ * Description: Updates whatever scene needs to be updated.
  */
 static void _update(const u32 ticks_delta)
 {
-	enum scene_index (*update_funcs[SCENE_COUNT])(struct update_parms) = {
+	enum scene_index (*update_funcs[SCENE_COUNT])(update_parms_t) = {
 		title_update, testroom_update,
 	};
 
@@ -92,10 +92,9 @@ static void _update(const u32 ticks_delta)
 	while (ticks_accum >= CONF_DELTATICKS)
 	{
 		joypad_poll();
-		struct update_parms uparms = {
-			joypad_get_buttons_pressed(JOYPAD_PORT_1),
-			joypad_get_buttons_held(JOYPAD_PORT_1),
-			joypad_get_inputs(JOYPAD_PORT_1),
+		update_parms_t uparms = {
+			get_keys_down(),
+			get_keys_held(),
 		};
 
 		scene_index = (*update_funcs[scene_index])(uparms);
@@ -103,11 +102,6 @@ static void _update(const u32 ticks_delta)
 	}
 }
 
-/**
- * _loop - Main Loop
- *
- * Description: Main while loop for game
- */
 static void _loop(void)
 {
 	static u32 ticks_last;
@@ -125,12 +119,6 @@ static void _loop(void)
 	audio_write_end();
 }
 
-/**
- * main - Main Function
- *
- * Description: I shouldn't have to explain what this is
- * Return: 0 = Success, else = Failure
- */
 int main(void)
 {
 	_init();

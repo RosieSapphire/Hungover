@@ -3,9 +3,10 @@
 
 #include <libdragon.h>
 
-typedef struct
+struct update_parms
 {
-	struct controller_data down, held;
-} update_parms_t;
+	joypad_buttons_t down, held;
+	joypad_inputs_t stick;
+};
 
 #endif /* _ENGINE_UPDATE_H_ */

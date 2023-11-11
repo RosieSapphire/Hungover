@@ -6,6 +6,14 @@
 #include "engine/node.h"
 #include "engine/update.h"
 
+/**
+ * enum scene_index - Scene Index
+ * @SCENE_TITLE: Title Screen
+ * @SCENE_TESTROOM: Test Room
+ * @SCENE_COUNT: Numer of Scenes
+ *
+ * Description: Which scene we are currently interacting with
+ */
 enum scene_index
 {
 	SCENE_TITLE,

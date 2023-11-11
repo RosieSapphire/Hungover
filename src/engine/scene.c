@@ -4,7 +4,7 @@
 #include "engine/util.h"
 #include "engine/scene.h"
 
-enum scene_index scene_index = SCENE_TESTROOM;
+enum scene_index scene_index = SCENE_TITLE;
 static u32 pickup_spin_frame, pickup_spin_frame_last;
 
 static void _mesh_read(smesh_t *m, FILE *file)

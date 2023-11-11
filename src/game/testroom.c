@@ -28,7 +28,7 @@ static void _testroom_load(void)
 	is_loaded = true;
 }
 
-enum scene_index testroom_update(update_parms_t uparms)
+enum scene_index testroom_update(struct update_parms uparms)
 {
 	scene_update(scene);
 	player_update(&p, scene, uparms);

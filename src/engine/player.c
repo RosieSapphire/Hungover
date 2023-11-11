@@ -46,10 +46,10 @@ static void _player_friction_update(player_t *p)
 	vector_scale(p->vel, newspeed, 3);
 }
 
-static void _player_acceleration_update(player_t *p, update_parms_t uparms)
+static void _player_acceleration_update(player_t *p, struct update_parms uparms)
 {
-	int cx = uparms.held.c->C_left - uparms.held.c->C_right;
-	int cy = uparms.held.c->C_up - uparms.held.c->C_down;
+	int cx = uparms.held.c_left - uparms.held.c_right;
+	int cy = uparms.held.c_up - uparms.held.c_down;
 	f32 forw[3] = {
 		cosf(p->cam.yaw) * cy,
 		sinf(p->cam.yaw) * cy,
@@ -68,10 +68,10 @@ static void _player_acceleration_update(player_t *p, update_parms_t uparms)
 	vector_add(p->vel, move, p->vel, 3);
 }
 
-static void _player_look_update(player_t *p, update_parms_t uparms)
+static void _player_look_update(player_t *p, struct update_parms uparms)
 {
-	f32 stick_x = ((f32)uparms.held.c->x / 85.0f);
-	f32 stick_y = ((f32)uparms.held.c->y / 85.0f);
+	f32 stick_x = ((f32)uparms.stick.stick_x / 85.0f);
+	f32 stick_y = ((f32)uparms.stick.stick_y / 85.0f);
 
 	if (fabsf(stick_x) < 0.1f)
 		stick_x = 0;
@@ -151,7 +151,7 @@ static void _player_pickup_check(player_t *p, scene_t *s)
 	}
 }
 
-static void _player_item_use_check(player_t *p, update_parms_t uparms)
+static void _player_item_use_check(player_t *p, struct update_parms uparms)
 {
 	if (!p->num_items || p->item_selected == NOTHING)
 		return;
@@ -161,7 +161,7 @@ static void _player_item_use_check(player_t *p, update_parms_t uparms)
 	switch (p->item_indis[p->item_selected])
 	{
 	case PISTOL:
-		if (!uparms.down.c->Z || item->cooldown > 0.0f)
+		if (!uparms.down.z || item->cooldown > 0.0f)
 			return;
 
 		item->anim_cur = 1;
@@ -175,10 +175,10 @@ static void _player_item_use_check(player_t *p, update_parms_t uparms)
 		return;
 
 	case BONG:
-		if (!uparms.held.c->Z && item->anim_cur == 1)
+		if (!uparms.held.z && item->anim_cur == 1)
 			item->scene->anims[1].is_backward = true;
 
-		if (uparms.down.c->Z)
+		if (uparms.down.z)
 		{
 			animation_t *anim = item->scene->anims + 1;
 
@@ -197,12 +197,12 @@ static void _player_item_use_check(player_t *p, update_parms_t uparms)
 	}
 }
 
-static void _player_item_swap_check(player_t *p, update_parms_t uparms)
+static void _player_item_swap_check(player_t *p, struct update_parms uparms)
 {
 	if (p->num_items < 2)
 		return;
 
-	if (uparms.down.c->R)
+	if (uparms.down.r)
 	{
 		p->item_selected = (p->item_selected + 1) % p->num_items;
 		p->items[p->item_selected].anim_cur = 0;
@@ -231,7 +231,7 @@ static void _player_items_animation_update(player_t *p)
 	}
 }
 
-void player_update(player_t *p, scene_t *s, update_parms_t uparms)
+void player_update(player_t *p, scene_t *s, struct update_parms uparms)
 {
 	_player_friction_update(p);
 	_player_acceleration_update(p, uparms);
