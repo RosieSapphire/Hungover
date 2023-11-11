@@ -53,6 +53,15 @@ u8 title_logo_transform_main(const f32 music_t, const u8 music_ch_last)
 	return (1);
 }
 
+/**
+ * title_logo_transform_start - Transforms Title Logo for Starting the Game
+ * @beats_lerp: The subtick-interpolated beat counter value.
+ * @difft: The difference of t
+ * @music_state_last: Last Music State
+ *
+ * Description: Transforms the title logo for the game starting music state
+ * Return: Bool for whether or not to draw logo
+ */
 u8 title_logo_transform_start(const f32 beats_lerp, f32 *difft,
 			      const u8 music_state_last)
 {

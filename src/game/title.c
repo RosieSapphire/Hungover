@@ -34,6 +34,11 @@ static u8 bg_is_white;
 
 static smesh_t *text_mesh;
 
+/**
+ * title_load - Loads Title Assets
+ *
+ * Description: Loads assets for the title screen
+ */
 void title_load(void)
 {
 	if (is_loaded)
@@ -76,6 +81,11 @@ void title_load(void)
 	is_loaded = true;
 }
 
+/**
+ * title_unload - Unloads Title Assets
+ *
+ * Description: Unloads assets for the title screen
+ */
 void title_unload(void)
 {
 	if (!is_loaded)
@@ -90,6 +100,13 @@ void title_unload(void)
 	is_loaded = false;
 }
 
+/**
+ * title_update - Updates Title Screen
+ * @uparms: Input Parameters
+ *
+ * Description: Updates title screen functionality
+ * Return: Desired Scene Index
+ */
 enum scene_index title_update(struct update_parms uparms)
 {
 	frame_counter++;
@@ -112,6 +129,22 @@ enum scene_index title_update(struct update_parms uparms)
 	return (SCENE_TITLE);
 }
 
+/**
+ * title_logo_draw - Draws Title Screen Logo
+ * @mesh: Mesh quad for drawing title screen 2D assets with
+ * @tid: OpenGL Texture ID
+ * @music_t: Music Interpolation
+ * @t: Interpolation
+ * @subtick: 0-1 Value between last and current frame
+ * @music_beats_last: Music Beats value last
+ * @music_beats: Music Beats value current
+ * @music_state_last: Music State value last
+ * @music_state: Music State value current
+ * @music_ch_last: Music Channel last
+ * @bg_is_white: Boolean Pointer for the background being white
+ *
+ * Description: Draws all the iterations of the title screen logo
+ */
 void title_logo_draw(const smesh_t *mesh, const u32 tid, f32 music_t, f32 t,
 		     f32 subtick, f32 music_beats_last, f32 music_beats,
 		     u8 music_state_last, u8 music_state,
@@ -159,6 +192,12 @@ void title_logo_draw(const smesh_t *mesh, const u32 tid, f32 music_t, f32 t,
 	}
 }
 
+/**
+ * title_draw - Draws Title Screen
+ * @subtick: Value for interpolating between last and current frame
+ *
+ * Description: Draws everything necessary for the title screen
+ */
 void title_draw(f32 subtick)
 {
 	title_load();
