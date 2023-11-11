@@ -26,40 +26,6 @@
       "-fdiagnostics-color=always",
       "-std=gnu99",
       "-o",
-      "build/src/engine/scene.o",
-      "src/engine/scene.c"
-    ],
-    "directory": "/home/rosie/dev/n64/libdragon/hungover",
-    "file": "/home/rosie/dev/n64/libdragon/hungover/src/engine/scene.c",
-    "output": "/home/rosie/dev/n64/libdragon/hungover/build/src/engine/scene.o"
-  },
-  {
-    "arguments": [
-      "/opt/libdragon/bin/mips64-elf-gcc",
-      "-c",
-      "-Wall",
-      "-Wextra",
-      "-Iinclude",
-      "-Ofast",
-      "-march=vr4300",
-      "-mtune=vr4300",
-      "-I/opt/libdragon/mips64-elf/include",
-      "-falign-functions=32",
-      "-ffunction-sections",
-      "-fdata-sections",
-      "-g",
-      "-ffile-prefix-map=/home/rosie/dev/n64/libdragon/hungover=",
-      "-ffast-math",
-      "-ftrapping-math",
-      "-fno-associative-math",
-      "-DN64",
-      "-O2",
-      "-Wall",
-      "-Werror",
-      "-Wno-error=deprecated-declarations",
-      "-fdiagnostics-color=always",
-      "-std=gnu99",
-      "-o",
       "build/src/engine/node.o",
       "src/engine/node.c"
     ],
@@ -94,12 +60,12 @@
       "-fdiagnostics-color=always",
       "-std=gnu99",
       "-o",
-      "build/src/engine/player.o",
-      "src/engine/player.c"
+      "build/src/engine/camera.o",
+      "src/engine/camera.c"
     ],
     "directory": "/home/rosie/dev/n64/libdragon/hungover",
-    "file": "/home/rosie/dev/n64/libdragon/hungover/src/engine/player.c",
-    "output": "/home/rosie/dev/n64/libdragon/hungover/build/src/engine/player.o"
+    "file": "/home/rosie/dev/n64/libdragon/hungover/src/engine/camera.c",
+    "output": "/home/rosie/dev/n64/libdragon/hungover/build/src/engine/camera.o"
   },
   {
     "arguments": [
@@ -196,12 +162,46 @@
       "-fdiagnostics-color=always",
       "-std=gnu99",
       "-o",
-      "build/src/engine/camera.o",
-      "src/engine/camera.c"
+      "build/src/engine/sfx.o",
+      "src/engine/sfx.c"
     ],
     "directory": "/home/rosie/dev/n64/libdragon/hungover",
-    "file": "/home/rosie/dev/n64/libdragon/hungover/src/engine/camera.c",
-    "output": "/home/rosie/dev/n64/libdragon/hungover/build/src/engine/camera.o"
+    "file": "/home/rosie/dev/n64/libdragon/hungover/src/engine/sfx.c",
+    "output": "/home/rosie/dev/n64/libdragon/hungover/build/src/engine/sfx.o"
+  },
+  {
+    "arguments": [
+      "/opt/libdragon/bin/mips64-elf-gcc",
+      "-c",
+      "-Wall",
+      "-Wextra",
+      "-Iinclude",
+      "-Ofast",
+      "-march=vr4300",
+      "-mtune=vr4300",
+      "-I/opt/libdragon/mips64-elf/include",
+      "-falign-functions=32",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-g",
+      "-ffile-prefix-map=/home/rosie/dev/n64/libdragon/hungover=",
+      "-ffast-math",
+      "-ftrapping-math",
+      "-fno-associative-math",
+      "-DN64",
+      "-O2",
+      "-Wall",
+      "-Werror",
+      "-Wno-error=deprecated-declarations",
+      "-fdiagnostics-color=always",
+      "-std=gnu99",
+      "-o",
+      "build/src/engine/scene.o",
+      "src/engine/scene.c"
+    ],
+    "directory": "/home/rosie/dev/n64/libdragon/hungover",
+    "file": "/home/rosie/dev/n64/libdragon/hungover/src/engine/scene.c",
+    "output": "/home/rosie/dev/n64/libdragon/hungover/build/src/engine/scene.o"
   },
   {
     "arguments": [
@@ -264,46 +264,12 @@
       "-fdiagnostics-color=always",
       "-std=gnu99",
       "-o",
-      "build/src/engine/sfx.o",
-      "src/engine/sfx.c"
+      "build/src/engine/player.o",
+      "src/engine/player.c"
     ],
     "directory": "/home/rosie/dev/n64/libdragon/hungover",
-    "file": "/home/rosie/dev/n64/libdragon/hungover/src/engine/sfx.c",
-    "output": "/home/rosie/dev/n64/libdragon/hungover/build/src/engine/sfx.o"
-  },
-  {
-    "arguments": [
-      "/opt/libdragon/bin/mips64-elf-gcc",
-      "-c",
-      "-Wall",
-      "-Wextra",
-      "-Iinclude",
-      "-Ofast",
-      "-march=vr4300",
-      "-mtune=vr4300",
-      "-I/opt/libdragon/mips64-elf/include",
-      "-falign-functions=32",
-      "-ffunction-sections",
-      "-fdata-sections",
-      "-g",
-      "-ffile-prefix-map=/home/rosie/dev/n64/libdragon/hungover=",
-      "-ffast-math",
-      "-ftrapping-math",
-      "-fno-associative-math",
-      "-DN64",
-      "-O2",
-      "-Wall",
-      "-Werror",
-      "-Wno-error=deprecated-declarations",
-      "-fdiagnostics-color=always",
-      "-std=gnu99",
-      "-o",
-      "build/src/engine/texture.o",
-      "src/engine/texture.c"
-    ],
-    "directory": "/home/rosie/dev/n64/libdragon/hungover",
-    "file": "/home/rosie/dev/n64/libdragon/hungover/src/engine/texture.c",
-    "output": "/home/rosie/dev/n64/libdragon/hungover/build/src/engine/texture.o"
+    "file": "/home/rosie/dev/n64/libdragon/hungover/src/engine/player.c",
+    "output": "/home/rosie/dev/n64/libdragon/hungover/build/src/engine/player.o"
   },
   {
     "arguments": [
@@ -338,6 +304,40 @@
     "directory": "/home/rosie/dev/n64/libdragon/hungover",
     "file": "/home/rosie/dev/n64/libdragon/hungover/src/engine/util_base.c",
     "output": "/home/rosie/dev/n64/libdragon/hungover/build/src/engine/util_base.o"
+  },
+  {
+    "arguments": [
+      "/opt/libdragon/bin/mips64-elf-gcc",
+      "-c",
+      "-Wall",
+      "-Wextra",
+      "-Iinclude",
+      "-Ofast",
+      "-march=vr4300",
+      "-mtune=vr4300",
+      "-I/opt/libdragon/mips64-elf/include",
+      "-falign-functions=32",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-g",
+      "-ffile-prefix-map=/home/rosie/dev/n64/libdragon/hungover=",
+      "-ffast-math",
+      "-ftrapping-math",
+      "-fno-associative-math",
+      "-DN64",
+      "-O2",
+      "-Wall",
+      "-Werror",
+      "-Wno-error=deprecated-declarations",
+      "-fdiagnostics-color=always",
+      "-std=gnu99",
+      "-o",
+      "build/src/engine/texture.o",
+      "src/engine/texture.c"
+    ],
+    "directory": "/home/rosie/dev/n64/libdragon/hungover",
+    "file": "/home/rosie/dev/n64/libdragon/hungover/src/engine/texture.c",
+    "output": "/home/rosie/dev/n64/libdragon/hungover/build/src/engine/texture.o"
   },
   {
     "arguments": [
@@ -474,5 +474,39 @@
     "directory": "/home/rosie/dev/n64/libdragon/hungover",
     "file": "/home/rosie/dev/n64/libdragon/hungover/src/game/title.c",
     "output": "/home/rosie/dev/n64/libdragon/hungover/build/src/game/title.o"
+  },
+  {
+    "arguments": [
+      "/opt/libdragon/bin/mips64-elf-gcc",
+      "-c",
+      "-Wall",
+      "-Wextra",
+      "-Iinclude",
+      "-Ofast",
+      "-march=vr4300",
+      "-mtune=vr4300",
+      "-I/opt/libdragon/mips64-elf/include",
+      "-falign-functions=32",
+      "-ffunction-sections",
+      "-fdata-sections",
+      "-g",
+      "-ffile-prefix-map=/home/rosie/dev/n64/libdragon/hungover=",
+      "-ffast-math",
+      "-ftrapping-math",
+      "-fno-associative-math",
+      "-DN64",
+      "-O2",
+      "-Wall",
+      "-Werror",
+      "-Wno-error=deprecated-declarations",
+      "-fdiagnostics-color=always",
+      "-std=gnu99",
+      "-o",
+      "build/src/game/title_logo.o",
+      "src/game/title_logo.c"
+    ],
+    "directory": "/home/rosie/dev/n64/libdragon/hungover",
+    "file": "/home/rosie/dev/n64/libdragon/hungover/src/game/title_logo.c",
+    "output": "/home/rosie/dev/n64/libdragon/hungover/build/src/game/title_logo.o"
   }
 ]

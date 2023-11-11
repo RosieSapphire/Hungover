@@ -9,8 +9,8 @@
 
 #include "game/title.h"
 
-#define MUSIC_bPM 178
-#define MUSIC_DELTA ((MUSIC_bPM / 60.0f) / (f32)CONF_TICKRATE)
+#define MUSIC_BPM 178
+#define MUSIC_DELTA ((MUSIC_BPM / 60.0f) / (f32)CONF_TICKRATE)
 
 static bool is_loaded;
 static long frame_counter;
@@ -34,11 +34,11 @@ static texture_t continue_text;
 static texture_t options_text;
 static texture_t press_start_text;
 
-static bool bg_is_white;
+static u8 bg_is_white;
 
 static smesh_t *text_mesh;
 
-void _title_load(void)
+void title_load(void)
 {
 	if (is_loaded)
 		return;
@@ -81,7 +81,7 @@ void _title_load(void)
 	is_loaded = true;
 }
 
-void _title_unload(void)
+void title_unload(void)
 {
 	if (!is_loaded)
 		return;
@@ -95,9 +95,9 @@ void _title_unload(void)
 	is_loaded = false;
 }
 
-static void _title_option_change(struct update_parms uparms)
+static void _title_menu_option_change(struct update_parms uparms)
 {
-	static bool stick_option_change;
+	static bool stick_menu_option_change;
 
 	option_selected_last = option_selected;
 	if (music_state == 2)
@@ -111,9 +111,9 @@ static void _title_option_change(struct update_parms uparms)
 
 		if (fabsf(stick_y) >= 0.5f)
 		{
-			if (!stick_option_change)
+			if (!stick_menu_option_change)
 			{
-				stick_option_change = true;
+				stick_menu_option_change = true;
 
 				if (stick_y > 0)
 					option_selected++;
@@ -123,7 +123,7 @@ static void _title_option_change(struct update_parms uparms)
 		}
 		else
 		{
-			stick_option_change = false;
+			stick_menu_option_change = false;
 		}
 	}
 
@@ -205,141 +205,13 @@ enum scene_index title_update(struct update_parms uparms)
 
 	if (music_state == 3 && music_state_timer >= 4.0f)
 	{
-		_title_unload();
+		title_unload();
 		return (SCENE_TESTROOM);
 	}
 
-	_title_option_change(uparms);
+	_title_menu_option_change(uparms);
 
 	return (SCENE_TITLE);
-}
-
-static u8 _title_logo_setup_transform(f32 *beats_lerp,
-					f32 *difft, f32 music_t)
-{
-	f32 a[3], b[3], c[3];
-	f32 bl = *beats_lerp;
-	f32 dt = *difft;
-
-	switch (music_state)
-	{
-	case 0:
-		a[0] =   0;
-		a[1] =   0;
-		a[2] = -10;
-
-		b[0] = 0;
-		b[1] = 0;
-		b[2] = 0;
-
-		bl = clampf(bl - 29.5f, 0, 3) / 3.0f;
-		debugf("%f\n", bl);
-
-		if (bl <= 0.0f)
-			return (0);
-
-		vector_lerp(a, b, bl * bl, c, 3);
-		glTranslatef(c[0], c[1], c[2]);
-		glRotatef(bl * 720 * bl, 0, 0, 1);
-		break;
-
-	case 1:
-		break;
-
-	case 2:
-		f32 a[3] = {0,    0,     0};
-		f32 b[3] = {0, 1.5f, -1.0f};
-
-		if (music_ch_last == 4)
-			vector_copy(b, a, 3);
-
-		vector_smooth(a, b, music_t, c, 3);
-		glTranslatef(c[0], c[1], c[2]);
-
-		break;
-
-	case 3:
-		static f32 beats_start = 0.0f;
-
-		if (music_state_last == 2)
-			beats_start = bl;
-
-		a[0] = 0.0f;
-		a[1] = 1.5f;
-		a[2] = -1.0f;
-
-		b[0] = 0.0f;
-		b[1] = 0.0f;
-		b[2] =  0.0f;
-
-		dt = (bl - beats_start) / 3.5f;
-		dt *= dt * dt;
-		dt = clampf(dt, 0, 1);
-		vector_lerp(a, b, dt, c, 3);
-
-		glTranslatef(c[0], c[1], c[2]);
-		glRotatef(smoothf(0, 720, dt), 0, 0, 1);
-		break;
-
-	case 4:
-		glTranslatef(0, 1.5f, -1.0f);
-		break;
-	}
-
-	*beats_lerp = bl;
-	*difft = dt;
-
-	return (1);
-}
-
-static void _title_logo_draw(f32 music_t, f32 t, f32 subtick)
-{
-	int num_it = 5;
-
-	for (int i = 0; i < num_it; i++)
-	{
-		glLoadIdentity();
-		f32 beats_lerp = lerpf(music_beats_last, music_beats, subtick);
-		f32 difft = 0.0f;
-
-		if(!_title_logo_setup_transform(&beats_lerp, &difft, music_t))
-			break;
-
-		bool only_one = difft >= 1.0f;
-
-		if (only_one)
-		{
-			glColor3f(0, 0, 0);
-			glTranslatef(0, 0, 1.2f);
-			bg_is_white = true;
-		}
-		else
-		{
-			f32 z_trans;
-
-			if (i != num_it - 1)
-				z_trans = (i * 0.4f) -
-					wrapf(beats_lerp * 0.125f, 0.4f);
-			else
-				z_trans = 1.2f;
-
-			f32 ti = smoothf(t, t + i, (1.2f - z_trans) / 1.6f);
-			f32 bright = (z_trans + 0.4f) / 1.6f;
-
-			glTranslatef(sinf(ti) * 0.04f * (1.0f - difft),
-					sinf(ti * 1.5f) * 0.04f * (1.0f - difft),
-					z_trans);
-			glRotatef(sinf(ti) * 4 * (1.0f - difft), 0, 0, 1);
-			glScalef(bright, bright, 1);
-			bright *= bright * bright;
-			glColor3f(bright, bright, bright);
-		}
-
-		smesh_draw_tex(text_mesh, hungover_text.id);
-
-		if (only_one)
-			return;
-	}
 }
 
 static void _title_menu_option_draw_main(f32 t, s8 move_dir,
@@ -437,7 +309,7 @@ static void _title_music_volume(const f32 music_t)
 
 void title_draw(f32 subtick)
 {
-	_title_load();
+	title_load();
 
 	gl_context_begin();
 	glClearColor(bg_is_white, bg_is_white, bg_is_white, 1);
@@ -455,7 +327,9 @@ void title_draw(f32 subtick)
 		     clampf(music_state_timer, 0, 1), subtick);
 	f32 t = lerpf(frame_counter - 1, frame_counter, subtick) / 12.0f;
 
-	_title_logo_draw(music_t, t, subtick);
+	title_logo_draw(text_mesh, hungover_text.id, music_t, t, subtick,
+		 music_beats_last, music_beats, music_state_last, music_state,
+		 music_ch_last, &bg_is_white);
 	_title_music_volume(music_t);
 	if (music_state == 1)
 	{
