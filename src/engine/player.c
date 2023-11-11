@@ -153,7 +153,7 @@ static void _player_pickup_check(player_t *p, scene_t *s)
 
 static void _player_item_use_check(player_t *p, update_parms_t uparms)
 {
-	if (!p->num_items || p->item_selected == -1)
+	if (!p->num_items || p->item_selected == NOTHING)
 		return;
 
 	item_t *item = p->items + p->item_selected;

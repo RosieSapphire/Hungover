@@ -11,7 +11,9 @@
 #include "game/title.h"
 #include "game/testroom.h"
 
-int main(void)
+static surface_t depth_buffer;
+
+static void _init(void)
 {
 	srand(TICKS_READ());
 	display_init(CONF_RESOLUTION, CONF_BITDEPTH, CONF_NUMBUF,
@@ -46,53 +48,69 @@ int main(void)
 		wav64_play(&title_music4, SFXC_MUSIC4);
 	}
 
-	surface_t dep = surface_alloc(FMT_RGBA16, CONF_WIDTH, CONF_HEIGHT);
-	long ticks_last = get_ticks();
-	long ticks_accum = 0;
+	depth_buffer = surface_alloc(FMT_RGBA16, CONF_WIDTH, CONF_HEIGHT);
+}
+
+static void _loop(void)
+{
+	static long ticks_last = 0;
+	static long ticks_accum = 0;
+
+	long ticks_now = get_ticks();
+	long ticks_delta = TICKS_DISTANCE(ticks_last, ticks_now);
+
+	ticks_last = ticks_now;
+
+	enum scene_index
+	(*update_funcs[SCENE_COUNT])(update_parms_t) = {
+		title_update, testroom_update,
+	};
+
+	void (*draw_funcs[SCENE_COUNT])(float) = {
+		title_draw, testroom_draw,
+	};
+
+	/*
+	 * Drawing
+	 */
+	float subtick = (float)ticks_accum / (float)CONF_DELTATICKS;
+	surface_t *col = display_get();
+
+	rdpq_attach_clear(col, &depth_buffer);
+	(*draw_funcs[scene_index])(subtick);
+	rdpq_detach_show();
+
+	/*
+	 * Updating
+	 */
+	ticks_accum += ticks_delta;
+	while (ticks_accum >= CONF_DELTATICKS)
+	{
+		joypad_poll();
+		update_parms_t uparms = {
+			get_keys_down(),
+			get_keys_held(),
+		};
+
+		scene_index = (*update_funcs[scene_index])(uparms);
+		ticks_accum -= CONF_DELTATICKS;
+	}
+
+	if (!audio_can_write())
+		return;
+
+	short *audio_buf = audio_write_begin();
+
+	mixer_poll(audio_buf, audio_get_buffer_length());
+	audio_write_end();
+}
+
+int main(void)
+{
+	_init();
 
 	while (1)
-	{
-		long ticks_now = get_ticks();
-		long ticks_delta = TICKS_DISTANCE(ticks_last, ticks_now);
-
-		ticks_last = ticks_now;
-
-		enum scene_index (*update_funcs[SCENE_COUNT])(update_parms_t) = {
-			title_update, testroom_update,
-		};
-
-		void (*draw_funcs[SCENE_COUNT])(float) = {
-			title_draw, testroom_draw,
-		};
-
-		ticks_accum += ticks_delta;
-		while (ticks_accum >= CONF_DELTATICKS)
-		{
-			joypad_poll();
-			update_parms_t uparms = {
-				get_keys_down(),
-				get_keys_held(),
-			};
-
-			scene_index = (*update_funcs[scene_index])(uparms);
-			ticks_accum -= CONF_DELTATICKS;
-		}
-
-		float subtick = (float)ticks_accum / (float)CONF_DELTATICKS;
-		surface_t *col = display_get();
-
-		rdpq_attach_clear(col, &dep);
-		(*draw_funcs[scene_index])(subtick);
-		rdpq_detach_show();
-
-		if (!audio_can_write())
-			continue;
-
-		short *audio_buf = audio_write_begin();
-
-		mixer_poll(audio_buf, audio_get_buffer_length());
-		audio_write_end();
-	}
+		_loop();
 
 	return (0);
 }
