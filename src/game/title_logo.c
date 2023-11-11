@@ -64,40 +64,6 @@ u8 title_logo_transform_start(const f32 beats_lerp, f32 *difft,
 	return (1);
 }
 
-u8 title_logo_transform(const u8 music_state, const u8 music_state_last,
-			const u8 music_ch_last, f32 *beats_lerp,
-			f32 *difft, f32 music_t)
-{
-	u8 ret = 0;
-
-	switch (music_state)
-	{
-	case 0:
-		ret = title_logo_transform_intro(beats_lerp);
-		break;
-
-	case 1:
-		ret = 1;
-		break;
-
-	case 2:
-		ret = title_logo_transform_main(music_t, music_ch_last);
-		break;
-
-	case 3:
-		ret = title_logo_transform_start(*beats_lerp,
-				   difft, music_state_last);
-		break;
-
-	case 4:
-		ret = 1;
-		glTranslatef(0, 1.5f, -1.0f);
-		break;
-	}
-
-	return (ret);
-}
-
 void title_logo_draw_object(const f32 difft, const u8 i, const u8 num_it,
 			    const f32 beats_lerp, const f32 t,
 			    const smesh_t *text_mesh, const u32 tid,
@@ -130,4 +96,20 @@ void title_logo_draw_object(const f32 difft, const u8 i, const u8 num_it,
 	glColor3f(bright, bright, bright);
 
 	smesh_draw_tex(text_mesh, tid);
+}
+
+void title_logo_draw_press_start(const smesh_t *mesh, const u32 tid,
+				 const u8 music_state, const f32 music_beats)
+{
+	if (music_state != 1)
+		return;
+
+	glLoadIdentity();
+	glScalef(2, 1, 1);
+	glTranslatef(0, -2.5f, -2);
+	f32 blink = (music_beats * 0.25f) - (int)(music_beats * 0.25f);
+
+	blink = (int)(blink * 2) & 1;
+	glColor3f(blink, blink, blink);
+	smesh_draw_tex(mesh, tid);
 }

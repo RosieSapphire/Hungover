@@ -4,21 +4,8 @@
 
 #include "game/title.h"
 
-static texture_t new_game_text;
-static texture_t continue_text;
-static texture_t options_text;
-
 static s32 opt_last_frame;
 static int opt_selected_last;
-
-void title_menu_load(void)
-{
-	opt_last_frame = 0;
-	opt_selected_last = 0;
-	new_game_text = tex_objs_loaded[1];
-	continue_text = tex_objs_loaded[2];
-	options_text  = tex_objs_loaded[3];
-}
 
 void title_menu_option_change(struct update_parms uparms, s8 *opt_selected,
 			      u8 music_state, u32 frame)
@@ -58,9 +45,8 @@ void title_menu_option_change(struct update_parms uparms, s8 *opt_selected,
 		os = 0;
 	if (os < 0)
 		os = 2;
-	if (opt_selected_last != os) {
+	if (opt_selected_last != os)
 		opt_last_frame = frame;
-	}
 
 	*opt_selected = os;
 }
@@ -109,7 +95,7 @@ void title_menu_option_draw(const smesh_t *mesh, s8 move_dir, u8 music_state,
 	{
 	case 0:
 	case 1:
-		return;
+		break;
 
 	case 2:
 		title_menu_option_draw_main(t, move_dir, os, ind, music_t);
@@ -137,25 +123,4 @@ void title_menu_option_draw(const smesh_t *mesh, s8 move_dir, u8 music_state,
 	glTranslatef(sinf(to) * 0.04f, sinf(to * 1.5f) * 0.04f, 0);
 	glRotatef(sinf(to) * 4, 0, 0, 1);
 	smesh_draw_tex(mesh, tex);
-}
-
-void title_menu_draw(const smesh_t *mesh, f32 music_t,
-		     f32 t, const u8 music_state, const u8 os)
-{
-	if (music_state < 2)
-		return;
-
-	title_menu_option_draw(mesh, 1, music_state, os,
-			music_t, t, 0, new_game_text.id);
-	title_menu_option_draw(mesh, -1, music_state, os,
-			music_t, t, 1, continue_text.id);
-	title_menu_option_draw(mesh, 1, music_state, os,
-			music_t, t, 2, options_text.id);
-}
-
-void title_menu_unload(void)
-{
-	texture_destroy(&options_text);
-	texture_destroy(&continue_text);
-	texture_destroy(&new_game_text);
 }
