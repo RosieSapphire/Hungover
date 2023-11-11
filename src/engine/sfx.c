@@ -1,8 +1,8 @@
 #include "engine/sfx.h"
 
 wav64_t title_music0, title_music1, title_music2,
-       title_music3, title_music4, pickup_pistol, pickup_bong, fire_pistol,
-       lighter_bong;
+	title_music3, title_music4, pickup_pistol, pickup_bong, fire_pistol,
+	lighter_bong;
 
 void sfx_init(void)
 {

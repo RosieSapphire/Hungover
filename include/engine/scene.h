@@ -6,7 +6,8 @@
 #include "engine/node.h"
 #include "engine/update.h"
 
-enum scene_index {
+enum scene_index
+{
 	SCENE_TITLE,
 	SCENE_TESTROOM,
 	SCENE_COUNT,
@@ -14,7 +15,8 @@ enum scene_index {
 
 extern enum scene_index scene_index;
 
-typedef struct {
+typedef struct
+{
 	uint16_t num_meshes;
 	smesh_t *meshes;
 	uint16_t num_anims;
@@ -25,7 +27,6 @@ typedef struct {
 } scene_t;
 
 scene_t *scene_load(const char *path);
-// smesh_t scene_load_first_mesh(const char *path);
 void scene_unload(scene_t *s);
 void scene_update(scene_t *s);
 void scene_draw(const scene_t *s, float subtick);

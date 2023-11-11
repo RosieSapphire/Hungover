@@ -17,6 +17,7 @@ void projection_setup(void)
 void quat_lerp(const f32 *a, const f32 *b, f32 *c, const f32 t)
 {
 	f32 out_scale = (vector_dot(a, b, 4) >= 0) ? 1.0f : -1.0f;
+
 	for (int i = 0; i < 4; i++)
 		c[i] = ((1 - t) * a[i]) + (out_scale * t * b[i]);
 

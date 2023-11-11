@@ -5,80 +5,82 @@
 #include "engine/util.h"
 #include "engine/vector.h"
 
-void vector_copy(const float *src, float *dst, int comp)
+void vector_copy(const f32 *src, f32 *dst, const u8 comp)
 {
-	memcpy(dst, src, sizeof(float) * comp);
+	memcpy(dst, src, sizeof(f32) * comp);
 }
 
-void vector_zero(float *vec, int comp)
+void vector_zero(f32 *vec, const u8 comp)
 {
 	memset(vec, 0, comp);
 }
 
-void vector_add(const float *a, const float *b, float *c, const int comp)
+void vector_add(const f32 *a, const f32 *b, f32 *c, const u8 comp)
 {
-	for(int i = 0; i < comp; i++)
+	for (int i = 0; i < comp; i++)
 		c[i] = a[i] + b[i];
 }
 
-void vector_sub(const float *a, const float *b, float *c, const int comp)
+void vector_sub(const f32 *a, const f32 *b, f32 *c, const u8 comp)
 {
-	for(int i = 0; i < comp; i++)
+	for (int i = 0; i < comp; i++)
 		c[i] = a[i] - b[i];
 }
 
-void vector_scale(float *x, float s, int comp)
+void vector_scale(f32 *x, f32 s, const u8 comp)
 {
-	for(int i = 0; i < comp; i++)
+	for (int i = 0; i < comp; i++)
 		x[i] = x[i] * s;
 }
 
-void vector_lerp(const float *a, const float *b, float t, float *o, int comp)
+void vector_lerp(const f32 *a, const f32 *b, f32 t, f32 *o, const u8 comp)
 {
-	for(int i = 0; i < comp; i++)
+	for (int i = 0; i < comp; i++)
 		o[i] = lerpf(a[i], b[i], t);
 }
 
-void vector_smooth(float *a, float *b, float t, float *o, int comp)
+void vector_smooth(f32 *a, f32 *b, f32 t, f32 *o, const u8 comp)
 {
-	for(int i = 0; i < comp; i++)
+	for (int i = 0; i < comp; i++)
 		o[i] = smoothf(a[i], b[i], t);
 }
 
-float vector_dot(const float *a, const float *b, const int comp)
+f32 vector_dot(const f32 *a, const f32 *b, const u8 comp)
 {
-	float total = 0.0f;
-	for(int i = 0; i < comp; i++)
+	f32 total = 0.0f;
+
+	for (int i = 0; i < comp; i++)
 		total += a[i] * b[i];
 
-	return total;
+	return (total);
 }
 
-float vector_magnitude_sqr(float *x, int comp)
+f32 vector_magnitude_sqr(f32 *x, const u8 comp)
 {
-	return vector_dot(x, x, comp);
+	return (vector_dot(x, x, comp));
 }
 
-float vector_magnitude(float *x, int comp)
+f32 vector_magnitude(f32 *x, const u8 comp)
 {
-	return sqrtf(vector_magnitude_sqr(x, comp));
+	return (sqrtf(vector_magnitude_sqr(x, comp)));
 }
 
-float vector_normalize(float *x, int comp)
+f32 vector_normalize(f32 *x, const u8 comp)
 {
-	float mag = vector_magnitude(x, comp);
-	if(!mag)
-		return 0.0f;
+	f32 mag = vector_magnitude(x, comp);
 
-	for(int i = 0; i < comp; i++)
+	if (!mag)
+		return (0.0f);
+
+	for (int i = 0; i < comp; i++)
 		x[i] /= mag;
 
-	return mag;
+	return (mag);
 }
 
-void vector_print(float *x, int comp)
+void vector_print(f32 *x, const u8 comp)
 {
-	for(int i = 0; i < comp; i++)
+	for (int i = 0; i < comp; i++)
 		debugf("%f ", x[i]);
 	debugf("\n");
 }

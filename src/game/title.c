@@ -24,9 +24,9 @@ static float music_state_timer;
 static int music_ch_last;
 static int music_ch_cur;
 
-static int option_last_frame = 0;
-static int option_selected_last = 0;
-static int option_selected = 0;
+static int option_last_frame;
+static int option_selected_last;
+static int option_selected;
 
 static texture_t hungover_text;
 static texture_t new_game_text;
@@ -34,7 +34,7 @@ static texture_t continue_text;
 static texture_t options_text;
 static texture_t press_start_text;
 
-static bool bg_is_white = false;
+static bool bg_is_white;
 
 static smesh_t *text_mesh;
 
@@ -50,7 +50,7 @@ void _title_load(void)
 	texture_create_file("rom:/press_start.ia8.sprite");
 
 	hungover_text    = tex_objs_loaded[0];
-	new_game_text    = tex_objs_loaded[1]; 
+	new_game_text    = tex_objs_loaded[1];
 	continue_text    = tex_objs_loaded[2];
 	options_text     = tex_objs_loaded[3];
 	press_start_text = tex_objs_loaded[4];
@@ -76,8 +76,8 @@ void _title_load(void)
 	};
 
 	const uint16_t indis[6] = {0, 1, 2, 2, 1, 3};
-	text_mesh = smesh_create_data("UI", 4, 6, verts, indis);
 
+	text_mesh = smesh_create_data("UI", 4, 6, verts, indis);
 	is_loaded = true;
 }
 
@@ -98,14 +98,16 @@ void _title_unload(void)
 enum scene_index title_update(update_parms_t uparms)
 {
 	music_state_last = music_state;
-	switch(music_state) {
+	switch (music_state)
+	{
 	case 0:
 	case 1:
 		music_state += uparms.down.c->start;
 		break;
 
 	case 2:
-		switch(option_selected) {
+		switch (option_selected)
+		{
 		case 0:
 		case 1:
 			music_state +=
@@ -126,11 +128,12 @@ enum scene_index title_update(update_parms_t uparms)
 		music_state -= uparms.down.c->B * 2;
 		break;
 	}
-	
 
-	static bool stick_option_change = false;
+	static bool stick_option_change;
+
 	option_selected_last = option_selected;
-	if (music_state == 2) {
+	if (music_state == 2)
+	{
 		/* Buttons */
 		option_selected +=
 			(uparms.down.c->C_down || uparms.down.c->down);
@@ -139,15 +142,21 @@ enum scene_index title_update(update_parms_t uparms)
 
 		/* Joystick */
 		float stick_y = (float)uparms.held.c->y / -85.0f;
-		if (fabsf(stick_y) >= 0.5f) {
-			if (!stick_option_change) {
+
+		if (fabsf(stick_y) >= 0.5f)
+		{
+			if (!stick_option_change)
+			{
 				stick_option_change = true;
+
 				if (stick_y > 0)
 					option_selected++;
 				else
 					option_selected--;
 			}
-		} else {
+		}
+		else
+		{
 			stick_option_change = false;
 		}
 	}
@@ -164,13 +173,14 @@ enum scene_index title_update(update_parms_t uparms)
 	if (music_beats >= 31.5f && music_state == 0)
 		music_state = 1;
 
-	if (music_state_last != music_state) {
+	if (music_state_last != music_state)
+	{
 		music_ch_last = music_ch_cur;
 		music_ch_cur = music_state;
-
 		music_state_timer = 0.0f;
 
-		if (music_ch_cur == SFXC_MUSIC3) {
+		if (music_ch_cur == SFXC_MUSIC3)
+		{
 			mixer_ch_stop(SFXC_MUSIC0);
 			mixer_ch_stop(SFXC_MUSIC1);
 			mixer_ch_stop(SFXC_MUSIC2);
@@ -185,26 +195,37 @@ enum scene_index title_update(update_parms_t uparms)
 
 	frame_counter++;
 
-	if (music_state == 3 && music_state_timer >= 4.0f) {
+	if (music_state == 3 && music_state_timer >= 4.0f)
+	{
 		_title_unload();
-		return SCENE_TESTROOM;
+		return (SCENE_TESTROOM);
 	}
 
-	return SCENE_TITLE;
+	return (SCENE_TITLE);
 }
 
 static void _title_logo_draw(float music_t, float t, float subtick)
 {
 	int num_it = 5;
-	for(int i = 0; i < num_it; i++) {
+
+	for (int i = 0; i < num_it; i++)
+	{
 		glLoadIdentity();
 		float a[3], b[3], c[3];
-		float beats_lerp = lerpf(music_beats_last, music_beats, subtick);
+		float beats_lerp =
+			lerpf(music_beats_last, music_beats, subtick);
 		float difft = 0.0f;
-		switch(music_state) {
+
+		switch (music_state)
+		{
 		case 0:
-			a[0] = 0.0f; a[1] = 0.0f; a[2] = -10.0f;
-			b[0] = 0.0f; b[1] = 0.0f; b[2] =  0.0f;
+			a[0] =   0.0f;
+			a[1] =   0.0f;
+			a[2] = -10.0f;
+
+			b[0] =   0.0f;
+			b[1] =   0.0f;
+			b[2] =   0.0f;
 			beats_lerp = clampf(beats_lerp - 29.5f, 0, 2) / 2.0f;
 			if (beats_lerp <= 0.0f)
 				return;
@@ -212,25 +233,41 @@ static void _title_logo_draw(float music_t, float t, float subtick)
 			glTranslatef(c[0], c[1], c[2]);
 			glRotatef(beats_lerp * 720 * beats_lerp, 0, 0, 1);
 			break;
-		
+
 		case 1:
 			break;
 
 		case 2:
-			a[0] = 0.0f; a[1] = 0.0f; a[2] =  0.0f;
-			b[0] = 0.0f; b[1] = 1.5f; b[2] =  -1.0f;
+			a[0] =  0.0f;
+			a[1] =  0.0f;
+			a[2] =  0.0f;
+
+			b[0] =  0.0f;
+			b[1] =  1.5f;
+			b[2] = -1.0f;
+
 			if (music_ch_last == 4)
 				vector_copy(b, a, 3);
+
 			vector_smooth(a, b, music_t, c, 3);
 			glTranslatef(c[0], c[1], c[2]);
+
 			break;
 
 		case 3:
 			static float beats_start = 0.0f;
+
 			if (music_state_last == 2)
 				beats_start = beats_lerp;
-			a[0] = 0.0f; a[1] = 1.5f; a[2] = -1.0f;
-			b[0] = 0.0f; b[1] = 0.0f; b[2] =  0.0f;
+
+			a[0] = 0.0f;
+			a[1] = 1.5f;
+			a[2] = -1.0f;
+
+			b[0] = 0.0f;
+			b[1] = 0.0f;
+			b[2] =  0.0f;
+
 			difft = (beats_lerp - beats_start) / 3.5f;
 			difft *= difft * difft;
 			difft = clampf(difft, 0, 1);
@@ -246,24 +283,30 @@ static void _title_logo_draw(float music_t, float t, float subtick)
 		}
 
 		bool only_one = difft >= 1.0f;
-		if (only_one) {
+
+		if (only_one)
+		{
 			glColor3f(0, 0, 0);
 			glTranslatef(0, 0, 1.2f);
 			bg_is_white = true;
-		} else {
+		}
+		else
+		{
 			float z_trans;
+
 			if (i != num_it - 1)
 				z_trans = (i * 0.4f) -
 					wrapf(beats_lerp * 0.125f, 0.4f);
 			else
 				z_trans = 1.2f;
+
 			float ti = smoothf(t, t + i, (1.2f - z_trans) / 1.6f);
-			glTranslatef(sinf(ti) * 0.04f * (1.0f - difft), 
+			float bright = (z_trans + 0.4f) / 1.6f;
+
+			glTranslatef(sinf(ti) * 0.04f * (1.0f - difft),
 					sinf(ti * 1.5f) * 0.04f * (1.0f - difft),
 					z_trans);
 			glRotatef(sinf(ti) * 4 * (1.0f - difft), 0, 0, 1);
-
-			float bright = (z_trans + 0.4f) / 1.6f;
 			glScalef(bright, bright, 1);
 			bright *= bright * bright;
 			glColor3f(bright, bright, bright);
@@ -279,9 +322,11 @@ static void _title_logo_draw(float music_t, float t, float subtick)
 static void _title_menu_option_draw(int move_dir,
 		float music_t, float t, int ind, uint32_t tex)
 {
-	glLoadIdentity();
 	float a[3], b[3], c[3];
-	switch(music_state) {
+
+	glLoadIdentity();
+	switch (music_state)
+	{
 	case 0:
 	case 1:
 		return;
@@ -294,13 +339,22 @@ static void _title_menu_option_draw(int move_dir,
 		float select_offset_bob = lerpf(-1.5f,
 				-0.5f + (sinf(time_last_select * 8) / 8.0f),
 				time_last_select * 3 * time_last_select * 3);
-		a[0] = 20 * move_dir; a[1] = -10; a[2] = -5.5f;
-		b[0] = 0; b[1] = -ind;
 		float col = select_offset + 1.5f;
-		if (option_selected == ind) {
+
+		a[0] = 20 * move_dir;
+		a[1] = -10;
+		a[2] = -5.5f;
+
+		b[0] = 0;
+		b[1] = -ind;
+
+		if (option_selected == ind)
+		{
 			glColor3f(col, col, col);
 			b[2] = select_offset_bob;
-		} else {
+		}
+		else
+		{
 			col = (1.0f - col) * 0.5f + 0.5f;
 			glColor3f(col, col, col);
 			b[2] = 1.0f / select_offset_bob;
@@ -310,14 +364,21 @@ static void _title_menu_option_draw(int move_dir,
 		break;
 
 	case 3:
-		a[0] = 0; a[1] = -ind; a[2] = -1.5f;
-		b[0] = 10 * move_dir; b[1] = 5; b[2] = 2.5f;
+		a[0] = 0;
+		a[1] = -ind;
+		a[2] = -1.5f;
+
+		b[0] = 10 * move_dir;
+		b[1] = 5;
+		b[2] = 2.5f;
+
 		vector_lerp(a, b, music_t, c, 3);
 		glTranslatef(c[0], c[1], c[2]);
 		break;
 	}
 
 	float to = t + (8 * ind);
+
 	glTranslatef(sinf(to) * 0.04f, sinf(to * 1.5f) * 0.04f, 0);
 	glRotatef(sinf(to) * 4, 0, 0, 1);
 	smesh_draw_tex(text_mesh, tex);

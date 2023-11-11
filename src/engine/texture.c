@@ -1,9 +1,10 @@
 #include <string.h>
 #include <malloc.h>
 
+#include "engine/types.h"
 #include "engine/texture.h"
 
-unsigned int num_texs_loaded = 0;
+u16 num_texs_loaded = 0;
 char tex_paths_loaded[TEX_PATH_MAX_CNT][TEX_PATH_MAX_LEN];
 texture_t *tex_objs_loaded = NULL;
 
@@ -16,8 +17,8 @@ void textures_init(void)
 texture_t texture_create_empty(int fmt, int width, int height)
 {
 	texture_t t;
-	t.surf = surface_alloc(fmt, width, height);
 
+	t.surf = surface_alloc(fmt, width, height);
 	glGenTextures(1, &t.id);
 	glBindTexture(GL_TEXTURE_2D, t.id);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -25,15 +26,17 @@ texture_t texture_create_empty(int fmt, int width, int height)
 	glSurfaceTexImageN64(GL_TEXTURE_2D, 0, &t.surf, NULL);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
-	return t;
+	return (t);
 }
 
-uint32_t texture_create_file(const char *path)
+u32 texture_create_file(const char *path)
 {
 	texture_t t;
-	for(unsigned int i = 0; i < num_texs_loaded; i++) {
-		if(!strcmp(path, tex_paths_loaded[i]))
-			return i;
+
+	for (u16 i = 0; i < num_texs_loaded; i++)
+	{
+		if (!strcmp(path, tex_paths_loaded[i]))
+			return (i);
 	}
 
 	num_texs_loaded++;
@@ -56,7 +59,7 @@ uint32_t texture_create_file(const char *path)
 
 	strcpy(tex_paths_loaded[num_texs_loaded - 1], path);
 	tex_objs_loaded[num_texs_loaded - 1] = t;
-	return num_texs_loaded - 1;
+	return (num_texs_loaded - 1);
 }
 
 void texture_destroy(texture_t *t)

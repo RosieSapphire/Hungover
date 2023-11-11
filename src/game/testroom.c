@@ -8,14 +8,13 @@
 
 #include "game/testroom.h"
 
-static bool is_loaded = false;
-
-static scene_t *scene = NULL;
+static bool is_loaded;
+static scene_t *scene;
 static player_t p;
 
 static void _testroom_load(void)
 {
-	if(is_loaded)
+	if (is_loaded)
 		return;
 
 	scene = scene_load("rom:/test.scene");
@@ -34,7 +33,7 @@ enum scene_index testroom_update(update_parms_t uparms)
 	scene_update(scene);
 	player_update(&p, scene, uparms);
 
-	return SCENE_TESTROOM;
+	return (SCENE_TESTROOM);
 }
 
 void testroom_draw(float subtick)

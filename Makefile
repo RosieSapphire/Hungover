@@ -1,5 +1,5 @@
 GAME=hungover
-CFLAGS=-Wextra -Iinclude
+CFLAGS=-Wall -Wextra -Iinclude -Ofast
 BUILD_DIR=build
 include $(N64_INST)/include/n64.mk
 
@@ -57,5 +57,8 @@ clean:
 	rm -rf $(BUILD_DIR) $(GAME).z64
 
 -include $(wildcard $(BUILD_DIR)/*.d)
+
+betty:
+	clear; betty include/*/*.h src/*/*.c src/*.c
 
 .PHONY: all clean

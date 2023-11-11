@@ -1,9 +1,10 @@
-#ifndef ENGINE_VERTEX_H_
-#define ENGINE_VERTEX_H_
+#ifndef _ENGINE_VERTEX_H_
+#define _ENGINE_VERTEX_H_
 
-typedef struct {
+typedef struct
+{
 	float pos[3];
 	float uv[2];
 } vertex_t;
 
-#endif /* ENGINE_VERTEX_H_ */
+#endif /* _ENGINE_VERTEX_H_ */

@@ -1,17 +1,19 @@
 #ifndef ENGINE_VECTOR_H_
 #define ENGINE_VECTOR_H_
 
-void vector_copy(const float *src, float *dst, int comp);
-void vector_zero(float *vec, int comp);
-void vector_add(const float *a, const float *b, float *c, const int comp);
-void vector_sub(const float *a, const float *b, float *c, const int comp);
-void vector_scale(float *x, float s, int comp);
-void vector_lerp(const float *a, const float *b, float t, float *o, int comp);
-void vector_smooth(float *a, float *b, float t, float *o, int comp);
-float vector_dot(const float *a, const float *b, const int comp);
-float vector_magnitude_sqr(float *x, int comp);
-float vector_magnitude(float *x, int comp);
-float vector_normalize(float *x, int comp);
-void vector_print(float *x, int comp);
+#include "engine/types.h"
+
+void vector_copy(const f32 *src, f32 *dst, const u8 comp);
+void vector_zero(f32 *vec, const u8 comp);
+void vector_add(const f32 *a, const f32 *b, f32 *c, const u8 comp);
+void vector_sub(const f32 *a, const f32 *b, f32 *c, const u8 comp);
+void vector_scale(f32 *x, f32 s, const u8 comp);
+void vector_lerp(const f32 *a, const f32 *b, f32 t, f32 *o, const u8 comp);
+void vector_smooth(f32 *a, f32 *b, f32 t, f32 *o, const u8 comp);
+f32 vector_dot(const f32 *a, const f32 *b, const u8 comp);
+f32 vector_magnitude_sqr(f32 *x, const u8 comp);
+f32 vector_magnitude(f32 *x, const u8 comp);
+f32 vector_normalize(f32 *x, const u8 comp);
+void vector_print(f32 *x, const u8 comp);
 
 #endif /* ENGINE_VECTOR_H_ */

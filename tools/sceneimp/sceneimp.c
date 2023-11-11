@@ -364,7 +364,7 @@ static void _mesh_read(mesh_t *m, FILE *file)
 	fread(&m->tex_index, sizeof(uint16_t), 1, file);
 	m->tex_index = uint16_endian_flip(m->tex_index);
 
-	/* debugging */
+	/* debugging
 	printf("\tname=%s, num_verts=%d, num_indis=%d, tex_index=%d\n",
 			m->name, m->num_verts, m->num_indis, m->tex_index);
 
@@ -384,6 +384,7 @@ static void _mesh_read(mesh_t *m, FILE *file)
 				m->indis[i * 3 + 2]);
 
 	printf("\n");
+	*/
 }
 
 static void _anim_read(animation_t *a, FILE *file)
@@ -427,7 +428,7 @@ static void _anim_read(animation_t *a, FILE *file)
 			a->sca[i].vec[j] = float_endian_flip(a->sca[i].vec[j]);
 	}
 
-	/* debugging */
+	/* debugging
 	printf("\tname=%s, mesh_index=%d, length=%d, "
 			"npos=%d, nrot=%d, nsca=%d\n",
 			a->name, a->mesh_index, a->length,
@@ -453,8 +454,10 @@ static void _anim_read(animation_t *a, FILE *file)
 				a->sca[i].vec[2]);
 
 	printf("\n");
+	*/
 }
 
+/*
 static void _matrix_print(float *mat, int indents)
 {
 	for(int i = 0; i < 4; i++) {
@@ -467,6 +470,7 @@ static void _matrix_print(float *mat, int indents)
 	}
 	printf("\n");
 }
+*/
 
 static void _node_read(node_t *n, FILE *file, int depth)
 {
@@ -479,11 +483,13 @@ static void _node_read(node_t *n, FILE *file, int depth)
 
 	fread(&n->num_children, sizeof(uint16_t), 1, file);
 	n->num_children = uint16_endian_flip(n->num_children);
+	/*
 	for(int i = 0; i < depth; i++)
 		printf("\t");
 	printf("name=%s, mesh_index=%d num_children=%d\n",
 			n->name, n->mesh_index, n->num_children);
 	_matrix_print(n->mat, depth);
+	*/
 
 	n->children = malloc(sizeof(node_t) * n->num_children);
 	for(int i = 0; i < n->num_children; i++)
@@ -503,14 +509,14 @@ static void _scene_read_test(const char *path_out)
 	fread(&scene.num_meshes, sizeof(uint16_t), 1, file);
 	scene.num_meshes = uint16_endian_flip(scene.num_meshes);
 	scene.meshes = malloc(sizeof(mesh_t) * scene.num_meshes);
-	printf("num_meshes=%d\n", scene.num_meshes);
+	// printf("num_meshes=%d\n", scene.num_meshes);
 	for(int i = 0; i < scene.num_meshes; i++)
 		_mesh_read(scene.meshes + i, file);
 
 	fread(&scene.num_anims, sizeof(uint16_t), 1, file);
 	scene.num_anims = uint16_endian_flip(scene.num_anims);
 	scene.anims = malloc(sizeof(animation_t) * scene.num_anims);
-	printf("num_anims=%d\n", scene.num_anims);
+	// printf("num_anims=%d\n", scene.num_anims);
 	for(int i = 0; i < scene.num_anims; i++)
 		_anim_read(scene.anims + i, file);
 
@@ -518,10 +524,10 @@ static void _scene_read_test(const char *path_out)
 
 	fread(&scene.num_tex_paths, sizeof(uint16_t), 1, file);
 	scene.num_tex_paths = uint16_endian_flip(scene.num_tex_paths);
-	printf("num_tex_paths=%d\n", scene.num_tex_paths);
+	// printf("num_tex_paths=%d\n", scene.num_tex_paths);
 	for(uint16_t i = 0; i < scene.num_tex_paths; i++) {
 		fread(scene.tex_paths[i], sizeof(char), TEX_PATH_MAX_LEN, file);
-		printf("\ttex_path%d='%s'\n", i, scene.tex_paths[i]);
+		// printf("\ttex_path%d='%s'\n", i, scene.tex_paths[i]);
 	}
 
 	fclose(file);

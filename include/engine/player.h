@@ -8,20 +8,23 @@
 #define COOLDOWN_PISTOL 0.21f
 #define COOLDOWN_BONG 2.0f
 
-enum item_index {
+enum item_index
+{
 	NOTHING = -1,
 	PISTOL,
 	BONG,
 	NUM_ITEM_TYPES,
 };
 
-typedef struct {
+typedef struct
+{
 	scene_t *scene;
 	int16_t anim_cur;
 	float cooldown;
 } item_t;
 
-typedef struct {
+typedef struct
+{
 	camera_t cam;
 	float vel[3];
 	enum item_index item_selected;

@@ -33,12 +33,13 @@ int main(void)
 	debug_init_isviewer();
 	debug_init_usblog();
 	/*
-	rdpq_debug_start();
-	*/
+	 * rdpq_debug_start();
+	 */
 
 	sfx_init();
 
-	if(scene_index == SCENE_TITLE) {
+	if (scene_index == SCENE_TITLE)
+	{
 		wav64_play(&title_music0, SFXC_MUSIC0);
 		wav64_play(&title_music1, SFXC_MUSIC1);
 		wav64_play(&title_music2, SFXC_MUSIC2);
@@ -46,12 +47,14 @@ int main(void)
 	}
 
 	surface_t dep = surface_alloc(FMT_RGBA16, CONF_WIDTH, CONF_HEIGHT);
-
 	long ticks_last = get_ticks();
 	long ticks_accum = 0;
-	while(1) {
+
+	while (1)
+	{
 		long ticks_now = get_ticks();
 		long ticks_delta = TICKS_DISTANCE(ticks_last, ticks_now);
+
 		ticks_last = ticks_now;
 
 		enum scene_index (*update_funcs[SCENE_COUNT])(update_parms_t) = {
@@ -63,7 +66,8 @@ int main(void)
 		};
 
 		ticks_accum += ticks_delta;
-		while(ticks_accum >= CONF_DELTATICKS) {
+		while (ticks_accum >= CONF_DELTATICKS)
+		{
 			joypad_poll();
 			update_parms_t uparms = {
 				get_keys_down(),
@@ -76,17 +80,19 @@ int main(void)
 
 		float subtick = (float)ticks_accum / (float)CONF_DELTATICKS;
 		surface_t *col = display_get();
+
 		rdpq_attach_clear(col, &dep);
 		(*draw_funcs[scene_index])(subtick);
 		rdpq_detach_show();
 
-		if(!audio_can_write())
+		if (!audio_can_write())
 			continue;
 
 		short *audio_buf = audio_write_begin();
+
 		mixer_poll(audio_buf, audio_get_buffer_length());
 		audio_write_end();
 	}
 
-	return 0;
+	return (0);
 }

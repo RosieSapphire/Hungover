@@ -6,31 +6,33 @@
 #include "engine/scene.h"
 #include "engine/smesh.h"
 
-smesh_t *smesh_create_data(const char *name, uint16_t num_verts,
-		uint16_t num_indis, const vertex_t *verts,
-		const uint16_t *indis)
+smesh_t *smesh_create_data(const char *name, u16 num_verts,
+		u16 num_indis, const vertex_t *verts,
+		const u16 *indis)
 {
-	smesh_t *m = malloc(sizeof(smesh_t));
-	strcpy(m->name, name);
 	const size_t verts_size = sizeof(vertex_t) * num_verts;
-	const size_t indis_size = sizeof(uint16_t) * num_indis;
+	const size_t indis_size = sizeof(u16) * num_indis;
+	smesh_t *m = malloc(sizeof(smesh_t));
+
+	strcpy(m->name, name);
 	m->verts = malloc(verts_size);
 	m->indis = malloc(indis_size);
 	m->num_verts = num_verts;
 	m->num_indis = num_indis;
 	memcpy(m->verts, verts, verts_size);
 	memcpy(m->indis, indis, indis_size);
-	return m;
+
+	return (m);
 }
 
 void smesh_copy(const smesh_t *src, smesh_t *dst)
 {
+	const size_t verts_size = sizeof(vertex_t) * src->num_verts;
+	const size_t indis_size = sizeof(u16) * src->num_indis;
+
 	strncpy(dst->name, src->name, CONF_NAME_MAX_LEN);
 	dst->num_verts = src->num_verts;
 	dst->num_indis = src->num_indis;
-
-	const size_t verts_size = sizeof(vertex_t) * src->num_verts;
-	const size_t indis_size = sizeof(uint16_t) * src->num_indis;
 	dst->verts = malloc(verts_size);
 	dst->indis = malloc(indis_size);
 	memcpy(dst->verts, src->verts, verts_size);
@@ -48,40 +50,40 @@ void smesh_draw(const void *sc, const smesh_t *m)
 {
 	scene_t *s = (scene_t *)sc;
 
-	if(s) {
+	if (s)
+	{
 		const int tex_ind = s->tex_indis[m->tex_index];
-		/*
-		if(!strcmp(m->name, "Bong"))
-			debugf("name=%s, tex_ind=%d, mat_ind=%d\n",
-				m->name, tex_ind, m->tex_index);
-				*/
+
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, tex_objs_loaded[tex_ind].id);
 	}
+
 	glEnableClientState(GL_VERTEX_ARRAY);
-	glVertexPointer(3, GL_FLOAT, 5 * sizeof(float), m->verts->pos);
+	glVertexPointer(3, GL_FLOAT, 5 * sizeof(f32), m->verts->pos);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	glTexCoordPointer(2, GL_FLOAT, 5 * sizeof(float), m->verts->uv);
+	glTexCoordPointer(2, GL_FLOAT, 5 * sizeof(f32), m->verts->uv);
 
 	glDrawElements(GL_TRIANGLES, m->num_indis,
 			GL_UNSIGNED_SHORT, m->indis);
 
-	if(s) {
+	if (s)
+	{
 		glBindTexture(GL_TEXTURE_2D, 0);
 		glDisable(GL_TEXTURE_2D);
 	}
+
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
-void smesh_draw_tex(const smesh_t *m, const uint32_t tex)
+void smesh_draw_tex(const smesh_t *m, const u32 tex)
 {
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, tex);
 	glEnableClientState(GL_VERTEX_ARRAY);
-	glVertexPointer(3, GL_FLOAT, 5 * sizeof(float), m->verts->pos);
+	glVertexPointer(3, GL_FLOAT, 5 * sizeof(f32), m->verts->pos);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	glTexCoordPointer(2, GL_FLOAT, 5 * sizeof(float), m->verts->uv);
+	glTexCoordPointer(2, GL_FLOAT, 5 * sizeof(f32), m->verts->uv);
 
 	glDrawElements(GL_TRIANGLES, m->num_indis,
 			GL_UNSIGNED_SHORT, m->indis);
