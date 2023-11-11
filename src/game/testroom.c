@@ -12,6 +12,11 @@ static bool is_loaded;
 static scene_t *scene;
 static player_t p;
 
+/**
+ * _testroom_load - Load assets for Testroom
+ *
+ * Description: Loads the assets for the Testroom scene
+ */
 static void _testroom_load(void)
 {
 	if (is_loaded)
@@ -28,6 +33,13 @@ static void _testroom_load(void)
 	is_loaded = true;
 }
 
+/**
+ * testroom_update - Update Testroom and Player
+ * @uparms: Input Parameters
+ *
+ * Description: Updates Testroom scene and player character
+ * Return: Desired next scene
+ */
 enum scene_index testroom_update(struct update_parms uparms)
 {
 	scene_update(scene);
@@ -36,6 +48,12 @@ enum scene_index testroom_update(struct update_parms uparms)
 	return (SCENE_TESTROOM);
 }
 
+/**
+ * testroom_draw - Draw Testroom Scene
+ * @subtick: Delta value between frames
+ *
+ * Description: Draws Testroom scene with player camera
+ */
 void testroom_draw(float subtick)
 {
 	_testroom_load();
