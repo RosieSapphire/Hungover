@@ -131,29 +131,3 @@ void title_logo_draw_object(const f32 difft, const u8 i, const u8 num_it,
 
 	smesh_draw_tex(text_mesh, tid);
 }
-
-void title_logo_draw(const smesh_t *mesh, const u32 tid, f32 music_t, f32 t,
-		     f32 subtick, f32 music_beats_last, f32 music_beats,
-		     u8 music_state_last, u8 music_state,
-		     const u8 music_ch_last, u8 *bg_is_white)
-{
-	int num_it = 5;
-
-	for (int i = 0; i < num_it; i++)
-	{
-		glLoadIdentity();
-		f32 beats_lerp = lerpf(music_beats_last, music_beats, subtick);
-		f32 difft = 0.0f;
-
-		if(!title_logo_transform(music_state, music_state_last,
-			music_ch_last, &beats_lerp, &difft, music_t))
-			break;
-
-		title_logo_draw_object(difft, i, num_it, beats_lerp, t,
-			 mesh, tid, bg_is_white);
-
-		if (difft >= 1.0f)
-			return;
-	}
-}
-
