@@ -3,6 +3,13 @@
 
 #include "game/title.h"
 
+/**
+ * title_logo_transform_intro - Transforms Title Logo for Intro
+ * @beats_lerp: A pointer to the beats_lerp variable
+ *
+ * Description: Transforms the title logo for the intro music state
+ * Return: Bool for whether or not to draw logo
+ */
 u8 title_logo_transform_intro(f32 *beats_lerp)
 {
 	f32 a[3] = {0, 0, -10};
@@ -23,6 +30,14 @@ u8 title_logo_transform_intro(f32 *beats_lerp)
 	return (1);
 }
 
+/**
+ * title_logo_transform_main - Transforms Title Logo for Main Menu
+ * @music_t: Music Interpolation
+ * @music_ch_last: Last music channel played
+ *
+ * Description: Transforms the title logo for the main menu music state
+ * Return: Bool for whether or not to draw logo
+ */
 u8 title_logo_transform_main(const f32 music_t, const u8 music_ch_last)
 {
 	f32 a[3] = {0,    0,     0};
