@@ -4,6 +4,11 @@
 #include "engine/vector.h"
 #include "engine/util.h"
 
+/**
+ * projection_setup - Sets up the Projection Matrix
+ *
+ * Description: Sets up the Projection Matrix using Libdragon's OpenGL SDK
+ */
 void projection_setup(void)
 {
 	glMatrixMode(GL_PROJECTION);
@@ -14,6 +19,15 @@ void projection_setup(void)
 			CONF_NEAR_PLANE, CONF_FAR_PLANE);
 }
 
+/**
+ * quat_lerp - Lerps between quaternions
+ * @a: Quaternion A
+ * @b: Quaternion B
+ * @c: Quaternion Out
+ * @t: Interpolation
+ *
+ * Description: Linearly Interpolates between two quaternions
+ */
 void quat_lerp(const f32 *a, const f32 *b, f32 *c, const f32 t)
 {
 	f32 out_scale = (vector_dot(a, b, 4) >= 0) ? 1.0f : -1.0f;
@@ -24,6 +38,13 @@ void quat_lerp(const f32 *a, const f32 *b, f32 *c, const f32 t)
 	vector_normalize(c, 4);
 }
 
+/**
+ * pos_from_mat - Position from Matrix
+ * @mat: The Matrix (Starring Keanu Reeves)
+ * @pos: Position Vector Output
+ *
+ * Description: Gets position from a 4x4 matrix
+ */
 void pos_from_mat(const f32 *mat, f32 *pos)
 {
 	pos[0] = mat[12];
