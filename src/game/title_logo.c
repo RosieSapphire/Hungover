@@ -92,7 +92,7 @@ u8 title_logo_transform_start(const f32 beats_lerp, f32 *difft,
 
 void title_logo_draw_object(const f32 difft, const u8 i, const u8 num_it,
 			    const f32 beats_lerp, const f32 t,
-			    const smesh_t *text_mesh, const u32 tid,
+			    const struct mesh *text_mesh, const u32 tid,
 			    u8 *bg_is_white)
 {
 	if (difft >= 1.0f)
@@ -100,7 +100,7 @@ void title_logo_draw_object(const f32 difft, const u8 i, const u8 num_it,
 		glColor3f(0, 0, 0);
 		glTranslatef(0, 0, 1.2f);
 		*bg_is_white = true;
-		smesh_draw_tex(text_mesh, tid);
+		mesh_draw_tex(text_mesh, tid);
 		return;
 	}
 
@@ -121,10 +121,10 @@ void title_logo_draw_object(const f32 difft, const u8 i, const u8 num_it,
 	bright *= bright * bright;
 	glColor3f(bright, bright, bright);
 
-	smesh_draw_tex(text_mesh, tid);
+	mesh_draw_tex(text_mesh, tid);
 }
 
-void title_logo_draw_press_start(const smesh_t *mesh, const u32 tid,
+void title_logo_draw_press_start(const struct mesh *mesh, const u32 tid,
 				 const u8 music_state, const f32 music_beats)
 {
 	if (music_state != 1)
@@ -137,5 +137,5 @@ void title_logo_draw_press_start(const smesh_t *mesh, const u32 tid,
 
 	blink = (int)(blink * 2) & 1;
 	glColor3f(blink, blink, blink);
-	smesh_draw_tex(mesh, tid);
+	mesh_draw_tex(mesh, tid);
 }

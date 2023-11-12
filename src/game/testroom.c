@@ -10,8 +10,8 @@
 #include "game/testroom.h"
 
 static bool is_loaded;
-static scene_t *scene;
-static player_t p;
+static struct scene *scene;
+static struct player p;
 
 /**
  * _testroom_load - Load assets for Testroom

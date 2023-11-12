@@ -87,8 +87,9 @@ void title_menu_option_draw_main(f32 t, s8 move_dir, u8 os,
 	glTranslatef(c[0], c[1], c[2]);
 }
 
-void title_menu_option_draw(const smesh_t *mesh, s8 move_dir, u8 music_state,
-			    u8 os, f32 music_t, f32 t, int ind, u32 tex)
+void title_menu_option_draw(const struct mesh *mesh, s8 move_dir,
+			    u8 music_state, u8 os, f32 music_t, f32 t,
+			    int ind, u32 tex)
 {
 	f32 a[3], b[3], c[3];
 
@@ -124,5 +125,5 @@ void title_menu_option_draw(const smesh_t *mesh, s8 move_dir, u8 music_state,
 
 	glTranslatef(sinf(to) * 0.04f, sinf(to * 1.5f) * 0.04f, 0);
 	glRotatef(sinf(to) * 4, 0, 0, 1);
-	smesh_draw_tex(mesh, tex);
+	mesh_draw_tex(mesh, tex);
 }

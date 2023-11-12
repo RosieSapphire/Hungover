@@ -4,10 +4,10 @@
 #include <GL/gl.h>
 
 #include "engine/scene.h"
-#include "engine/smesh.h"
+#include "engine/mesh.h"
 
 /**
- * smesh_create_data - Creates a Mesh from Data
+ * mesh_create_data - Creates a Mesh from Data
  * @name: Mesh Name
  * @num_verts: Number of Vertices
  * @num_indis: Number of Indices
@@ -16,12 +16,12 @@
  *
  * Return: Mesh Created from Data
  */
-smesh_t *smesh_create_data(const char *name, u16 num_verts,
-		u16 num_indis, const struct vertex *verts, const u16 *indis)
+struct mesh *mesh_create_data(const char *name, u16 num_verts, u16 num_indis,
+			      const struct vertex *verts, const u16 *indis)
 {
 	const size_t verts_size = sizeof(struct vertex) * num_verts;
 	const size_t indis_size = sizeof(u16) * num_indis;
-	smesh_t *m = malloc(sizeof(smesh_t));
+	struct mesh *m = malloc(sizeof(struct mesh));
 
 	strcpy(m->name, name);
 	m->verts = malloc(verts_size);
@@ -34,7 +34,12 @@ smesh_t *smesh_create_data(const char *name, u16 num_verts,
 	return (m);
 }
 
-void smesh_copy(const smesh_t *src, smesh_t *dst)
+/**
+ * mesh_copy - Copies a Mesh to Another
+ * @src: Source Mesh
+ * @dst: Destination Mesh
+ */
+void mesh_copy(const struct mesh *src, struct mesh *dst)
 {
 	const size_t verts_size = sizeof(struct vertex) * src->num_verts;
 	const size_t indis_size = sizeof(u16) * src->num_indis;
@@ -48,16 +53,27 @@ void smesh_copy(const smesh_t *src, smesh_t *dst)
 	memcpy(dst->indis, src->indis, indis_size);
 }
 
-void smesh_destroy(smesh_t *m)
+/**
+ * mesh_destroy - Destroys/Unloads a Mesh
+ * @m: Mesh to Unload
+ */
+void mesh_destroy(struct mesh *m)
 {
 	free(m->verts);
 	free(m->indis);
 	m->num_verts = m->num_indis = 0;
 }
 
-void smesh_draw(const void *sc, const smesh_t *m)
+/**
+ * mesh_draw - Draws a Mesh in a Scene
+ * @sc: Scene to Connect To
+ * @m: Mesh to Draw
+ *
+ * Description: Draws a Mesh using a Scene to find Texture Index
+ */
+void mesh_draw(const void *sc, const struct mesh *m)
 {
-	scene_t *s = (scene_t *)sc;
+	struct scene *s = (struct scene *)sc;
 
 	if (s)
 	{
@@ -85,7 +101,12 @@ void smesh_draw(const void *sc, const smesh_t *m)
 	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
-void smesh_draw_tex(const smesh_t *m, const u32 tex)
+/**
+ * mesh_draw_tex - Draws a Mesh with a custom Texture
+ * @m: Mesh to Draw
+ * @tex: OpenGL Texture ID
+ */
+void mesh_draw_tex(const struct mesh *m, const u32 tex)
 {
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, tex);

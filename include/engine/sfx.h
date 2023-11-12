@@ -3,6 +3,16 @@
 
 #include <libdragon.h>
 
+/**
+ * enum sfx_channels - SFX Channels
+ * @SFXC_MUSIC0: Music Channel 0
+ * @SFXC_MUSIC1: Music Channel 1
+ * @SFXC_MUSIC2: Music Channel 2
+ * @SFXC_MUSIC3: Music Channel 3
+ * @SFXC_MUSIC4: Music Channel 4
+ * @SFXC_ITEM: Item Channel
+ * @SFXC_COUNT: Number of SFX Channels
+ */
 enum sfx_channels
 {
 	SFXC_MUSIC0,

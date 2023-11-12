@@ -85,7 +85,8 @@ static void _draw(void)
 static void _update(const u32 ticks_delta)
 {
 	enum scene_index (*update_funcs[SCENE_COUNT])(struct update_parms) = {
-		title_update, testroom_update,
+		title_update,
+		testroom_update,
 	};
 
 	ticks_accum += ticks_delta;

@@ -62,7 +62,7 @@ betty-style:
 	betty-style --allow-global-variables include/*/*.h src/*/*.c src/*.c
 
 betty-doc:
-	betty-doc -v include/*/*.h src/*/*.c src/*.c
+	betty-doc include/*/*.h src/*/*.c src/*.c
 
 betty:
 	clear; make betty-doc; make betty-style;

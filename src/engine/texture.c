@@ -7,7 +7,7 @@
 
 u16 num_texs_loaded;
 char tex_paths_loaded[TEX_PATH_MAX_CNT][TEX_PATH_MAX_LEN];
-texture_t *tex_objs_loaded;
+struct texture *tex_objs_loaded;
 
 /**
  * textures_init - Initializes Texture Subsystem
@@ -26,9 +26,9 @@ void textures_init(void)
  *
  * Return: The Empty Texture
  */
-texture_t texture_create_empty(int fmt, int width, int height)
+struct texture texture_create_empty(int fmt, int width, int height)
 {
-	texture_t t;
+	struct texture t;
 
 	t.surf = surface_alloc(fmt, width, height);
 	glGenTextures(1, &t.id);
@@ -49,7 +49,7 @@ texture_t texture_create_empty(int fmt, int width, int height)
  */
 u32 texture_create_file(const char *path)
 {
-	texture_t t;
+	struct texture t;
 
 	for (u16 i = 0; i < num_texs_loaded; i++)
 	{
@@ -59,7 +59,7 @@ u32 texture_create_file(const char *path)
 
 	num_texs_loaded++;
 	tex_objs_loaded = realloc(tex_objs_loaded,
-			sizeof(texture_t) * num_texs_loaded);
+			sizeof(struct texture) * num_texs_loaded);
 	t.spr = sprite_load(path);
 
 	glGenTextures(1, &t.id);
@@ -84,11 +84,11 @@ u32 texture_create_file(const char *path)
  * texture_destroy - Destroys a Texture
  * @t: Texture in Question
  */
-void texture_destroy(texture_t *t)
+void texture_destroy(struct texture *t)
 {
 	glDeleteTextures(1, &t->id);
 	sprite_free(t->spr);
 	num_texs_loaded--;
 	tex_objs_loaded = realloc(tex_objs_loaded,
-			sizeof(texture_t) * num_texs_loaded);
+			sizeof(struct texture) * num_texs_loaded);
 }

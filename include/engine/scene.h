@@ -1,7 +1,7 @@
 #ifndef ENGINE_SCENE_H_
 #define ENGINE_SCENE_H_
 
-#include "engine/smesh.h"
+#include "engine/mesh.h"
 #include "engine/animation.h"
 #include "engine/node.h"
 #include "engine/update.h"
@@ -24,21 +24,31 @@ enum scene_index
 extern enum scene_index scene_index;
 extern u32 pickup_spin_frame, pickup_spin_frame_last;
 
-typedef struct
+/**
+ * struct scene - Scene Structure
+ * @num_meshes: Number of Meshes
+ * @meshes: Meshes Array
+ * @num_anims: Number of Animations
+ * @anims: Animations Array
+ * @root_node: Root Node for Hierarchy
+ * @num_tex_indis: Number of Texture Indices
+ * @tex_indis: Texture Indices Array
+ */
+struct scene
 {
-	uint16_t num_meshes;
-	smesh_t *meshes;
-	uint16_t num_anims;
-	animation_t *anims;
-	node_t root_node;
-	uint16_t num_tex_indis;
-	uint32_t *tex_indis;
-} scene_t;
+	u16 num_meshes;
+	struct mesh *meshes;
+	u16 num_anims;
+	struct animation *anims;
+	struct node root_node;
+	u16 num_tex_indis;
+	u32 *tex_indis;
+};
 
-scene_t *scene_load(const char *path);
-void scene_unload(scene_t *s);
-void scene_update(scene_t *s);
-void scene_draw(const scene_t *s, float subtick);
-node_t *scene_node_from_name(node_t *n, const char *name);
+struct scene *scene_load(const char *path);
+void scene_unload(struct scene *s);
+void scene_update(struct scene *s);
+void scene_draw(const struct scene *s, float subtick);
+struct node *scene_node_from_name(struct node *n, const char *name);
 
 #endif /* ENGINE_SCENE_H_ */

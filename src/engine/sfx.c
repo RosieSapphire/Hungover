@@ -4,6 +4,9 @@ wav64_t title_music0, title_music1, title_music2,
 	title_music3, title_music4, pickup_pistol, pickup_bong, fire_pistol,
 	lighter_bong;
 
+/**
+ * sfx_init - Initializes Sound Effects and Music
+ */
 void sfx_init(void)
 {
 	/* channels */

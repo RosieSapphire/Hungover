@@ -3,6 +3,12 @@
 
 #include <libdragon.h>
 
+/**
+ * struct update_parms - Update/Input Parameters
+ * @down: Buttons Just Pressed
+ * @held: Buttons Held Down
+ * @stick: Stick Input
+ */
 struct update_parms
 {
 	joypad_buttons_t down, held;

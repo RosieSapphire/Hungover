@@ -6,7 +6,11 @@
 #define DECEL 0.1f
 #define FRICTION 4
 
-void player_friction_update(player_t *p)
+/**
+ * player_friction_update - Updates Player's Friction to Clamp Velocity
+ * @p: Player Struct
+ */
+void player_friction_update(struct player *p)
 {
 	const f32 speed = vector_magnitude(p->vel, 3);
 
@@ -24,7 +28,12 @@ void player_friction_update(player_t *p)
 	vector_scale(p->vel, newspeed, 3);
 }
 
-void player_acceleration_update(player_t *p, struct update_parms uparms)
+/**
+ * player_acceleration_update - Updates Player's Acceleration and Velocity
+ * @p: Player Struct
+ * @uparms: Input Parameters
+ */
+void player_acceleration_update(struct player *p, struct update_parms uparms)
 {
 	int cx = uparms.held.c_left - uparms.held.c_right;
 	int cy = uparms.held.c_up - uparms.held.c_down;
@@ -46,7 +55,12 @@ void player_acceleration_update(player_t *p, struct update_parms uparms)
 	vector_add(p->vel, move, p->vel, 3);
 }
 
-void player_look_update(player_t *p, struct update_parms uparms)
+/**
+ * player_look_update - Updates Player's Look Direction for Camera
+ * @p: Player Struct
+ * @uparms: Input Parameters
+ */
+void player_look_update(struct player *p, struct update_parms uparms)
 {
 	f32 stick_x = ((f32)uparms.stick.stick_x / 85.0f);
 	f32 stick_y = ((f32)uparms.stick.stick_y / 85.0f);
@@ -70,7 +84,11 @@ void player_look_update(player_t *p, struct update_parms uparms)
 		p->cam.pitch_smooth = p->cam.pitch;
 }
 
-void player_pos_and_focus_update(player_t *p)
+/**
+ * player_pos_and_focus_update - Updates Player's Position and Camera Angle
+ * @p: Player Struct
+ */
+void player_pos_and_focus_update(struct player *p)
 {
 	vector_copy(p->cam.eye, p->cam.eye_last, 3);
 	vector_add(p->cam.eye, p->vel, p->cam.eye, 3);

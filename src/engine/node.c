@@ -5,7 +5,11 @@
 #include "engine/types.h"
 #include "engine/node.h"
 
-void node_destroy(node_t *n)
+/**
+ * node_destroy - Destroys a Node
+ * @n: Node in Question
+ */
+void node_destroy(struct node *n)
 {
 	memset(n->name, 0, CONF_NAME_MAX_LEN);
 	memset(n->mat, 0, 16 * sizeof(f32));

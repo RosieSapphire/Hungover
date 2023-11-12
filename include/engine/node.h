@@ -3,18 +3,25 @@
 
 #include "engine/config.h"
 
-typedef struct node_t node_t;
-
-struct node_t
+/**
+ * struct node - Node Structure
+ * @name: Node Name
+ * @mesh_index: Scene Mesh Index
+ * @mat: Transformation Matrix
+ * @num_children: Number of Node Children
+ * @children: Children Array
+ * @is_active: Boolean for Is Active
+ */
+struct node
 {
 	char name[CONF_NAME_MAX_LEN];
-	uint16_t mesh_index;
-	float mat[4 * 4];
-	uint16_t num_children;
-	node_t *children;
-	bool is_active;
+	u16 mesh_index;
+	f32 mat[4 * 4];
+	u16 num_children;
+	struct node *children;
+	u8 is_active;
 };
 
-void node_destroy(node_t *n);
+void node_destroy(struct node *n);
 
 #endif /* ENGINE_NODE_H_ */

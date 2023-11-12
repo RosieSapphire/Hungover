@@ -12,9 +12,14 @@ static const char *player_item_names[NUM_ITEM_TYPES] = {
 	"PU.Bong",
 };
 
-void player_item_pickup_check(player_t *p, scene_t *s)
+/**
+ * player_item_pickup_check - Checks for Player Pickup up Item
+ * @p: Player Struct
+ * @s: Scene with Pickup Item
+ */
+void player_item_pickup_check(struct player *p, struct scene *s)
 {
-	node_t *n;
+	struct node *n;
 
 	for (int i = 0; i < NUM_ITEM_TYPES; i++)
 	{
@@ -30,20 +35,19 @@ void player_item_pickup_check(player_t *p, scene_t *s)
 			continue;
 		n->is_active = false;
 		p->num_items++;
-		const char *item_paths[NUM_ITEM_TYPES] = {
-			"rom:/pistol.scene",
-			"rom:/bong.scene",
-		};
+		const char *item_paths[NUM_ITEM_TYPES] = {"rom:/pistol.scene",
+							  "rom:/bong.scene"};
 		const u16 ind = p->num_items - 1;
 		const u16 ind2 = p->item_indis[ind] = i;
 
 		p->item_selected = ind;
 		p->items[ind].scene = scene_load(item_paths[ind2]);
 		p->items[ind].anim_cur = 0;
-		animation_t *anim = p->items[ind].scene->anims + 0;
+		struct animation *anim = p->items[ind].scene->anims + 0;
 
-		anim->frame = anim->is_backward = anim->loops = 0;
-		anim->is_playing = 1;
+		anim->frame = 0;
+		anim->flags &= ~(ANIM_IS_BACKWARD | ANIM_IS_LOOPING);
+		anim->flags |= (ANIM_IS_PLAYING);
 		switch (ind2)
 		{
 		case PISTOL:
@@ -56,11 +60,16 @@ void player_item_pickup_check(player_t *p, scene_t *s)
 	}
 }
 
-void player_item_use_check(player_t *p, struct update_parms uparms)
+/**
+ * player_item_use_check - Checks for Player Using an Item (or Weapon)
+ * @p: Player Struct
+ * @uparms: Input parameters
+ */
+void player_item_use_check(struct player *p, struct update_parms uparms)
 {
 	if (!p->num_items || p->item_selected == NOTHING)
 		return;
-	item_t *item = p->items + p->item_selected;
+	struct item *item = p->items + p->item_selected;
 
 	switch (p->item_indis[p->item_selected])
 	{
@@ -70,28 +79,28 @@ void player_item_use_check(player_t *p, struct update_parms uparms)
 
 		item->anim_cur = 1;
 
-		animation_t *anim = item->scene->anims + item->anim_cur;
+		struct animation *anim = item->scene->anims + item->anim_cur;
 
-		anim->is_backward = anim->loops = 0;
+		anim->flags &= ~(ANIM_IS_BACKWARD | ANIM_IS_LOOPING);
 		anim->frame = 0;
 		item->cooldown = COOLDOWN_PISTOL;
 		wav64_play(&fire_pistol, SFXC_ITEM);
 		return;
 	case BONG:
 		if (!uparms.held.z && item->anim_cur == 1)
-			item->scene->anims[1].is_backward = true;
+			item->scene->anims[1].flags |= ANIM_IS_BACKWARD;
 
 		if (uparms.down.z)
 		{
-			animation_t *anim = item->scene->anims + 1;
+			struct animation *anim = item->scene->anims + 1;
 
 			wav64_play(&lighter_bong, SFXC_ITEM);
 			item->anim_cur = 1;
-			anim->is_backward = false;
+			anim->flags &= ~(ANIM_IS_BACKWARD);
 			anim->frame = 0;
 		}
 
-		item->scene->anims[1].loops = false;
+		item->scene->anims[1].flags &= ~(ANIM_IS_LOOPING);
 
 		return;
 	default:
@@ -99,7 +108,12 @@ void player_item_use_check(player_t *p, struct update_parms uparms)
 	}
 }
 
-void player_item_swap_check(player_t *p, struct update_parms uparms)
+/**
+ * player_item_swap_check - Checks for Switching Player's Selected Item
+ * @p: Player Struct
+ * @uparms: Input parameters
+ */
+void player_item_swap_check(struct player *p, struct update_parms uparms)
 {
 	if (p->num_items < 2)
 		return;
@@ -107,22 +121,29 @@ void player_item_swap_check(player_t *p, struct update_parms uparms)
 	if (uparms.down.r)
 	{
 		p->item_selected = (p->item_selected + 1) % p->num_items;
-		p->items[p->item_selected].anim_cur = 0;
-		animation_t *anim = p->items[p->item_selected].scene->anims + 0;
+		struct item *item_cur = p->items + p->item_selected;
 
-		anim->frame = anim->loops = anim->is_backward = 0;
-		anim->is_playing = 1;
+		item_cur->anim_cur = 0;
+		struct animation *anim = item_cur->scene->anims + 0;
+
+		anim->frame = 0;
+		anim->flags &= ~(ANIM_IS_BACKWARD | ANIM_IS_LOOPING);
+		anim->flags |= ANIM_IS_PLAYING;
 	}
 }
 
-void player_items_animation_update(player_t *p)
+/**
+ * player_items_animation_update - Updates all Animations for Player Items
+ * @p: Player Struct
+ */
+void player_items_animation_update(struct player *p)
 {
 	const u16 i = p->item_selected;
 
 	if (i == 0xFFFF)
 		return;
 
-	item_t *item = p->items + i;
+	struct item *item = p->items + i;
 
 	scene_update(item->scene);
 	if (item->cooldown > 0.0f)
@@ -133,7 +154,12 @@ void player_items_animation_update(player_t *p)
 	}
 }
 
-void player_item_draw(const player_t *p, f32 subtick)
+/**
+ * player_item_draw - Draws Player's Currently Held Item
+ * @p: Player Struct
+ * @subtick: Subtick Between Frames
+ */
+void player_item_draw(const struct player *p, f32 subtick)
 {
 	if (p->item_selected == -1 || !p->num_items)
 		return;
@@ -152,8 +178,8 @@ void player_item_draw(const player_t *p, f32 subtick)
 	pitch_turn = lerpf(pitch_turn, pitch_dist, 0.2f);
 
 	const u16 ind = p->item_selected;
-	const item_t *item = p->items + ind;
-	animation_t *anim = item->scene->anims + item->anim_cur;
+	const struct item *item = p->items + ind;
+	struct animation *anim = item->scene->anims + item->anim_cur;
 
 	glPushMatrix();
 	glLoadIdentity();
@@ -161,6 +187,6 @@ void player_item_draw(const player_t *p, f32 subtick)
 	glRotatef(-90, 0, 1, 0);
 	glRotatef(-90, 1, 0, 0);
 	animation_setup_matrix(anim, subtick);
-	smesh_draw(item->scene, &p->items[ind].scene->meshes[0]);
+	mesh_draw(item->scene, &p->items[ind].scene->meshes[0]);
 	glPopMatrix();
 }

@@ -5,16 +5,20 @@
 #include "engine/vector.h"
 #include "engine/animation.h"
 
-void animation_update(animation_t *a)
+/**
+ * animation_update - Updates Animation
+ * @a: Animation to Update
+ */
+void animation_update(struct animation *a)
 {
 	a->frame_last = a->frame;
 
-	if (a->is_backward)
+	if (a->flags & ANIM_IS_BACKWARD)
 		a->frame--;
 	else
 		a->frame++;
 
-	if (a->loops)
+	if (a->flags & ANIM_IS_LOOPING)
 	{
 		if ((s16)a->frame < 0)
 			a->frame = a->length - 1;
@@ -28,9 +32,17 @@ void animation_update(animation_t *a)
 	a->frame = clampi(a->frame, 0, a->length - 1);
 }
 
-static void _animation_setup_values_lerp(const animation_t *a, f32 subtick,
-					 f32 *pos_out, f32 *rot_out,
-					 f32 *sca_out)
+/**
+ * _animation_setup_values_lerp - Sets up Pos/Rot/Sca Lerp Values
+ * @a: Animation to Update
+ * @subtick: Subtick Between Frames
+ * @pos_out: Position Output
+ * @rot_out: Rotation Output
+ * @sca_out: Scaling Output
+ */
+static void _animation_setup_values_lerp(const struct animation *a,
+					 f32 subtick, f32 *pos_out,
+					 f32 *rot_out, f32 *sca_out)
 {
 	if (a->num_pos)
 	{
@@ -64,7 +76,12 @@ static void _animation_setup_values_lerp(const animation_t *a, f32 subtick,
 
 }
 
-void animation_setup_matrix(const animation_t *a, f32 subtick)
+/**
+ * animation_setup_matrix - Sets up OpenGL Matrix for Animation
+ * @a: Animation to Set up Matrix for
+ * @subtick: Subtick Between Frames
+ */
+void animation_setup_matrix(const struct animation *a, f32 subtick)
 {
 	f32 pos_lerp[3] = {0, 0, 0};
 	f32 rot_lerp[4] = {0, 0, 0, 1};
@@ -106,10 +123,15 @@ void animation_setup_matrix(const animation_t *a, f32 subtick)
 	glMultMatrixf(mat);
 }
 
-void animation_destroy(animation_t *a)
+/**
+ * animation_destroy - Destroys an Animation
+ * @a: Animation to Destroy
+ */
+void animation_destroy(struct animation *a)
 {
 	a->mesh_index = a->length = a->num_pos =
-		a->num_rot = a->num_sca = a->frame = a->is_playing = 0;
+		a->num_rot = a->num_sca = a->frame = 0;
+	a->flags = ANIM_FLAGS_NONE;
 	free(a->pos);
 	free(a->rot);
 	free(a->sca);

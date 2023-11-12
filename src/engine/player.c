@@ -6,18 +6,30 @@
 #include "engine/camera.h"
 #include "engine/sfx.h"
 #include "engine/player.h"
+#include "engine/update.h"
 
-void player_init(player_t *p)
+/**
+ * player_init - Initializes Player
+ * @p: Player in Question
+ */
+void player_init(struct player *p)
 {
 	camera_init(&p->cam);
 	vector_zero(p->vel, 3);
 	p->item_selected = NOTHING;
 	p->num_items = 0;
 	memset(p->item_indis, 0, sizeof(u16) * NUM_ITEM_TYPES);
-	memset(p->items, 0, sizeof(item_t) * NUM_ITEM_TYPES);
+	memset(p->items, 0, sizeof(struct item) * NUM_ITEM_TYPES);
 }
 
-void player_update(player_t *p, scene_t *s, struct update_parms uparms)
+/**
+ * player_update - Updates all Facilities of Player Interaction
+ * @p: Player in Question
+ * @s: Scene to Interact with
+ * @uparms: Input Parameters
+ */
+void player_update(struct player *p, struct scene *s,
+		   struct update_parms uparms)
 {
 	player_friction_update(p);
 	player_acceleration_update(p, uparms);
@@ -29,7 +41,12 @@ void player_update(player_t *p, scene_t *s, struct update_parms uparms)
 	player_items_animation_update(p);
 }
 
-void player_view_matrix_setup(const player_t *p, f32 subtick)
+/**
+ * player_view_matrix_setup - Sets up OpenGL's View Matrix with Player Camera
+ * @p: Player for Camera
+ * @subtick: Subtick Between Frames
+ */
+void player_view_matrix_setup(const struct player *p, f32 subtick)
 {
 	f32 cam_foc_lerp[3];
 	f32 cam_eye_lerp[3];

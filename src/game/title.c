@@ -13,9 +13,9 @@ static bool is_loaded;
 static u32 frame_counter;
 static s8 option_selected;
 
-static texture_t new_game_text;
-static texture_t continue_text;
-static texture_t options_text;
+static struct texture new_game_text;
+static struct texture continue_text;
+static struct texture options_text;
 
 static u8 music_state_last;
 static u8 music_state;
@@ -27,12 +27,12 @@ static f32 music_beats;
 static f32 music_state_timer_last;
 static f32 music_state_timer;
 
-static texture_t hungover_text;
-static texture_t press_start_text;
+static struct texture hungover_text;
+static struct texture press_start_text;
 
 static u8 bg_is_white;
 
-static smesh_t *text_mesh;
+static struct mesh *text_mesh;
 
 /**
  * title_load - Loads Title Assets
@@ -77,7 +77,7 @@ void title_load(void)
 
 	const u16 indis[6] = {0, 1, 2, 2, 1, 3};
 
-	text_mesh = smesh_create_data("UI", 4, 6, verts, indis);
+	text_mesh = mesh_create_data("UI", 4, 6, verts, indis);
 	is_loaded = true;
 }
 
@@ -145,8 +145,8 @@ enum scene_index title_update(struct update_parms uparms)
  *
  * Description: Draws all the iterations of the title screen logo
  */
-void title_logo_draw(const smesh_t *mesh, const u32 tid, f32 music_t, f32 t,
-		     f32 subtick, f32 music_beats_last, f32 music_beats,
+void title_logo_draw(const struct mesh *mesh, const u32 tid, f32 music_t,
+		     f32 t, f32 subtick, f32 music_beats_last, f32 music_beats,
 		     u8 music_state_last, u8 music_state,
 		     const u8 music_ch_last, u8 *bg_is_white)
 {

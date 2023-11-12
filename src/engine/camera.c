@@ -3,7 +3,11 @@
 #include "engine/vector.h"
 #include "engine/camera.h"
 
-void camera_init(camera_t *c)
+/**
+ * camera_init - Initializes Camera
+ * @c: Camera in Question
+ */
+void camera_init(struct camera *c)
 {
 	c->pitch = c->yaw = c->pitch_smooth = c->yaw_smooth = 0;
 	c->pitch_last = c->yaw_last = 0;
@@ -14,7 +18,11 @@ void camera_init(camera_t *c)
 	vector_copy(c->foc_last, c->foc, 3);
 }
 
-void camera_get_focus(camera_t *c)
+/**
+ * camera_get_focus - Calculates the Focus Vector for a Camera
+ * @c: Camera in Question
+ */
+void camera_get_focus(struct camera *c)
 {
 	const float cosp = cosf(c->pitch_smooth);
 
