@@ -68,7 +68,7 @@ void title_load(void)
 
 	projection_setup();
 
-	const vertex_t verts[4] = {
+	const struct vertex verts[4] = {
 		{{-1.0f, -0.5f, -2.5f}, {0.0f, 1.0f}},
 		{{ 1.0f, -0.5f, -2.5f}, {1.0f, 1.0f}},
 		{{-1.0f,  0.5f, -2.5f}, {0.0f, 0.0f}},

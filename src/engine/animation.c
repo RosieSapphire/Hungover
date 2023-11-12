@@ -28,12 +28,10 @@ void animation_update(animation_t *a)
 	a->frame = clampi(a->frame, 0, a->length - 1);
 }
 
-void animation_setup_matrix(const animation_t *a, f32 subtick)
+static void _animation_setup_values_lerp(const animation_t *a, f32 subtick,
+					 f32 *pos_out, f32 *rot_out,
+					 f32 *sca_out)
 {
-	f32 pos_lerp[3] = {0, 0, 0};
-	f32 rot_lerp[4] = {0, 0, 0, 1};
-	f32 sca_lerp[3] = {1, 1, 1};
-
 	if (a->num_pos)
 	{
 		const f32 *pos_last =
@@ -41,7 +39,7 @@ void animation_setup_matrix(const animation_t *a, f32 subtick)
 		const f32 *pos_cur =
 			a->pos[clampi(a->frame, 0, a->num_pos - 1)].vec;
 
-		vector_lerp(pos_last, pos_cur, subtick, pos_lerp, 3);
+		vector_lerp(pos_last, pos_cur, subtick, pos_out, 3);
 	}
 
 	if (a->num_rot)
@@ -51,7 +49,7 @@ void animation_setup_matrix(const animation_t *a, f32 subtick)
 		const f32 *rot_cur =
 			a->rot[clampi(a->frame, 0, a->num_rot - 1)].vec;
 
-		quat_lerp(rot_last, rot_cur, rot_lerp, subtick);
+		quat_lerp(rot_last, rot_cur, rot_out, subtick);
 	}
 
 	if (a->num_sca)
@@ -61,8 +59,18 @@ void animation_setup_matrix(const animation_t *a, f32 subtick)
 		const f32 *sca_cur =
 			a->sca[clampi(a->frame, 0, a->num_sca - 1)].vec;
 
-		vector_lerp(sca_last, sca_cur, subtick, sca_lerp, 3);
+		vector_lerp(sca_last, sca_cur, subtick, sca_out, 3);
 	}
+
+}
+
+void animation_setup_matrix(const animation_t *a, f32 subtick)
+{
+	f32 pos_lerp[3] = {0, 0, 0};
+	f32 rot_lerp[4] = {0, 0, 0, 1};
+	f32 sca_lerp[3] = {1, 1, 1};
+
+	_animation_setup_values_lerp(a, subtick, pos_lerp, rot_lerp, sca_lerp);
 
 	f32 mat[4 * 4] = {0};
 

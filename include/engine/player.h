@@ -33,9 +33,29 @@ typedef struct
 	item_t items[NUM_ITEM_TYPES];
 } player_t;
 
+/*
+ * Main
+ */
 void player_init(player_t *p);
 void player_update(player_t *p, scene_t *s, struct update_parms uparms);
 void player_view_matrix_setup(const player_t *p, float subtick);
 void player_item_draw(const player_t *p, float subtick);
+
+/*
+ * Items
+ */
+void player_item_pickup_check(player_t *p, scene_t *s);
+void player_item_use_check(player_t *p, struct update_parms uparms);
+void player_item_swap_check(player_t *p, struct update_parms uparms);
+void player_items_animation_update(player_t *p);
+void player_item_draw(const player_t *p, f32 subtick);
+
+/*
+ * Input
+ */
+void player_friction_update(player_t *p);
+void player_acceleration_update(player_t *p, struct update_parms uparms);
+void player_look_update(player_t *p, struct update_parms uparms);
+void player_pos_and_focus_update(player_t *p);
 
 #endif /* ENGINE_PLAYER_H_ */

@@ -1,3 +1,4 @@
+#include <GL/gl.h>
 #include <GL/gl_integration.h>
 
 #include "engine/camera.h"

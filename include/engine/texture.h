@@ -1,8 +1,9 @@
 #ifndef _ENGINE_TEXTURE_H_
 #define _ENGINE_TEXTURE_H_
 
-#include <GL/gl.h>
 #include <libdragon.h>
+
+#include "engine/types.h"
 
 #define TEX_PATH_MAX_LEN 64
 #define TEX_PATH_MAX_CNT 8

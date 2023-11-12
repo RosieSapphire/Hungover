@@ -6,11 +6,20 @@
 #include "engine/scene.h"
 #include "engine/smesh.h"
 
+/**
+ * smesh_create_data - Creates a Mesh from Data
+ * @name: Mesh Name
+ * @num_verts: Number of Vertices
+ * @num_indis: Number of Indices
+ * @verts: Vertices Array
+ * @indis: Indices Array
+ *
+ * Return: Mesh Created from Data
+ */
 smesh_t *smesh_create_data(const char *name, u16 num_verts,
-		u16 num_indis, const vertex_t *verts,
-		const u16 *indis)
+		u16 num_indis, const struct vertex *verts, const u16 *indis)
 {
-	const size_t verts_size = sizeof(vertex_t) * num_verts;
+	const size_t verts_size = sizeof(struct vertex) * num_verts;
 	const size_t indis_size = sizeof(u16) * num_indis;
 	smesh_t *m = malloc(sizeof(smesh_t));
 
@@ -27,7 +36,7 @@ smesh_t *smesh_create_data(const char *name, u16 num_verts,
 
 void smesh_copy(const smesh_t *src, smesh_t *dst)
 {
-	const size_t verts_size = sizeof(vertex_t) * src->num_verts;
+	const size_t verts_size = sizeof(struct vertex) * src->num_verts;
 	const size_t indis_size = sizeof(u16) * src->num_indis;
 
 	strncpy(dst->name, src->name, CONF_NAME_MAX_LEN);

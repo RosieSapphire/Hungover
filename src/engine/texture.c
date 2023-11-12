@@ -1,19 +1,31 @@
 #include <string.h>
 #include <malloc.h>
+#include <GL/gl.h>
 
 #include "engine/types.h"
 #include "engine/texture.h"
 
-u16 num_texs_loaded = 0;
+u16 num_texs_loaded;
 char tex_paths_loaded[TEX_PATH_MAX_CNT][TEX_PATH_MAX_LEN];
-texture_t *tex_objs_loaded = NULL;
+texture_t *tex_objs_loaded;
 
+/**
+ * textures_init - Initializes Texture Subsystem
+ */
 void textures_init(void)
 {
 	memset(tex_paths_loaded, 0, TEX_PATH_MAX_CNT * TEX_PATH_MAX_LEN);
 	tex_objs_loaded = malloc(0);
 }
 
+/**
+ * texture_create_empty - Creates an Empty Texture
+ * @fmt: Image Format
+ * @width: Image Width
+ * @height: Image Height
+ *
+ * Return: The Empty Texture
+ */
 texture_t texture_create_empty(int fmt, int width, int height)
 {
 	texture_t t;
@@ -29,6 +41,12 @@ texture_t texture_create_empty(int fmt, int width, int height)
 	return (t);
 }
 
+/**
+ * texture_create_file - Loads a Texture from a File
+ * @path: Texture Path
+ *
+ * Return: OpenGL ID for Texture at Index
+ */
 u32 texture_create_file(const char *path)
 {
 	texture_t t;
@@ -62,6 +80,10 @@ u32 texture_create_file(const char *path)
 	return (num_texs_loaded - 1);
 }
 
+/**
+ * texture_destroy - Destroys a Texture
+ * @t: Texture in Question
+ */
 void texture_destroy(texture_t *t)
 {
 	glDeleteTextures(1, &t->id);

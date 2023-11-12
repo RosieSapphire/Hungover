@@ -1,3 +1,5 @@
+#include <GL/gl.h>
+
 #include "engine/util.h"
 #include "engine/vector.h"
 

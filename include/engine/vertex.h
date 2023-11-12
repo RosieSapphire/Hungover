@@ -1,10 +1,15 @@
 #ifndef _ENGINE_VERTEX_H_
 #define _ENGINE_VERTEX_H_
 
-typedef struct
+/**
+ * struct vertex - Vertex Struct
+ * @pos: Position Component
+ * @uv: UV Component
+ */
+struct vertex
 {
 	float pos[3];
 	float uv[2];
-} vertex_t;
+};
 
 #endif /* _ENGINE_VERTEX_H_ */

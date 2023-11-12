@@ -22,6 +22,7 @@ enum scene_index
 };
 
 extern enum scene_index scene_index;
+extern u32 pickup_spin_frame, pickup_spin_frame_last;
 
 typedef struct
 {
