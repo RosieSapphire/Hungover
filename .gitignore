@@ -3,3 +3,6 @@ filesystem/
 res/
 *.z64
 *.json
+tools/sceneimp/compile_commands.json
+tools/sceneimp/*.o
+tools/sceneimp/sceneimp
