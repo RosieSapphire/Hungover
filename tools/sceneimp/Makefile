@@ -20,7 +20,7 @@ $(BIN): $(OBJ)
 	$(CC) $(CFLAGS) -c $^ $(INC)
 
 clean:
-	rm -rf sceneimp *.scn
+	rm -rf sceneimp *.scn *.o
 
 betty-style:
 	betty-style --allow-global-variables $(BETTY_SCAN)
