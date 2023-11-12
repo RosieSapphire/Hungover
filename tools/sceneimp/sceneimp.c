@@ -548,9 +548,11 @@ int main(int argc, char **argv)
 
 	const char *path_in = argv[1];
 	const struct aiScene *scenein = aiImportFile(path_in,
-			aiProcess_JoinIdenticalVertices | aiProcess_Triangulate
-			| aiProcess_ImproveCacheLocality
-			| aiProcess_RemoveRedundantMaterials);
+			aiProcess_JoinIdenticalVertices |
+			aiProcess_Triangulate |
+			aiProcess_ImproveCacheLocality |
+			aiProcess_RemoveRedundantMaterials |
+			aiProcess_FlipUVs);
 	if(!scenein) {
 		fprintf(stderr, "Assimp Error (%s): %s\n", path_in,
 				aiGetErrorString());
