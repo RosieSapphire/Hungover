@@ -1,0 +1,26 @@
+#ifndef _CONFIG_H_
+#define _CONFIG_H_
+
+#define DISPLAY_RESOLUTION RESOLUTION_320x240
+#define DISPLAY_BITDEPTH DEPTH_16_BPP
+#define DISPLAY_NUM_BUFFERS 2
+#define DISPLAY_GAMMA GAMMA_NONE
+#define DISPLAY_FILTERS FILTERS_RESAMPLE
+
+#define VIEWPORT_FOV 90.0f
+#define VIEWPORT_NEAR 10.0f
+#define VIEWPORT_FAR 1000.0f
+
+#define TICKRATE 30
+#define DELTA_TIME (1.0f / (float)TICKRATE)
+
+#define INVERT_Y_LOOK 1
+
+/* DO NOT MODIFY THIS DIRECTLY (use `INVERT_Y_LOOK` define instead) */
+#if INVERT_Y_LOOK
+#define LOOK_Y_SIGN -1
+#else
+#define LOOK_Y_SIGN 1
+#endif
+
+#endif /* _CONFIG_H_ */
