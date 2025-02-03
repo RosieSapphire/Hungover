@@ -1,4 +1,6 @@
+DEBUG_ENABLED := 1
 BUILD_DIR := build
+
 include $(N64_INST)/include/n64.mk
 include $(T3D_INST)/t3d.mk
 
@@ -17,6 +19,9 @@ ROM := $(TARGET).z64
 ELF := $(BUILD_DIR)/$(TARGET).elf
 DFS := $(BUILD_DIR)/$(TARGET).dfs
 N64_CFLAGS += -Wall -Wextra -Werror -Os $(INC_FLAGS)
+ifeq ($(DEBUG_ENABLED),1)
+	N64_CFLAGS += -DDEBUG_ENABLED
+endif
 
 ASSETS_PNG := $(wildcard assets/*.png)
 ASSETS_WAV := $(wildcard assets/*.wav)

@@ -9,7 +9,6 @@
 
 #define CAM_TURN_DEG_PER_SEC 119.3f
 #define CAM_TURN_Y_MAX 89.9f
-#define CAM_MOVE_UNITS_PER_SEC (87.4f * (1 + INPUT_GET_BTN(Z, HELD)))
 
 // #define CAMERA_DEBUG
 
@@ -22,7 +21,7 @@ camera_t camera_init(const T3DVec3 *eye, const float yaw_deg,
 	cam.yaw_deg = cam.yaw_deg_old = yaw_deg;
 	cam.pitch_deg = cam.pitch_deg_old = pitch_deg;
 	if (!up) {
-		cam.up = cam.up_old = T3DVEC3(0.f, 1.f, 0.f);
+		cam.up = cam.up_old = T3D_VEC3(0.f, 1.f, 0.f);
 		return cam;
 	}
 	cam.up = cam.up_old = *up;
@@ -58,28 +57,6 @@ void camera_update(camera_t *c, const float dt)
 		c->pitch_deg = -CAM_TURN_Y_MAX;
 	}
 
-	/* position */
-	T3DVec3 focus, look_dir;
-	camera_get_values(c, NULL, &focus, NULL, 1.f);
-	t3d_vec3_diff(&look_dir, &focus, &c->eye);
-
-	const int forw_sign =
-		INPUT_GET_BTN(C_UP, HELD) - INPUT_GET_BTN(C_DOWN, HELD);
-	const int side_sign =
-		INPUT_GET_BTN(C_RIGHT, HELD) - INPUT_GET_BTN(C_LEFT, HELD);
-	T3DVec3 forw_move = look_dir;
-	T3DVec3 side_move, move;
-	t3d_vec3_cross(&side_move, &forw_move, &c->up);
-	t3d_vec3_scale(&forw_move, &forw_move, forw_sign);
-	t3d_vec3_scale(&side_move, &side_move, side_sign);
-
-	t3d_vec3_add(&move, &forw_move, &side_move);
-	t3d_vec3_norm(&move);
-	t3d_vec3_scale(&move, &move, CAM_MOVE_UNITS_PER_SEC * dt);
-
-	c->eye_old = c->eye;
-	t3d_vec3_add(&c->eye, &c->eye, &move);
-
 #ifdef CAMERA_DEBUG
 	debugf("CAMERA\n");
 	debugf("\tPitch: %f\n\tCam Yaw: %f\n", c->yaw_deg, c->pitch_deg);
@@ -92,10 +69,10 @@ void camera_update(camera_t *c, const float dt)
 
 void camera_terminate(camera_t *c)
 {
-	t3d_vec3_zero(&c->eye_old);
-	t3d_vec3_zero(&c->up_old);
-	t3d_vec3_zero(&c->eye);
-	t3d_vec3_zero(&c->up);
+	c->eye_old = T3D_VEC3_ZERO;
+	c->up_old = T3D_VEC3_ZERO;
+	c->eye = T3D_VEC3_ZERO;
+	c->up = T3D_VEC3_ZERO;
 	c->yaw_deg_old = c->pitch_deg_old = c->yaw_deg = c->pitch_deg = 0;
 }
 
