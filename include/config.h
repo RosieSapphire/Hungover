@@ -12,7 +12,6 @@
 #define VIEWPORT_FAR 1000.0f
 
 #define TICKRATE 30
-#define DELTA_TIME (1.0f / (float)TICKRATE)
 
 #define INVERT_Y_LOOK 1
 

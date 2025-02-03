@@ -15,7 +15,7 @@ typedef struct {
  */
 camera_t camera_init(const T3DVec3 *eye, const float yaw_deg,
 		     const float pitch_deg, const T3DVec3 *up);
-void camera_update(camera_t *c, const int controller_port);
+void camera_update(camera_t *c, const float dt);
 
 /*
  * `interp` is usually whatever the `subtick` value is for the sake of

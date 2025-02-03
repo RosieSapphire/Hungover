@@ -4,8 +4,8 @@
 
 #include "config.h"
 #include "util.h"
+#include "input.h"
 
-#include "engine/controller.h"
 #include "engine/player.h"
 
 #define DEBUG_TOGGLE
@@ -22,7 +22,7 @@ int main(void)
 #endif
 	int dfs_handle = dfs_init(DFS_DEFAULT_LOCATION);
 	asset_init_compression(1);
-	controllers_init(CONTROLLER_FLAG_PORT1);
+	input_init();
 
 	T3DViewport viewport = t3d_viewport_create();
 	uint8_t ambient_color[4] = { 0xFF, 0xFF, 0xFF, 0xFF };
@@ -55,17 +55,18 @@ int main(void)
 		 * UPDATE *
 		 **********/
 		float frame_time = display_get_delta_time();
+		const float dt = 1.f / (float)TICKRATE;
 		time_accumulated += frame_time;
-		while (time_accumulated >= DELTA_TIME) {
-			controllers_update();
-			player_update(&player);
-			time_accumulated -= DELTA_TIME;
+		while (time_accumulated >= dt) {
+			input_poll();
+			player_update(&player, dt);
+			time_accumulated -= dt;
 		}
 
 		/********************
 		 * UPDATE -> RENDER *
 		 ********************/
-		float subtick = time_accumulated / DELTA_TIME;
+		float subtick = time_accumulated / dt;
 
 		t3d_viewport_attach(&viewport);
 		t3d_viewport_set_projection(&viewport,
@@ -110,7 +111,7 @@ int main(void)
 #ifdef DEBUG_TOGGLE
 	rdpq_debug_stop();
 #endif
-	controllers_terminate();
+	input_terminate();
 	rdpq_close();
 	display_close();
 

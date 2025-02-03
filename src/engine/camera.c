@@ -2,15 +2,15 @@
 
 #include "util.h"
 #include "config.h"
+#include "input.h"
 
-#include "engine/controller.h"
 #include "engine/camera.h"
 
 #define CAM_TURN_DEG_PER_SEC 119.3f
 #define CAM_TURN_Y_MAX 89.9f
-#define CAM_MOVE_UNITS_PER_SEC (87.4f * (1 + BUTTON_GET_FLAG(Z, DOWN_NOW, 1)))
+#define CAM_MOVE_UNITS_PER_SEC (87.4f * (1 + INPUT_GET_BTN(Z, HELD)))
 
-#define CAMERA_DEBUG
+// #define CAMERA_DEBUG
 
 camera_t camera_init(const T3DVec3 *eye, const float yaw_deg,
 		     const float pitch_deg, const T3DVec3 *up)
@@ -29,16 +29,15 @@ camera_t camera_init(const T3DVec3 *eye, const float yaw_deg,
 	return cam;
 }
 
-void camera_update(camera_t *c, const int controller_port)
+void camera_update(camera_t *c, const float dt)
 {
 	// c->up_old = c->up;
 
-	float stick[2] = { STICK_GET(X, controller_port),
-			   STICK_GET(Y, controller_port) };
+	float stick[2] = { INPUT_GET_STICK(X), INPUT_GET_STICK(Y) };
 
 	/* yaw */
 	c->yaw_deg_old = c->yaw_deg;
-	c->yaw_deg += stick[0] * CAM_TURN_DEG_PER_SEC * DELTA_TIME;
+	c->yaw_deg += stick[0] * CAM_TURN_DEG_PER_SEC * dt;
 	while (c->yaw_deg >= 360.f) {
 		c->yaw_deg -= 360.f;
 		c->yaw_deg_old -= 360.f;
@@ -50,8 +49,7 @@ void camera_update(camera_t *c, const int controller_port)
 
 	/* pitch */
 	c->pitch_deg_old = c->pitch_deg;
-	c->pitch_deg +=
-		stick[1] * LOOK_Y_SIGN * CAM_TURN_DEG_PER_SEC * DELTA_TIME;
+	c->pitch_deg += stick[1] * LOOK_Y_SIGN * CAM_TURN_DEG_PER_SEC * dt;
 	if (c->pitch_deg >= CAM_TURN_Y_MAX) {
 		c->pitch_deg = CAM_TURN_Y_MAX;
 	}
@@ -64,10 +62,10 @@ void camera_update(camera_t *c, const int controller_port)
 	camera_get_values(c, NULL, &focus, NULL, 1.f);
 	t3d_vec3_diff(&look_dir, &focus, &c->eye);
 
-	const int forw_sign = BUTTON_GET_FLAG(C_UP, DOWN_NOW, 1) -
-			      BUTTON_GET_FLAG(C_DOWN, DOWN_NOW, 1);
-	const int side_sign = BUTTON_GET_FLAG(C_RIGHT, DOWN_NOW, 1) -
-			      BUTTON_GET_FLAG(C_LEFT, DOWN_NOW, 1);
+	const int forw_sign =
+		INPUT_GET_BTN(C_UP, HELD) - INPUT_GET_BTN(C_DOWN, HELD);
+	const int side_sign =
+		INPUT_GET_BTN(C_RIGHT, HELD) - INPUT_GET_BTN(C_LEFT, HELD);
 	T3DVec3 forw_move = look_dir;
 	T3DVec3 side_move, move;
 	t3d_vec3_cross(&side_move, &forw_move, &c->up);
@@ -76,7 +74,7 @@ void camera_update(camera_t *c, const int controller_port)
 
 	t3d_vec3_add(&move, &forw_move, &side_move);
 	t3d_vec3_norm(&move);
-	t3d_vec3_scale(&move, &move, CAM_MOVE_UNITS_PER_SEC * DELTA_TIME);
+	t3d_vec3_scale(&move, &move, CAM_MOVE_UNITS_PER_SEC * dt);
 
 	c->eye_old = c->eye;
 	t3d_vec3_add(&c->eye, &c->eye, &move);

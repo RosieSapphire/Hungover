@@ -2,3 +2,5 @@ build/
 filesystem/
 ideas.txt
 *.z64
+*.json
+*.sh

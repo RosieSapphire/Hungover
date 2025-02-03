@@ -8,6 +8,6 @@ typedef struct {
 } player_t;
 
 player_t player_init(void);
-void player_update(player_t *p);
+void player_update(player_t *p, const float dt);
 
 #endif /* _ENGINE_PLAYER_H_ */

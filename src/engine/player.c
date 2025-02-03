@@ -11,7 +11,7 @@ player_t player_init(void)
 	return p;
 }
 
-void player_update(player_t *p)
+void player_update(player_t *p, const float dt)
 {
-	camera_update(&p->cam, 1);
+	camera_update(&p->cam, dt);
 }
