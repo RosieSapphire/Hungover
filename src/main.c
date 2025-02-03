@@ -101,6 +101,8 @@ int main(void)
 		rdpq_detach_show();
 	}
 
+	player_terminate(&player);
+
 	for (int i = 0; i < 4; i++) {
 		free_uncached(bubby_matrix[i]);
 	}

@@ -74,9 +74,6 @@ void input_poll(void)
 	input_new.stick[0] /= STICK_MAG_MAX;
 	input_new.stick[1] /= STICK_MAG_MAX;
 	input_new.stick_mag /= STICK_MAG_MAX;
-
-	debugf("%f, %f (%f)\n", input_new.stick[0], input_new.stick[1],
-	       input_new.stick_mag);
 }
 
 void input_terminate(void)

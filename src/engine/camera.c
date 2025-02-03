@@ -3,6 +3,7 @@
 #include "util.h"
 #include "config.h"
 #include "input.h"
+#include "t3d_ext.h"
 
 #include "engine/camera.h"
 
@@ -87,6 +88,15 @@ void camera_update(camera_t *c, const float dt)
 	       look_dir.v[2]);
 	debugf("\tMove: (%f, %f, %f)\n", move.v[0], move.v[1], move.v[2]);
 #endif
+}
+
+void camera_terminate(camera_t *c)
+{
+	t3d_vec3_zero(&c->eye_old);
+	t3d_vec3_zero(&c->up_old);
+	t3d_vec3_zero(&c->eye);
+	t3d_vec3_zero(&c->up);
+	c->yaw_deg_old = c->pitch_deg_old = c->yaw_deg = c->pitch_deg = 0;
 }
 
 void camera_get_values(const camera_t *c, T3DVec3 *eye, T3DVec3 *focus,
