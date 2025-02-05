@@ -29,7 +29,8 @@ ASSETS_GLB := $(wildcard assets/*.glb)
 ASSETS_CONV := \
 	$(ASSETS_PNG:assets/%.png=filesystem/%.sprite) \
 	$(ASSETS_WAV:assets/%.wav=filesystem/%.wav64) \
-	$(ASSETS_GLB:assets/%.glb=filesystem/%.t3dm)
+	$(ASSETS_GLB:assets/%.glb=filesystem/%.t3dm) \
+	$(ASSETS_GLB:assets/%.glb=filesystem/%.col)
 
 final: $(ROM)
 $(ROM): N64_ROM_TITLE=$(TARGET_STR)
@@ -40,6 +41,9 @@ $(ELF): $(O_FILES)
 AUDIOCONV_FLAGS := --wav-compress 1
 MKSPRITE_FLAGS := --compress 1
 MKMODEL_FLAGS := --compress 1
+GLB_TO_COL_FLAGS := --compress 1
+
+GLB_TO_COL := ./tools/glb-to-col/glb-to-col
 
 filesystem/%.sprite: assets/%.png
 	@mkdir -p $(dir $@)
@@ -54,8 +58,14 @@ filesystem/%.wav64: assets/%.wav
 filesystem/%.t3dm: assets/%.glb
 	@mkdir -p $(dir $@)
 	@echo "    [T3D-MODEL] $@"
-	$(T3D_GLTF_TO_3D) "$<" $@ --base-scale=26
+	$(T3D_GLTF_TO_3D) "$<" $@ --base-scale=64
 	$(N64_BINDIR)/mkasset $(MKMODEL_FLAGS) -o filesystem $@
+
+filesystem/%.col: assets/%.glb
+	@mkdir -p $(dir $@)
+	@echo "    [COLLISION] $@"
+	$(GLB_TO_COL) $< $@
+	$(N64_BINDIR)/mkasset $(GLB_TO_COL_FLAGS) -o filesystem $@
 
 clean:
 	rm -rf $(ROM) $(BUILD_DIR) filesystem
