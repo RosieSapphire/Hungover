@@ -79,11 +79,12 @@ static void _init(void)
 	player = player_init();
 
 	/* test room ref */
-	test_room_obj = object_init_from_model_path("rom:/test-room.t3dm",
+	test_room_obj = object_init_from_model_path("rom:/apartment-test.t3dm",
 						    &T3D_VEC3_ZERO,
 						    &T3D_VEC3_ZERO,
 						    &T3D_VEC3_ONE);
-	test_room_col = collision_mesh_init_from_file("rom:/test-room.col");
+	test_room_col =
+		collision_mesh_init_from_file("rom:/apartment-test.col");
 	player.collision_mesh_ptr = &test_room_col;
 	object_matrix_setup(&test_room_obj, 1.f);
 
