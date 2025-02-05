@@ -6,10 +6,12 @@
 
 #include "engine/player.h"
 
-#define PLAYER_RADIUS 32.f
-#define PLAYER_EYE_Y_OFFSET (1.5748f * T3DM_TO_N64_SCALE)
+#define PLAYER_RADIUS (0.5f * T3DM_TO_N64_SCALE)
+#define PLAYER_HEIGHT (1.5748f * T3DM_TO_N64_SCALE)
+#define PLAYER_COLLISION_CHECK_Y_OFFSET (0.7874f * T3DM_TO_N64_SCALE)
+#define PLAYER_MAX_COLLISION_DIST (4.20f * T3DM_TO_N64_SCALE)
 
-#define PLAYER_TURN_DEG_PER_SEC 120.f
+#define PLAYER_TURN_DEG_PER_SEC ((INPUT_GET_BTN(Z, HELD) ? 236.59f : 169.3f))
 #define PLAYER_TURN_Y_MAX 89.9f
 #define PLAYER_MOVE_UNITS_PER_SEC \
 	((INPUT_GET_BTN(Z, HELD) ? 4.4704f : 1.34112f) * T3DM_TO_N64_SCALE)
@@ -33,7 +35,7 @@ void player_get_look_values(T3DVec3 *eye, T3DVec3 *focus, const player_t *p,
 	T3DVec3 eye_offset;
 
 	t3d_vec3_lerp(&pos_lerp, &p->pos_old, &p->pos, interp);
-	t3d_vec3_scale(&eye_offset, &T3D_VEC3_UP, PLAYER_EYE_Y_OFFSET);
+	t3d_vec3_scale(&eye_offset, &T3D_VEC3_UP, PLAYER_HEIGHT);
 	t3d_vec3_add(eye, &pos_lerp, &eye_offset);
 
 	/* focus */
@@ -54,7 +56,7 @@ void player_get_focus_pos(T3DVec3 *eye, const player_t *p, const float interp)
 	T3DVec3 eye_offset;
 
 	t3d_vec3_lerp(&pos_lerp, &p->pos_old, &p->pos, interp);
-	t3d_vec3_scale(&eye_offset, &T3D_VEC3_UP, PLAYER_EYE_Y_OFFSET);
+	t3d_vec3_scale(&eye_offset, &T3D_VEC3_UP, PLAYER_HEIGHT);
 	t3d_vec3_add(eye, &pos_lerp, &eye_offset);
 }
 
@@ -63,7 +65,6 @@ static void _player_update_look_angles(player_t *p, const float dt)
 	float stick[2] = { INPUT_GET_STICK(X), INPUT_GET_STICK(Y) };
 
 	/* yaw */
-	p->yaw_old = p->yaw;
 	p->yaw += stick[0] * PLAYER_TURN_DEG_PER_SEC * dt;
 	while (p->yaw >= 360.f) {
 		p->yaw -= 360.f;
@@ -75,7 +76,6 @@ static void _player_update_look_angles(player_t *p, const float dt)
 	}
 
 	/* pitch */
-	p->pitch_old = p->pitch;
 	p->pitch += stick[1] * LOOK_Y_SIGN * PLAYER_TURN_DEG_PER_SEC * dt;
 	if (p->pitch >= PLAYER_TURN_Y_MAX) {
 		p->pitch = PLAYER_TURN_Y_MAX;
@@ -107,7 +107,6 @@ static void _player_update_position(player_t *p, const float dt)
 	t3d_vec3_norm(&move);
 	t3d_vec3_scale(&move, &move, PLAYER_MOVE_UNITS_PER_SEC * dt);
 
-	p->pos_old = p->pos;
 	t3d_vec3_add(&p->pos, &p->pos, &move);
 }
 
@@ -117,55 +116,66 @@ static void _player_update_collision(player_t *p)
 
 	for (uint16_t i = 0; i < cm->num_triangles; i++) {
 		collision_triangle_t *tri = cm->triangles + i;
-		T3DVec3 tri_norm = *(T3DVec3 *)tri->norm;
-
-		/* ignore floors & ceilings (for now) */
-		/*
-		if (fabsf(t3d_vec3_dot(&tri_norm, &T3D_VEC3_UP)) == 1.f) {
-			continue;
-		}
-		*/
-
 		T3DVec3 dir;
-		t3d_vec3_negate(&dir, &tri_norm);
-
-		float dist;
-		const T3DVec3 *pos[3] = {
+		const T3DVec3 *tri_verts[3] = {
 			((const T3DVec3 *)tri->verts[0].pos),
 			((const T3DVec3 *)tri->verts[1].pos),
 			((const T3DVec3 *)tri->verts[2].pos),
 		};
+		T3DVec3 tri_norm = *(T3DVec3 *)tri->norm;
 
-		if (!t3d_raycast_triangle(&p->pos, &dir, pos, &dist)) {
+		t3d_vec3_negate(&dir, &tri_norm);
+
+		float dist;
+		T3DVec3 check_offset;
+		T3DVec3 check_pos;
+
+		t3d_vec3_scale(&check_offset, &T3D_VEC3_UP,
+			       PLAYER_COLLISION_CHECK_Y_OFFSET);
+		t3d_vec3_add(&check_pos, &p->pos, &check_offset);
+
+		if (!t3d_raycast_triangle(&check_pos, &dir, tri_verts, &dist)) {
+			continue;
+		}
+
+		if (dist > PLAYER_MAX_COLLISION_DIST) {
 			continue;
 		}
 
 		T3DVec3 push_vec;
-		const float push_amnt = fmaxf(PLAYER_RADIUS - dist, 0.f);
+		float push_amnt = 0.f;
+
+		const float tri_dot = t3d_vec3_dot(&tri_norm, &T3D_VEC3_UP);
+		if (!tri_dot) { /* is wall */
+			push_amnt = fmaxf(PLAYER_RADIUS - dist, 0.f);
+			// debugf("Wall: %f\n", push_amnt);
+		} else if (tri_dot > 0.4f) { /* is floor */
+			push_amnt = -dist + PLAYER_COLLISION_CHECK_Y_OFFSET;
+			debugf("Floor: %f (%f)\n", push_amnt, p->pos.v[1]);
+		}
 
 		t3d_vec3_scale(&push_vec, &tri_norm, push_amnt);
 		t3d_vec3_add(&p->pos, &push_vec, &p->pos);
-		/*
-		if (dist < PLAYER_RADIUS) {
-		}
-		*/
 	}
 }
 
 void player_update(player_t *p, const float dt)
 {
+	/* old values */
+	p->yaw_old = p->yaw;
+	p->pitch_old = p->pitch;
+	p->pos_old = p->pos;
+
 	_player_update_look_angles(p, dt);
 	_player_update_position(p, dt);
 	if (p->collision_mesh_ptr) {
 		_player_update_collision(p);
 	}
-
-	debugf_tv3("Player Pos", p->pos);
 }
 
 void player_to_viewport(T3DViewport *vp, const player_t *p, const float interp)
 {
-	T3DVec3 eye, focus, up;
+	T3DVec3 eye, focus;
 
 	player_get_look_values(&eye, &focus, p, interp);
 	t3d_viewport_look_at(vp, &eye, &focus, &T3D_VEC3_UP);

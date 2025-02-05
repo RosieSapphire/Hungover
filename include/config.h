@@ -11,7 +11,7 @@
 #define VIEWPORT_NEAR 10.0f
 #define VIEWPORT_FAR 1000.0f
 
-#define TICKRATE 30
+#define TICKRATE 15
 
 #define INVERT_Y_LOOK 1
 
