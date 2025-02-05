@@ -21,11 +21,12 @@ static int dfs_handle;
 
 /* tiny3D */
 static T3DViewport viewport;
-static uint8_t ambient_color[4] = { 0xFF, 0xFF, 0xFF, 0xFF };
+static uint8_t ambient_color[4] = { 0x20, 0x20, 0x20, 0xFF };
+static uint8_t light_color[4] = { 0xFF, 0xFF, 0xFF, 0xFF };
+static T3DVec3 light_dir = { { 0.577f, 0.577f, 0.577f } };
 
-static T3DModel *bubby_mdl;
-static object_t bubby_objs[6];
-static rspq_block_t *bubby_objs_dl;
+static object_t test_room_obj;
+static collision_mesh_t test_room_col;
 
 /* function prototypes */
 static void _init(void);
@@ -72,30 +73,19 @@ static void _init(void)
 	input_init();
 
 	viewport = t3d_viewport_create();
-	for (int i = 0; i < 4; i++) {
-		ambient_color[i] = 0xFF;
-	}
 
 	t3d_init((T3DInitParams){ 0 });
 
 	player = player_init();
 
-	/* bubby */
-	const T3DVec3 bubby_pos[6] = {
-		{ { 0.f, 0.f, -128.f } }, { { 0.f, 0.f, 128.f } },
-		{ { 128.f, 0.f, 0.f } },  { { -128.f, 0.f, 0.f } },
-		{ { 0.f, 128.f, 0.f } },  { { 0.f, -128.f, 0.f } }
-	};
-
-	bubby_mdl = t3d_model_load("rom:/bubby-cube.t3dm");
-	for (int i = 0; i < 6; i++) {
-		bubby_objs[i] = object_init_from_model_pointer(bubby_mdl,
-							       bubby_pos + i,
-							       &T3D_VEC3_ZERO,
-							       &T3D_VEC3_ONE);
-	}
-
-	bubby_objs_dl = objects_instanced_gen_dl(6, bubby_objs, bubby_mdl);
+	/* test room ref */
+	test_room_obj = object_init_from_model_path("rom:/test-room.t3dm",
+						    &T3D_VEC3_ZERO,
+						    &T3D_VEC3_ZERO,
+						    &T3D_VEC3_ONE);
+	test_room_col = collision_mesh_init_from_file("rom:/test-room.col");
+	player.collision_mesh_ptr = &test_room_col;
+	object_matrix_setup(&test_room_obj, 1.f);
 
 	time_accumulated = 0.f;
 }
@@ -105,13 +95,6 @@ static void _update(const float dt)
 	input_poll();
 
 	player_update(&player, dt);
-
-	for (int i = 0; i < 6; i++) {
-		object_t *o = bubby_objs + i;
-
-		o->rotation_old = o->rotation;
-		o->rotation.v[i % 3] += dt * T3D_PI;
-	}
 }
 
 static void _update_renderer(const float dt)
@@ -121,11 +104,7 @@ static void _update_renderer(const float dt)
 	t3d_viewport_attach(&viewport);
 	t3d_viewport_set_projection(&viewport, T3D_DEG_TO_RAD(VIEWPORT_FOV),
 				    VIEWPORT_NEAR, VIEWPORT_FAR);
-	camera_to_viewport(&viewport, &player.cam, subtick);
-
-	for (int i = 0; i < 6; i++) {
-		object_matrix_setup(bubby_objs + i, subtick);
-	}
+	player_to_viewport(&viewport, &player, subtick);
 }
 
 static void _render(void)
@@ -137,8 +116,10 @@ static void _render(void)
 	t3d_screen_clear_depth();
 
 	t3d_light_set_ambient(ambient_color);
+	t3d_light_set_count(1);
+	t3d_light_set_directional(0, light_color, &light_dir);
 
-	rspq_block_run(bubby_objs_dl);
+	object_render(&test_room_obj);
 
 	rdpq_detach_show();
 }
@@ -147,15 +128,7 @@ static void _terminate(void)
 {
 	player_terminate(&player);
 
-	rspq_block_free(bubby_objs_dl);
-	bubby_objs_dl = NULL;
-
-	for (int i = 0; i < 6; i++) {
-		object_terminate(bubby_objs + i, false);
-	}
-
-	t3d_model_free(bubby_mdl);
-	bubby_mdl = NULL;
+	object_terminate(&test_room_obj, true);
 
 	t3d_destroy();
 

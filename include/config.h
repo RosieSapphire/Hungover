@@ -11,7 +11,7 @@
 #define VIEWPORT_NEAR 10.0f
 #define VIEWPORT_FAR 1000.0f
 
-#define TICKRATE 15
+#define TICKRATE 30
 
 #define INVERT_Y_LOOK 1
 
@@ -21,5 +21,7 @@
 #else
 #define LOOK_Y_SIGN 1
 #endif
+
+#define T3DM_TO_N64_SCALE 64
 
 #endif /* _CONFIG_H_ */

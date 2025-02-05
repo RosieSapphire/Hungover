@@ -18,6 +18,7 @@ object_t object_init_from_model_path(const char *path, const T3DVec3 *pos,
 object_t object_init_from_model_pointer(T3DModel *mdl, const T3DVec3 *pos,
 					const T3DVec3 *rot,
 					const T3DVec3 *scale);
+void object_render(object_t *obj);
 rspq_block_t *objects_instanced_gen_dl(const int num_objs, object_t *objs,
 				       const T3DModel *common_mdl);
 void object_matrix_setup(object_t *o, const float subtick);
