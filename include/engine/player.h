@@ -13,7 +13,7 @@ typedef struct {
 	collision_mesh_t *collision_mesh_ptr;
 } player_t;
 
-player_t player_init(void);
+player_t player_init(collision_mesh_t *colmesh_ptr);
 void player_get_look_values(T3DVec3 *eye, T3DVec3 *focus, const player_t *p,
 			    const float interp);
 void player_update(player_t *p, const float dt);

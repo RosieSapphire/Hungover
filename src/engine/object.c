@@ -2,14 +2,19 @@
 
 #include "engine/object.h"
 
-object_t object_init_from_model_path(const char *path, const T3DVec3 *pos,
-				     const T3DVec3 *rot, const T3DVec3 *scale)
+#define OBJECT_NAME_MAX_LENGTH 32
+
+object_t object_read_from_file(FILE *file)
 {
 	object_t o;
+	char obj_name[OBJECT_NAME_MAX_LENGTH];
+	char mdl_path[OBJECT_NAME_MAX_LENGTH << 1];
 
-	o.mdl = t3d_model_load(path);
-	assertf(o.mdl, "Failed to load model from '%s'\n", path);
+	fread(obj_name, 1, OBJECT_NAME_MAX_LENGTH, file);
+	snprintf(mdl_path, OBJECT_NAME_MAX_LENGTH << 1, "rom:/%s.t3dm",
+		 obj_name);
 
+	o.mdl = t3d_model_load(mdl_path);
 	o.matrix = malloc_uncached(sizeof *o.matrix);
 
 	rspq_block_begin();
@@ -18,32 +23,31 @@ object_t object_init_from_model_path(const char *path, const T3DVec3 *pos,
 	t3d_matrix_pop(1);
 	o.displaylist = rspq_block_end();
 
-	o.position = o.position_old = *pos;
-	o.rotation = o.rotation_old = *rot;
-	o.scale = o.scale_old = *scale;
+	T3DVec3 pos, rot, scale;
 
-	return o;
-}
+	for (int i = 0; i < 3; i++) {
+		fread(pos.v + i, 4, 1, file);
+	}
 
-object_t object_init_from_model_pointer(T3DModel *mdl, const T3DVec3 *pos,
-					const T3DVec3 *rot,
-					const T3DVec3 *scale)
-{
-	object_t o;
+	for (int i = 0; i < 3; i++) {
+		fread(rot.v + i, 4, 1, file);
+	}
 
-	o.mdl = mdl;
+	for (int i = 0; i < 3; i++) {
+		fread(scale.v + i, 4, 1, file);
+	}
 
-	o.matrix = malloc_uncached(sizeof *o.matrix);
+	o.position = o.position_old = pos;
+	o.rotation = o.rotation_old = rot;
+	o.scale = o.scale_old = scale;
 
-	rspq_block_begin();
-	t3d_matrix_push(o.matrix);
-	t3d_model_draw(o.mdl);
-	t3d_matrix_pop(1);
-	o.displaylist = rspq_block_end();
-
-	o.position = o.position_old = *pos;
-	o.rotation = o.rotation_old = *rot;
-	o.scale = o.scale_old = *scale;
+	debugf("\t\tObject '%s':\n", obj_name);
+	debugf("\t\t\tPosition: (%f, %f, %f):\n", o.position.v[0],
+	       o.position.v[1], o.position.v[2]);
+	debugf("\t\t\tRotation: (%f, %f, %f):\n", o.rotation.v[0],
+	       o.rotation.v[1], o.rotation.v[2]);
+	debugf("\t\t\tScale: (%f, %f, %f):\n", o.scale.v[0], o.scale.v[1],
+	       o.scale.v[2]);
 
 	return o;
 }

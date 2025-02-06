@@ -30,7 +30,7 @@ ASSETS_CONV := \
 	$(ASSETS_PNG:assets/%.png=filesystem/%.sprite) \
 	$(ASSETS_WAV:assets/%.wav=filesystem/%.wav64) \
 	$(ASSETS_GLB:assets/%.glb=filesystem/%.t3dm) \
-	$(ASSETS_GLB:assets/%.glb=filesystem/%.col)
+	$(ASSETS_GLB:assets/%.glb=filesystem/%.scn)
 
 final: $(ROM)
 $(ROM): N64_ROM_TITLE=$(TARGET_STR)
@@ -61,9 +61,9 @@ filesystem/%.t3dm: assets/%.glb
 	$(T3D_GLTF_TO_3D) "$<" $@ --base-scale=64
 	$(N64_BINDIR)/mkasset $(MKMODEL_FLAGS) -o filesystem $@
 
-filesystem/%.col: assets/%.glb
+filesystem/%.scn: assets/%.glb
 	@mkdir -p $(dir $@)
-	@echo "    [COLLISION] $@"
+	@echo "    [SCENE] $@"
 	$(GLB_TO_COL) $< $@
 	$(N64_BINDIR)/mkasset $(GLB_TO_COL_FLAGS) -o filesystem $@
 

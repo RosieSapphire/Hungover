@@ -5,12 +5,9 @@
 
 // #define DEBUG_COLLISION
 
-collision_mesh_t collision_mesh_init_from_file(const char *path)
+collision_mesh_t collision_mesh_read_from_file(FILE *file)
 {
 	collision_mesh_t cm;
-	FILE *file = asset_fopen(path, NULL);
-
-	assertf(file, "Failed to load collision mesh from '%s'\n", path);
 
 	fread(&cm.num_triangles, 2, 1, file);
 #ifdef DEBUG_COLLISION
@@ -44,7 +41,9 @@ collision_mesh_t collision_mesh_init_from_file(const char *path)
 #endif
 	}
 
-	fclose(file);
+	for (uint16_t i = 0; i < 3; i++) {
+		fread(cm.offset.v + i, 4, 1, file);
+	}
 
 	return cm;
 }

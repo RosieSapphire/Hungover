@@ -1,3 +1,9 @@
+#define IS_USING_SCENE_CONVERTER
+
+typedef struct {
+	float v[3];
+} T3DVec3;
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -7,10 +13,8 @@
 #include <assimp/cimport.h>
 #include <assimp/postprocess.h>
 
-#include "../../include/config.h"
-#include "../../include/engine/collision.h"
-
-// #define RUN_TEST
+#include "config.h"
+#include "engine/scene.h"
 
 static void exitf(const char *fmt, ...)
 {
@@ -21,39 +25,6 @@ static void exitf(const char *fmt, ...)
 	va_end(args);
 
 	exit(EXIT_FAILURE);
-}
-
-static void combine_meshes(collision_mesh_t *out, const uint16_t array_len,
-			   const collision_mesh_t *array)
-{
-	out->num_triangles = 0;
-	out->triangles = malloc(0);
-	for (uint16_t i = 0; i < array_len; i++) {
-		const collision_mesh_t *m = array + i;
-
-		out->num_triangles += m->num_triangles;
-		out->triangles =
-			realloc(out->triangles,
-				sizeof *out->triangles * out->num_triangles);
-		memcpy(out->triangles + (out->num_triangles - m->num_triangles),
-		       m->triangles, sizeof *m->triangles * m->num_triangles);
-	}
-}
-
-static void cleanup(uint16_t *num_meshes, collision_mesh_t **meshes_out,
-		    FILE *file)
-{
-	/* cleanup */
-	for (uint16_t i = 0; i < *num_meshes; i++) {
-		collision_mesh_t *m = *meshes_out + i;
-
-		free(m->triangles);
-		m->triangles = NULL;
-		m->num_triangles = 0;
-	}
-	free(*meshes_out);
-	*meshes_out = NULL;
-	fclose(file);
 }
 
 static void triangle_calc_normal(collision_triangle_t *tri)
@@ -87,27 +58,58 @@ static void triangle_calc_normal(collision_triangle_t *tri)
 	tri->norm[2] /= mag;
 }
 
-static void assimp_mesh_to_collision_mesh(collision_mesh_t *mesh_out,
-					  const struct aiMesh *mesh_in)
+static collision_mesh_t collision_mesh_from_assimp(const struct aiScene *aiscn,
+						   const struct aiNode *ainode)
 {
-	mesh_out->num_triangles = mesh_in->mNumFaces;
-	mesh_out->triangles =
-		calloc(mesh_out->num_triangles, sizeof *mesh_out->triangles);
-	for (uint16_t i = 0; i < mesh_out->num_triangles; i++) {
-		const struct aiFace *tri_in = mesh_in->mFaces + i;
-		collision_triangle_t *tri_out = mesh_out->triangles + i;
+	collision_mesh_t ret;
 
-		for (uint16_t j = 0; j < 3; j++) {
-			collision_vertex_t *vert_out = tri_out->verts + j;
-			const struct aiVector3D vert_in =
-				mesh_in->mVertices[tri_in->mIndices[j]];
+	uint16_t num_meshes = ainode->mNumMeshes;
+	collision_mesh_t *meshes_out = calloc(num_meshes, sizeof *meshes_out);
+	for (int i = 0; i < num_meshes; i++) {
+		const struct aiMesh *in = aiscn->mMeshes[ainode->mMeshes[i]];
+		collision_mesh_t *out = meshes_out + i;
 
-			vert_out->pos[0] = vert_in.x * T3DM_TO_N64_SCALE;
-			vert_out->pos[1] = vert_in.y * T3DM_TO_N64_SCALE;
-			vert_out->pos[2] = vert_in.z * T3DM_TO_N64_SCALE;
+		out->num_triangles = in->mNumFaces;
+		out->triangles =
+			calloc(out->num_triangles, sizeof *out->triangles);
+		for (uint16_t i = 0; i < out->num_triangles; i++) {
+			const struct aiFace *tri_in = in->mFaces + i;
+			collision_triangle_t *tri_out = out->triangles + i;
+
+			for (uint16_t j = 0; j < 3; j++) {
+				collision_vertex_t *vert_out =
+					tri_out->verts + j;
+				const struct aiVector3D vert_in =
+					in->mVertices[tri_in->mIndices[j]];
+
+				vert_out->pos[0] =
+					vert_in.x * T3DM_TO_N64_SCALE;
+				vert_out->pos[1] =
+					vert_in.y * T3DM_TO_N64_SCALE;
+				vert_out->pos[2] =
+					vert_in.z * T3DM_TO_N64_SCALE;
+			}
+			triangle_calc_normal(tri_out);
 		}
-		triangle_calc_normal(tri_out);
 	}
+
+	ret.num_triangles = 0;
+	ret.triangles = malloc(0);
+	for (uint16_t i = 0; i < num_meshes; i++) {
+		const collision_mesh_t *m = meshes_out + i;
+
+		ret.num_triangles += m->num_triangles;
+		ret.triangles =
+			realloc(ret.triangles,
+				sizeof *ret.triangles * ret.num_triangles);
+		memcpy(ret.triangles + (ret.num_triangles - m->num_triangles),
+		       m->triangles, sizeof *m->triangles * m->num_triangles);
+	}
+	ret.offset.v[0] = ainode->mTransformation.a4;
+	ret.offset.v[1] = ainode->mTransformation.b4;
+	ret.offset.v[2] = ainode->mTransformation.c4;
+
+	return ret;
 }
 
 static unsigned long fwrite_ef16(const uint16_t *ptr, FILE *file)
@@ -152,32 +154,186 @@ static unsigned long fread_ef32(float *ptr, FILE *file)
 }
 #endif
 
-static void write_to_file(const collision_mesh_t *mesh, FILE *file)
+static void collision_mesh_write_to_file(const collision_mesh_t *cm, FILE *file)
 {
-	fwrite_ef16(&mesh->num_triangles, file);
-	for (uint16_t j = 0; j < mesh->num_triangles; j++) {
-		collision_triangle_t *f = mesh->triangles + j;
+	fwrite_ef16(&cm->num_triangles, file);
+	for (uint16_t i = 0; i < cm->num_triangles; i++) {
+		collision_triangle_t *tri = cm->triangles + i;
 
-		for (uint16_t k = 0; k < 3; k++) {
-			collision_vertex_t *v = f->verts + k;
-
-			for (uint16_t l = 0; l < 3; l++) {
-				fwrite_ef32(v->pos + l, file);
+		for (uint16_t j = 0; j < 3; j++) {
+			for (uint16_t k = 0; k < 3; k++) {
+				fwrite_ef32(tri->verts[j].pos + k, file);
 			}
 		}
 
-		for (uint16_t k = 0; k < 3; k++) {
-			fwrite_ef32(f->norm + k, file);
+		for (uint16_t j = 0; j < 3; j++) {
+			fwrite_ef32(tri->norm + j, file);
+		}
+	}
+
+	T3DVec3 offset = cm->offset;
+
+	for (uint16_t i = 0; i < 3; i++) {
+		offset.v[i] *= T3DM_TO_N64_SCALE;
+		fwrite_ef32(offset.v + i, file);
+	}
+}
+
+static void object_write_to_file(const object_t *o, FILE *file)
+{
+	fwrite(o->name, 1, OBJECT_NAME_MAX_LENGTH, file);
+
+	T3DVec3 pos_out = o->position;
+
+	for (int i = 0; i < 3; i++) {
+		pos_out.v[i] *= T3DM_TO_N64_SCALE;
+	}
+
+	for (int i = 0; i < 3; i++) {
+		fwrite_ef32(pos_out.v + i, file);
+	}
+
+	for (int i = 0; i < 3; i++) {
+		fwrite_ef32(o->rotation.v + i, file);
+	}
+
+	for (int i = 0; i < 3; i++) {
+		fwrite_ef32(o->scale.v + i, file);
+	}
+}
+
+static void area_write_to_file(const area_t *a, FILE *file)
+{
+	collision_mesh_write_to_file(&a->colmesh, file);
+	fwrite_ef16(&a->num_objects, file);
+	for (uint16_t i = 0; i < a->num_objects; i++) {
+		object_write_to_file(a->objects + i, file);
+	}
+}
+
+static void scene_write_to_file(const scene_t *scn, FILE *file)
+{
+	fwrite_ef16(&scn->num_areas, file);
+	for (uint16_t i = 0; i < scn->num_areas; i++) {
+		area_write_to_file(scn->areas + i, file);
+	}
+	printf("Successfully wrote scene to file\n");
+}
+
+static void scene_process_area(area_t *a, const struct aiScene *aiscn,
+			       const struct aiNode *n)
+{
+	a->num_objects = 0;
+	a->objects = malloc(0);
+	int num_col_meshes = 0;
+	for (unsigned int i = 0; i < n->mNumChildren; i++) {
+		const struct aiNode *ch = n->mChildren[i];
+
+		if (!strncmp(ch->mName.data, "Col", 3)) {
+			a->colmesh = collision_mesh_from_assimp(aiscn, ch);
+			num_col_meshes++;
+			if (num_col_meshes > 1) {
+				exitf("ERROR: Area can only have "
+				      "one collision mesh\n");
+			}
+		} else if (!strncmp(ch->mName.data, "Obj", 3)) {
+			a->objects =
+				realloc(a->objects,
+					sizeof *a->objects * ++a->num_objects);
+			object_t *onew = a->objects + a->num_objects - 1;
+			strncpy(onew->name, ch->mName.data,
+				OBJECT_NAME_MAX_LENGTH);
+			onew->position.v[0] = ch->mTransformation.a4;
+			onew->position.v[1] = ch->mTransformation.b4;
+			onew->position.v[2] = ch->mTransformation.c4;
+			onew->rotation = (T3DVec3){ { 0, 0, 0 } };
+			onew->scale = (T3DVec3){ { 1, 1, 1 } };
+		} else {
+			exitf("ERROR: Invalid Item Type.\n");
 		}
 	}
 }
 
+static void assimp_scene_process_node(scene_t *scn, const struct aiScene *aiscn,
+				      const struct aiNode *n)
+{
+	if (!strncmp("Area", n->mName.data, 4)) {
+		scn->areas = realloc(scn->areas,
+				     sizeof *scn->areas * ++scn->num_areas);
+		scene_process_area(scn->areas + scn->num_areas - 1, aiscn, n);
+	}
+
+	for (unsigned int i = 0; i < n->mNumChildren; i++) {
+		assimp_scene_process_node(scn, aiscn, n->mChildren[i]);
+	}
+}
+
+static void scene_debug(const scene_t *s, const char *scn_path)
+{
+	printf("DEBUGGING SCENE '%s' (%d areas)\n", scn_path, s->num_areas);
+	for (uint16_t i = 0; i < s->num_areas; i++) {
+		area_t *a = s->areas + i;
+
+		printf("\tArea %d (%d objects):\n", i, a->num_objects);
+		printf("\t\tCollision Mesh (%d triangles)\n",
+		       a->colmesh.num_triangles);
+		printf("\t\t\tOffset: (%f, %f, %f)\n", a->colmesh.offset.v[0],
+		       a->colmesh.offset.v[1], a->colmesh.offset.v[2]);
+		for (uint16_t j = 0; j < a->colmesh.num_triangles; j++) {
+			collision_triangle_t *tri = a->colmesh.triangles + j;
+
+			printf("\t\t\tTri %d:\n", j);
+			for (uint16_t k = 0; k < 3; k++) {
+				printf("\t\t\t\tPos %d: (%f, %f, %f)\n", k,
+				       tri->verts[k].pos[0],
+				       tri->verts[k].pos[1],
+				       tri->verts[k].pos[2]);
+			}
+			printf("\t\t\t\tNorm: (%f, %f, %f)\n", tri->norm[0],
+			       tri->norm[1], tri->norm[2]);
+		}
+
+		for (uint16_t j = 0; j < a->num_objects; j++) {
+			object_t *o = a->objects + j;
+
+			printf("\t\tObject %d ('%s'):\n", j, o->name);
+			printf("\t\t\tPosition: (%f, %f, %f):\n",
+			       o->position.v[0], o->position.v[1],
+			       o->position.v[2]);
+			printf("\t\t\tRotation: (%f, %f, %f):\n",
+			       o->rotation.v[0], o->rotation.v[1],
+			       o->rotation.v[2]);
+			printf("\t\t\tScale: (%f, %f, %f):\n", o->scale.v[0],
+			       o->scale.v[1], o->scale.v[2]);
+		}
+	}
+}
+
+static scene_t handle_scene(const struct aiScene *aiscn, const char *scn_path)
+{
+	scene_t scn;
+	scn.num_areas = 0;
+	scn.areas = malloc(0);
+
+	FILE *scn_file = fopen(scn_path, "wb");
+
+	if (!scn_file) {
+		exitf("Failed to write scene to '%s'\n", scn_path);
+	}
+
+	assimp_scene_process_node(&scn, aiscn, aiscn->mRootNode);
+	scene_debug(&scn, scn_path);
+	scene_write_to_file(&scn, scn_file);
+
+	return scn;
+}
+
 int main(int argc, char **argv)
 {
-	char col_path[512];
+	char scn_path[512];
 	const char *glb_path = argv[1];
 
-	memset(col_path, 0, 512);
+	memset(scn_path, 0, 512);
 
 	switch (argc) {
 	default:
@@ -185,12 +341,12 @@ int main(int argc, char **argv)
 		return 1;
 
 	case 2:
-		snprintf(col_path, strlen(glb_path) - 3, "%s", glb_path);
-		snprintf(col_path + strlen(col_path), 5, ".col");
+		snprintf(scn_path, strlen(glb_path) - 3, "%s", glb_path);
+		snprintf(scn_path + strlen(scn_path), 5, ".col");
 		break;
 
 	case 3:
-		strncpy(col_path, argv[2], 512);
+		strncpy(scn_path, argv[2], 512);
 		break;
 	}
 
@@ -203,64 +359,16 @@ int main(int argc, char **argv)
 	}
 
 	/* transferring mesh over */
-	uint16_t num_meshes = scene->mNumMeshes;
-	collision_mesh_t *meshes_out = calloc(num_meshes, sizeof *meshes_out);
-	for (int i = 0; i < num_meshes; i++) {
-		const struct aiMesh *in = scene->mMeshes[i];
-		collision_mesh_t *out = meshes_out + i;
-
-		assimp_mesh_to_collision_mesh(out, in);
-	}
-	collision_mesh_t meshes_combined;
-	combine_meshes(&meshes_combined, num_meshes, meshes_out);
+	// scene_t scn = scene_from_assimp(scene);
+	handle_scene(scene, scn_path);
+	// collision_mesh_t meshes_combined = collision_mesh_from_assimp(scene);
 
 	/* writing collision data out to file */
-	FILE *file = fopen(col_path, "wb");
+	FILE *file = fopen(scn_path, "wb");
 
 	if (!file) {
-		exitf("Failed to open collision file from '%s'\n", col_path);
+		exitf("Failed to open collision file from '%s'\n", scn_path);
 	}
-
-	write_to_file(&meshes_combined, file);
-
-	cleanup(&num_meshes, &meshes_out, file);
-
-#ifdef RUN_TEST
-	/* test by reading from file */
-
-	file = fopen(col_path, "rb");
-
-	if (!file) {
-		exitf("TEST FAILED! Couldn't read file '%s'\n", col_path);
-	}
-
-	printf("\n!!!RUNNING GLB-TO-COL TEST CODE!!!\n");
-	collision_mesh_t *m = &meshes_combined;
-	fread_ef16(&m->num_triangles, file);
-	printf("\n'%s' has %d triangles:\n", col_path, m->num_triangles);
-	m->triangles = calloc(m->num_triangles, sizeof *m->triangles);
-	for (uint16_t i = 0; i < m->num_triangles; i++) {
-		collision_triangle_t *f = m->triangles + i;
-
-		printf("\tFace (%d/%d):\n", i + 1, m->num_triangles);
-		for (uint16_t j = 0; j < 3; j++) {
-			collision_vertex_t *v = f->verts + j;
-
-			for (uint16_t k = 0; k < 3; k++) {
-				fread_ef32(v->pos + k, file);
-			}
-			printf("\t\tP%d: (%f, %f, %f)\n", j, v->pos[0],
-			       v->pos[1], v->pos[2]);
-		}
-
-		for (uint16_t j = 0; j < 3; j++) {
-			fread_ef32(f->norm + j, file);
-		}
-		printf("\t\tNORM: (%f, %f, %f)\n", f->norm[0], f->norm[1],
-		       f->norm[2]);
-	}
-
-#endif
 
 	return 0;
 }

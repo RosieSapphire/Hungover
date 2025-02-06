@@ -16,13 +16,13 @@
 #define PLAYER_MOVE_UNITS_PER_SEC \
 	((INPUT_GET_BTN(Z, HELD) ? 4.4704f : 1.34112f) * T3DM_TO_N64_SCALE)
 
-player_t player_init(void)
+player_t player_init(collision_mesh_t *colmesh_ptr)
 {
 	player_t p;
 
 	p.pos = p.pos_old = T3D_VEC3_ZERO;
 	p.yaw = p.yaw_old = p.pitch = p.pitch_old = 0.f;
-	p.collision_mesh_ptr = NULL;
+	p.collision_mesh_ptr = colmesh_ptr;
 
 	return p;
 }
@@ -117,11 +117,13 @@ static void _player_update_collision(player_t *p)
 	for (uint16_t i = 0; i < cm->num_triangles; i++) {
 		collision_triangle_t *tri = cm->triangles + i;
 		T3DVec3 dir;
-		const T3DVec3 *tri_verts[3] = {
-			((const T3DVec3 *)tri->verts[0].pos),
-			((const T3DVec3 *)tri->verts[1].pos),
-			((const T3DVec3 *)tri->verts[2].pos),
-		};
+		T3DVec3 tri_verts[3];
+		for (int j = 0; j < 3; j++) {
+			for (int k = 0; k < 3; k++) {
+				tri_verts[j].v[k] =
+					tri->verts[j].pos[k] + cm->offset.v[k];
+			}
+		}
 		T3DVec3 tri_norm = *(T3DVec3 *)tri->norm;
 
 		t3d_vec3_negate(&dir, &tri_norm);

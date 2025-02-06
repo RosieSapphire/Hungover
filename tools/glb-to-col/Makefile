@@ -4,7 +4,7 @@ C_FILES := main.c
 O_FILES := $(C_FILES:%.c=%.o)
 
 CC := gcc
-CFLAGS := -Wall -Wextra -Werror -pedantic -std=c99 -ggdb3
+CFLAGS := -Wall -Wextra -pedantic -std=c99 -ggdb3 -I../../include
 LIB := $(shell pkg-config --libs assimp) -lm
 
 final: $(TARGET)

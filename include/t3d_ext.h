@@ -14,6 +14,6 @@
 void t3d_vec3_negate(T3DVec3 *dst, const T3DVec3 *src);
 
 int t3d_raycast_triangle(const T3DVec3 *eye, const T3DVec3 *dir,
-			 const T3DVec3 *positions[3], float *distance);
+			 const T3DVec3 positions[3], float *distance);
 
 #endif /* _T3D_EXT_H_ */

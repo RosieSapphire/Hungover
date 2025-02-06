@@ -7,7 +7,7 @@
 #include "input.h"
 #include "t3d_ext.h"
 
-#include "engine/object.h"
+#include "engine/scene.h"
 #include "engine/player.h"
 
 /* general */
@@ -21,18 +21,18 @@ static int dfs_handle;
 
 /* tiny3D */
 static T3DViewport viewport;
-static uint8_t ambient_color[4] = { 0x20, 0x20, 0x20, 0xFF };
+static uint8_t ambient_color[4] = { 0xFF, 0xFF, 0xFF, 0xFF };
 static uint8_t light_color[4] = { 0xFF, 0xFF, 0xFF, 0xFF };
 static T3DVec3 light_dir = { { 0.577f, 0.577f, 0.577f } };
 
-static object_t test_room_obj;
-static collision_mesh_t test_room_col;
+// static scene_t test_room_scn;
+static scene_t scn;
 
 /* function prototypes */
 static void _init(void);
 static void _update(const float dt);
-static void _update_renderer(const float dt);
-static void _render(void);
+static float _update_renderer(const float dt);
+static void _render(const float subtick);
 static void _terminate(void);
 
 int main(void)
@@ -49,8 +49,8 @@ int main(void)
 			time_accumulated -= dt;
 		}
 
-		_update_renderer(dt);
-		_render();
+		const float subtick = _update_renderer(dt);
+		_render(subtick);
 	}
 
 	_terminate();
@@ -76,17 +76,8 @@ static void _init(void)
 
 	t3d_init((T3DInitParams){ 0 });
 
-	player = player_init();
-
-	/* test room ref */
-	test_room_obj = object_init_from_model_path("rom:/apartment-test.t3dm",
-						    &T3D_VEC3_ZERO,
-						    &T3D_VEC3_ZERO,
-						    &T3D_VEC3_ONE);
-	test_room_col =
-		collision_mesh_init_from_file("rom:/apartment-test.col");
-	player.collision_mesh_ptr = &test_room_col;
-	object_matrix_setup(&test_room_obj, 1.f);
+	scn = scene_init_from_file("rom:/test-room-2.scn");
+	player = player_init(&scn.areas[0].colmesh);
 
 	time_accumulated = 0.f;
 }
@@ -95,10 +86,16 @@ static void _update(const float dt)
 {
 	input_poll();
 
+	/* TODO: Make some condition for changing the scene aside
+	 * from a fucking button press... */
+	if (INPUT_GET_BTN(A, PRESSED)) {
+		scn.area_index ^= 1;
+	}
+
 	player_update(&player, dt);
 }
 
-static void _update_renderer(const float dt)
+static float _update_renderer(const float dt)
 {
 	float subtick = time_accumulated / dt;
 
@@ -106,9 +103,11 @@ static void _update_renderer(const float dt)
 	t3d_viewport_set_projection(&viewport, T3D_DEG_TO_RAD(VIEWPORT_FOV),
 				    VIEWPORT_NEAR, VIEWPORT_FAR);
 	player_to_viewport(&viewport, &player, subtick);
+
+	return subtick;
 }
 
-static void _render(void)
+static void _render(const float subtick)
 {
 	rdpq_attach(display_get(), display_get_zbuf());
 
@@ -120,7 +119,14 @@ static void _render(void)
 	t3d_light_set_count(1);
 	t3d_light_set_directional(0, light_color, &light_dir);
 
-	object_render(&test_room_obj);
+	scene_render(&scn, subtick);
+	/*
+	t3d_mat4fp_from_srt_euler(mdl_mfp, (float[3]){ 1, 1, 1 },
+				  (float[3]){ 0, 0, 0 }, (float[3]){ 0, 0, 0 });
+	t3d_matrix_push(mdl_mfp);
+	t3d_model_draw(mdl);
+	t3d_matrix_pop(1);
+	*/
 
 	rdpq_detach_show();
 }
@@ -128,8 +134,7 @@ static void _render(void)
 static void _terminate(void)
 {
 	player_terminate(&player);
-
-	object_terminate(&test_room_obj, true);
+	scene_terminate(&scn);
 
 	t3d_destroy();
 
