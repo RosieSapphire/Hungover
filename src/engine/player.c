@@ -9,20 +9,22 @@
 #define PLAYER_RADIUS (0.36f * T3DM_TO_N64_SCALE)
 #define PLAYER_HEIGHT (1.5748f * T3DM_TO_N64_SCALE)
 #define PLAYER_COLLISION_CHECK_Y_OFFSET (0.7874f * T3DM_TO_N64_SCALE)
-#define PLAYER_MAX_COLLISION_DIST (4.20f * T3DM_TO_N64_SCALE)
+#define PLAYER_MAX_COLLISION_DIST (69.20f * T3DM_TO_N64_SCALE)
 
 #define PLAYER_TURN_DEG_PER_SEC ((INPUT_GET_BTN(Z, HELD) ? 236.59f : 169.3f))
 #define PLAYER_TURN_Y_MAX 89.9f
 #define PLAYER_MOVE_UNITS_PER_SEC \
 	((INPUT_GET_BTN(Z, HELD) ? 4.4704f : 1.34112f) * T3DM_TO_N64_SCALE)
 
-player_t player_init(collision_mesh_t *colmesh_ptr)
+player_t player_init(collision_mesh_t *colmesh_ptrs, const int num_colmesh_ptrs)
 {
 	player_t p;
 
 	p.pos = p.pos_old = T3D_VEC3_ZERO;
 	p.yaw = p.yaw_old = p.pitch = p.pitch_old = 0.f;
-	p.collision_mesh_ptr = colmesh_ptr;
+	for (int i = 0; i < num_colmesh_ptrs; i++) {
+		p.collision_mesh_ptrs[i] = colmesh_ptrs + i;
+	}
 
 	return p;
 }
@@ -110,9 +112,9 @@ static void _player_update_position(player_t *p, const float dt)
 	t3d_vec3_add(&p->pos, &p->pos, &move);
 }
 
-static void _player_update_collision(player_t *p)
+static void _player_update_collision(player_t *p, const uint16_t col_index)
 {
-	collision_mesh_t *cm = p->collision_mesh_ptr;
+	collision_mesh_t *cm = p->collision_mesh_ptrs[col_index];
 
 	for (uint16_t i = 0; i < cm->num_triangles; i++) {
 		collision_triangle_t *tri = cm->triangles + i;
@@ -150,29 +152,48 @@ static void _player_update_collision(player_t *p)
 		const float tri_dot = t3d_vec3_dot(&tri_norm, &T3D_VEC3_UP);
 		if (!tri_dot) { /* is wall */
 			push_amnt = fmaxf(PLAYER_RADIUS - dist, 0.f);
-			// debugf("Wall: %f\n", push_amnt);
 		} else if (tri_dot > 0.4f) { /* is floor */
 			push_amnt = -dist + PLAYER_COLLISION_CHECK_Y_OFFSET;
-			debugf("Floor: %f (%f)\n", push_amnt, p->pos.v[1]);
 		}
 
 		t3d_vec3_scale(&push_vec, &tri_norm, push_amnt);
 		t3d_vec3_add(&p->pos, &push_vec, &p->pos);
 	}
+
+	// debugf("\n\n");
 }
 
-void player_update(player_t *p, const float dt)
+void player_update(player_t *p, const scene_t *scn, const float dt)
 {
 	/* old values */
 	p->yaw_old = p->yaw;
 	p->pitch_old = p->pitch;
 	p->pos_old = p->pos;
 
+	/* update collision parameters */
+	p->collision_mesh_ptrs[0] = &scn->areas[scn->area_index].colmesh;
+	p->collision_mesh_ptrs[1] =
+		(scn->flags & SCENE_FLAG_PROCESS_AREA_LAST) ?
+			&scn->areas[scn->area_index_old].colmesh :
+			NULL;
+
 	_player_update_look_angles(p, dt);
 	_player_update_position(p, dt);
-	if (p->collision_mesh_ptr) {
-		_player_update_collision(p);
+
+	/* collision with static geometry */
+	for (int i = 0; i < 2; i++) {
+		if (p->collision_mesh_ptrs[i]) {
+			_player_update_collision(p, i);
+		}
 	}
+
+	/* collision with objects */
+	/*
+	area_t *area = scn->areas + scn->area_index;
+	for (uint16_t i = 0; i < area->num_objects; i++) {
+		object_update(area->objects + i, &p->pos, dt);
+	}
+	*/
 }
 
 void player_to_viewport(T3DViewport *vp, const player_t *p, const float interp)
@@ -185,7 +206,7 @@ void player_to_viewport(T3DViewport *vp, const player_t *p, const float interp)
 
 void player_terminate(player_t *p)
 {
-	p->collision_mesh_ptr = NULL;
+	p->collision_mesh_ptrs[0] = p->collision_mesh_ptrs[1] = NULL;
 	p->yaw = p->yaw_old = p->pitch = p->pitch_old = 0.f;
 	p->pos = p->pos_old = T3D_VEC3_ZERO;
 }

@@ -9,6 +9,20 @@
 #define OBJECT_NAME_MAX_LENGTH 32
 #endif
 
+enum { OBJECT_TYPE_STATIC, OBJECT_TYPE_DOOR, NUM_OBJECT_TYPES };
+
+enum {
+	OBJECT_UPDATE_RETURN_NONE,
+	OBJECT_UPDATE_RETURN_LOAD_NEXT_AREA,
+	OBJECT_UPDATE_RETURN_UNLOAD_PREV_AREA,
+	OBJECT_NUM_UPDATE_RETURNS
+};
+
+enum {
+	OBJECT_FLAG_IS_ACTIVE = (1 << 0),
+	OBJECT_FLAG_MUST_REENTER_RADIUS_TO_INTERACT = (1 << 1)
+};
+
 typedef struct {
 #ifndef IS_USING_SCENE_CONVERTER
 	T3DModel *mdl;
@@ -19,10 +33,25 @@ typedef struct {
 #endif
 	T3DVec3 position, position_old, rotation, rotation_old, scale,
 		scale_old;
+	uint8_t type;
+
+	/* `arg` means different things depending on the `type`.
+	 * Full list of argument types below object struct definition */
+	uint8_t arg;
+	uint8_t flags;
 } object_t;
 
+/*
+ * ARGUMENT TYPES:
+ * Static:
+ * 	Nothing (so far)
+ *
+ * Door:
+ * 	Next area to load when opened
+ */
+
 #ifndef IS_USING_SCENE_CONVERTER
-object_t object_read_from_file(FILE *file);
+object_t object_read_from_file(FILE *file, const T3DVec3 *offset);
 /*
 object_t object_init_from_model_path(const char *path, const T3DVec3 *pos,
 				     const T3DVec3 *rot, const T3DVec3 *scale);
@@ -30,7 +59,8 @@ object_t object_init_from_model_pointer(T3DModel *mdl, const T3DVec3 *pos,
 					const T3DVec3 *rot,
 					const T3DVec3 *scale);
 					*/
-void object_render(object_t *obj);
+int object_update(object_t *obj, const T3DVec3 *player_pos, const float dt);
+void object_render(const object_t *obj);
 rspq_block_t *objects_instanced_gen_dl(const int num_objs, object_t *objs,
 				       const T3DModel *common_mdl);
 void object_matrix_setup(object_t *o, const float subtick);

@@ -5,7 +5,8 @@
 
 // #define DEBUG_COLLISION
 
-collision_mesh_t collision_mesh_read_from_file(FILE *file)
+collision_mesh_t collision_mesh_read_from_file(FILE *file,
+					       const T3DVec3 *offset)
 {
 	collision_mesh_t cm;
 
@@ -43,6 +44,7 @@ collision_mesh_t collision_mesh_read_from_file(FILE *file)
 
 	for (uint16_t i = 0; i < 3; i++) {
 		fread(cm.offset.v + i, 4, 1, file);
+		cm.offset.v[i] += offset->v[i];
 	}
 
 	return cm;

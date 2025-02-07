@@ -105,9 +105,9 @@ static collision_mesh_t collision_mesh_from_assimp(const struct aiScene *aiscn,
 		memcpy(ret.triangles + (ret.num_triangles - m->num_triangles),
 		       m->triangles, sizeof *m->triangles * m->num_triangles);
 	}
-	ret.offset.v[0] = ainode->mTransformation.a4;
-	ret.offset.v[1] = ainode->mTransformation.b4;
-	ret.offset.v[2] = ainode->mTransformation.c4;
+	ret.offset.v[0] = ainode->mTransformation.a4 * T3DM_TO_N64_SCALE;
+	ret.offset.v[1] = ainode->mTransformation.b4 * T3DM_TO_N64_SCALE;
+	ret.offset.v[2] = ainode->mTransformation.c4 * T3DM_TO_N64_SCALE;
 
 	return ret;
 }
@@ -171,11 +171,8 @@ static void collision_mesh_write_to_file(const collision_mesh_t *cm, FILE *file)
 		}
 	}
 
-	T3DVec3 offset = cm->offset;
-
 	for (uint16_t i = 0; i < 3; i++) {
-		offset.v[i] *= T3DM_TO_N64_SCALE;
-		fwrite_ef32(offset.v + i, file);
+		fwrite_ef32(cm->offset.v + i, file);
 	}
 }
 
@@ -183,14 +180,8 @@ static void object_write_to_file(const object_t *o, FILE *file)
 {
 	fwrite(o->name, 1, OBJECT_NAME_MAX_LENGTH, file);
 
-	T3DVec3 pos_out = o->position;
-
 	for (int i = 0; i < 3; i++) {
-		pos_out.v[i] *= T3DM_TO_N64_SCALE;
-	}
-
-	for (int i = 0; i < 3; i++) {
-		fwrite_ef32(pos_out.v + i, file);
+		fwrite_ef32(o->position.v + i, file);
 	}
 
 	for (int i = 0; i < 3; i++) {
@@ -204,6 +195,9 @@ static void object_write_to_file(const object_t *o, FILE *file)
 
 static void area_write_to_file(const area_t *a, FILE *file)
 {
+	for (int i = 0; i < 3; i++) {
+		fwrite_ef32(a->offset.v + i, file);
+	}
 	collision_mesh_write_to_file(&a->colmesh, file);
 	fwrite_ef16(&a->num_objects, file);
 	for (uint16_t i = 0; i < a->num_objects; i++) {
@@ -225,6 +219,9 @@ static void scene_process_area(area_t *a, const struct aiScene *aiscn,
 {
 	a->num_objects = 0;
 	a->objects = malloc(0);
+	a->offset.v[0] = n->mTransformation.a4 * T3DM_TO_N64_SCALE;
+	a->offset.v[1] = n->mTransformation.b4 * T3DM_TO_N64_SCALE;
+	a->offset.v[2] = n->mTransformation.c4 * T3DM_TO_N64_SCALE;
 	int num_col_meshes = 0;
 	for (unsigned int i = 0; i < n->mNumChildren; i++) {
 		const struct aiNode *ch = n->mChildren[i];
@@ -243,9 +240,12 @@ static void scene_process_area(area_t *a, const struct aiScene *aiscn,
 			object_t *onew = a->objects + a->num_objects - 1;
 			strncpy(onew->name, ch->mName.data,
 				OBJECT_NAME_MAX_LENGTH);
-			onew->position.v[0] = ch->mTransformation.a4;
-			onew->position.v[1] = ch->mTransformation.b4;
-			onew->position.v[2] = ch->mTransformation.c4;
+			onew->position.v[0] =
+				ch->mTransformation.a4 * T3DM_TO_N64_SCALE;
+			onew->position.v[1] =
+				ch->mTransformation.b4 * T3DM_TO_N64_SCALE;
+			onew->position.v[2] =
+				ch->mTransformation.c4 * T3DM_TO_N64_SCALE;
 			onew->rotation = (T3DVec3){ { 0, 0, 0 } };
 			onew->scale = (T3DVec3){ { 1, 1, 1 } };
 		} else {
@@ -275,6 +275,8 @@ static void scene_debug(const scene_t *s, const char *scn_path)
 		area_t *a = s->areas + i;
 
 		printf("\tArea %d (%d objects):\n", i, a->num_objects);
+		printf("\t\tOffset: (%f, %f, %f)\n", a->offset.v[0],
+		       a->offset.v[1], a->offset.v[2]);
 		printf("\t\tCollision Mesh (%d triangles)\n",
 		       a->colmesh.num_triangles);
 		printf("\t\t\tOffset: (%f, %f, %f)\n", a->colmesh.offset.v[0],

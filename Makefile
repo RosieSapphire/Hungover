@@ -26,11 +26,12 @@ endif
 ASSETS_PNG := $(wildcard assets/*.png)
 ASSETS_WAV := $(wildcard assets/*.wav)
 ASSETS_GLB := $(wildcard assets/*.glb)
+ASSETS_SCN_GLB := $(wildcard assets/Scn.*.glb)
 ASSETS_CONV := \
 	$(ASSETS_PNG:assets/%.png=filesystem/%.sprite) \
 	$(ASSETS_WAV:assets/%.wav=filesystem/%.wav64) \
 	$(ASSETS_GLB:assets/%.glb=filesystem/%.t3dm) \
-	$(ASSETS_GLB:assets/%.glb=filesystem/%.scn)
+	$(ASSETS_GLB:assets/Scn.%.glb=filesystem/Scn.%.scn)
 
 final: $(ROM)
 $(ROM): N64_ROM_TITLE=$(TARGET_STR)
@@ -61,7 +62,7 @@ filesystem/%.t3dm: assets/%.glb
 	$(T3D_GLTF_TO_3D) "$<" $@ --base-scale=64
 	$(N64_BINDIR)/mkasset $(MKMODEL_FLAGS) -o filesystem $@
 
-filesystem/%.scn: assets/%.glb
+filesystem/Scn.%.scn: assets/Scn.%.glb
 	@mkdir -p $(dir $@)
 	@echo "    [SCENE] $@"
 	$(GLB_TO_COL) $< $@

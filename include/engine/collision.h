@@ -22,7 +22,8 @@ typedef struct {
 	T3DVec3 offset;
 } collision_mesh_t;
 
-collision_mesh_t collision_mesh_read_from_file(FILE *file);
+collision_mesh_t collision_mesh_read_from_file(FILE *file,
+					       const T3DVec3 *offset);
 void collision_mesh_terminate(collision_mesh_t *cm);
 
 #endif /* _ENGINE_COLLISION_H_ */
