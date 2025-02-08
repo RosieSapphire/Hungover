@@ -16,14 +16,17 @@
 #define PLAYER_MOVE_UNITS_PER_SEC \
 	((INPUT_GET_BTN(Z, HELD) ? 4.4704f : 1.34112f) * T3DM_TO_N64_SCALE)
 
-player_t player_init(collision_mesh_t *colmesh_ptrs, const int num_colmesh_ptrs)
+player_t player_init(const scene_t *scn)
 {
 	player_t p;
 
 	p.pos = p.pos_old = T3D_VEC3_ZERO;
 	p.yaw = p.yaw_old = p.pitch = p.pitch_old = 0.f;
-	for (int i = 0; i < num_colmesh_ptrs; i++) {
-		p.collision_mesh_ptrs[i] = colmesh_ptrs + i;
+
+	p.collision_mesh_ptrs[0] = &scn->areas[scn->area_index].colmesh;
+	if (scn->area_index_old ^ scn->area_index) {
+		p.collision_mesh_ptrs[1] =
+			&scn->areas[scn->area_index_old].colmesh;
 	}
 
 	return p;
@@ -37,7 +40,7 @@ void player_get_look_values(T3DVec3 *eye, T3DVec3 *focus, const player_t *p,
 	T3DVec3 eye_offset;
 
 	t3d_vec3_lerp(&pos_lerp, &p->pos_old, &p->pos, interp);
-	t3d_vec3_scale(&eye_offset, &T3D_VEC3_UP, PLAYER_HEIGHT);
+	t3d_vec3_scale(&eye_offset, &T3D_VEC3_ZUP, PLAYER_HEIGHT);
 	t3d_vec3_add(eye, &pos_lerp, &eye_offset);
 
 	/* focus */
@@ -46,9 +49,9 @@ void player_get_look_values(T3DVec3 *eye, T3DVec3 *focus, const player_t *p,
 
 	*focus = T3D_VEC3(cosf(T3D_DEG_TO_RAD(yaw_lerp)) *
 				  cosf(T3D_DEG_TO_RAD(pitch_lerp)),
-			  T3D_DEG_TO_RAD(pitch_lerp),
 			  sinf(T3D_DEG_TO_RAD(yaw_lerp)) *
-				  cosf(T3D_DEG_TO_RAD(pitch_lerp)));
+				  cosf(T3D_DEG_TO_RAD(pitch_lerp)),
+			  T3D_DEG_TO_RAD(pitch_lerp));
 	t3d_vec3_add(focus, focus, eye);
 }
 
@@ -58,7 +61,7 @@ void player_get_focus_pos(T3DVec3 *eye, const player_t *p, const float interp)
 	T3DVec3 eye_offset;
 
 	t3d_vec3_lerp(&pos_lerp, &p->pos_old, &p->pos, interp);
-	t3d_vec3_scale(&eye_offset, &T3D_VEC3_UP, PLAYER_HEIGHT);
+	t3d_vec3_scale(&eye_offset, &T3D_VEC3_ZUP, PLAYER_HEIGHT);
 	t3d_vec3_add(eye, &pos_lerp, &eye_offset);
 }
 
@@ -67,7 +70,7 @@ static void _player_update_look_angles(player_t *p, const float dt)
 	float stick[2] = { INPUT_GET_STICK(X), INPUT_GET_STICK(Y) };
 
 	/* yaw */
-	p->yaw += stick[0] * PLAYER_TURN_DEG_PER_SEC * dt;
+	p->yaw -= stick[0] * PLAYER_TURN_DEG_PER_SEC * dt;
 	while (p->yaw >= 360.f) {
 		p->yaw -= 360.f;
 		p->yaw_old -= 360.f;
@@ -98,10 +101,10 @@ static void _player_update_position(player_t *p, const float dt)
 	const int side_sign =
 		INPUT_GET_BTN(C_RIGHT, HELD) - INPUT_GET_BTN(C_LEFT, HELD);
 	T3DVec3 forw_move = look_dir;
-	forw_move.v[1] = 0.f;
+	forw_move.v[2] = 0.f;
 	t3d_vec3_norm(&forw_move);
 	T3DVec3 side_move, move;
-	t3d_vec3_cross(&side_move, &forw_move, &T3D_VEC3_UP);
+	t3d_vec3_cross(&side_move, &forw_move, &T3D_VEC3_ZUP);
 	t3d_vec3_scale(&forw_move, &forw_move, forw_sign);
 	t3d_vec3_scale(&side_move, &side_move, side_sign);
 
@@ -134,7 +137,7 @@ static void _player_update_collision(player_t *p, const uint16_t col_index)
 		T3DVec3 check_offset;
 		T3DVec3 check_pos;
 
-		t3d_vec3_scale(&check_offset, &T3D_VEC3_UP,
+		t3d_vec3_scale(&check_offset, &T3D_VEC3_ZUP,
 			       PLAYER_COLLISION_CHECK_Y_OFFSET);
 		t3d_vec3_add(&check_pos, &p->pos, &check_offset);
 
@@ -149,7 +152,7 @@ static void _player_update_collision(player_t *p, const uint16_t col_index)
 		T3DVec3 push_vec;
 		float push_amnt = 0.f;
 
-		const float tri_dot = t3d_vec3_dot(&tri_norm, &T3D_VEC3_UP);
+		const float tri_dot = t3d_vec3_dot(&tri_norm, &T3D_VEC3_ZUP);
 		if (!tri_dot) { /* is wall */
 			push_amnt = fmaxf(PLAYER_RADIUS - dist, 0.f);
 		} else if (tri_dot > 0.4f) { /* is floor */
@@ -201,7 +204,7 @@ void player_to_viewport(T3DViewport *vp, const player_t *p, const float interp)
 	T3DVec3 eye, focus;
 
 	player_get_look_values(&eye, &focus, p, interp);
-	t3d_viewport_look_at(vp, &eye, &focus, &T3D_VEC3_UP);
+	t3d_viewport_look_at(vp, &eye, &focus, &T3D_VEC3_ZUP);
 }
 
 void player_terminate(player_t *p)

@@ -76,7 +76,7 @@ static void _init(void)
 	t3d_init((T3DInitParams){ 0 });
 
 	scene = scene_init_from_file("rom:/Scn.TestRoom.scn");
-	player = player_init(&scene.areas[0].colmesh, 1);
+	player = player_init(&scene);
 
 	time_accumulated = 0.f;
 }

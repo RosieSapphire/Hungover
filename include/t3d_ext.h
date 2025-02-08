@@ -9,7 +9,9 @@
 /* constants for T3DVec3 values */
 #define T3D_VEC3_ZERO (T3D_VEC3(0, 0, 0))
 #define T3D_VEC3_ONE (T3D_VEC3(1, 1, 1))
-#define T3D_VEC3_UP (T3D_VEC3(0, 1, 0))
+#define T3D_VEC3_XUP (T3D_VEC3(1, 0, 0))
+#define T3D_VEC3_YUP (T3D_VEC3(0, 1, 0))
+#define T3D_VEC3_ZUP (T3D_VEC3(0, 0, 1))
 
 void t3d_vec3_negate(T3DVec3 *dst, const T3DVec3 *src);
 
