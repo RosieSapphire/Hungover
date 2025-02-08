@@ -31,9 +31,66 @@ scene_t scene_init_from_file(const char *path)
 	return scn;
 }
 
-void scene_update(scene_t *scn, const T3DVec3 *player_pos, const float dt)
+static void _scene_update_area_object(object_t *o, scene_t *scn,
+				      const T3DVec3 *player_pos,
+				      const T3DVec3 *player_dir,
+				      uint16_t *inds[2], const float dt)
+{
+	if (!(o->flags & OBJECT_FLAG_IS_ACTIVE)) {
+		return;
+	}
+
+	switch (object_update(o, player_pos, player_dir, dt)) {
+	case OBJECT_UPDATE_RETURN_LOAD_NEXT_AREA:
+		*inds[1] = *inds[0];
+		*inds[0] = o->argi[OBJECT_DOOR_ARGI_NEXT_AREA];
+		scn->flags |= SCENE_FLAG_PROCESS_AREA_LAST;
+		object_t *new_door = area_find_door_by_dest_index(
+			scn->areas + o->argi[OBJECT_DOOR_ARGI_NEXT_AREA],
+			*inds[1]);
+		new_door->flags &= ~(OBJECT_FLAG_IS_ACTIVE);
+		return;
+
+	case OBJECT_UPDATE_RETURN_UNLOAD_PREV_AREA:
+		scn->flags &= ~(SCENE_FLAG_PROCESS_AREA_LAST);
+		object_t *cur_door = area_find_door_by_dest_index(
+			scn->areas + o->argi[OBJECT_DOOR_ARGI_NEXT_AREA],
+			*inds[1]);
+		cur_door->flags |= OBJECT_FLAG_IS_ACTIVE;
+		return;
+
+	case OBJECT_UPDATE_RETURN_UNLOAD_NEXT_AREA:
+		scn->flags &= ~(SCENE_FLAG_PROCESS_AREA_LAST);
+		scn->area_index = scn->area_index_old;
+		return;
+
+	default:
+		return;
+	}
+}
+
+void scene_update(scene_t *scn, const T3DVec3 *player_pos,
+		  const T3DVec3 *player_dir, const float dt)
 {
 	uint16_t *inds[2] = { &scn->area_index, &scn->area_index_old };
+
+	/*
+	 * This is to ensure all objects are only updated once per frame.
+	 * The reason this is done is because if, say, a door were to 
+	 * load a new area, the previous area would be active as well,
+	 * causing that same door object to be updated twice,
+	 * causing various issues. This loop mitigates that.
+	 */
+	object_setup_frame_static_vars();
+	for (uint16_t i = 0; i < scn->num_areas; i++) {
+		area_t *a = scn->areas + i;
+
+		for (uint16_t j = 0; j < a->num_objects; j++) {
+			object_t *o = a->objects + j;
+
+			o->flags &= ~(OBJECT_FLAG_WAS_UPDATED_THIS_FRAME);
+		}
+	}
 
 	for (uint16_t i = 0; i < 2; i++) {
 		if (i && !(scn->flags & SCENE_FLAG_PROCESS_AREA_LAST)) {
@@ -42,44 +99,12 @@ void scene_update(scene_t *scn, const T3DVec3 *player_pos, const float dt)
 
 		area_t *area = scn->areas + *inds[i];
 		for (uint16_t j = 0; j < area->num_objects; j++) {
-			object_t *o = area->objects + j;
-
-			if (!(o->flags & OBJECT_FLAG_IS_ACTIVE)) {
-				continue;
-			}
-
-			switch (object_update(o, player_pos, dt)) {
-			case OBJECT_UPDATE_RETURN_LOAD_NEXT_AREA:
-				debugf("LOAD NEXT AREA (%d)\n",
-				       o->argi[OBJECT_DOOR_ARGI_NEXT_AREA]);
-				*inds[1] = *inds[0];
-				*inds[0] = o->argi[OBJECT_DOOR_ARGI_NEXT_AREA];
-				scn->flags |= SCENE_FLAG_PROCESS_AREA_LAST;
-				object_t *new_door = area_find_door_by_dest_index(
-					scn->areas +
-						o->argi[OBJECT_DOOR_ARGI_NEXT_AREA],
-					*inds[1]);
-				new_door->flags &= ~(OBJECT_FLAG_IS_ACTIVE);
-				debugf("Deactivated next door\n");
-				break;
-
-			case OBJECT_UPDATE_RETURN_UNLOAD_PREV_AREA:
-				debugf("UNLOAD PREV AREA (%d)\n", *inds[1]);
-				scn->flags &= ~(SCENE_FLAG_PROCESS_AREA_LAST);
-				object_t *cur_door = area_find_door_by_dest_index(
-					scn->areas +
-						o->argi[OBJECT_DOOR_ARGI_NEXT_AREA],
-					*inds[1]);
-				cur_door->flags |=
-					OBJECT_FLAG_IS_ACTIVE |
-					OBJECT_FLAG_MUST_REENTER_RADIUS_TO_INTERACT;
-				break;
-
-			default:
-				break;
-			}
+			_scene_update_area_object(area->objects + j, scn,
+						  player_pos, player_dir, inds,
+						  dt);
 		}
 	}
+	object_update_ui_with_static_vars();
 }
 
 void scene_render(const scene_t *scn, const float subtick)

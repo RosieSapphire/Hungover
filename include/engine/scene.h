@@ -18,7 +18,8 @@ typedef struct {
 } scene_t;
 
 scene_t scene_init_from_file(const char *path);
-void scene_update(scene_t *scn, const T3DVec3 *player_pos, const float dt);
+void scene_update(scene_t *scn, const T3DVec3 *player_pos,
+		  const T3DVec3 *player_dir, const float dt);
 void scene_render(const scene_t *scn, const float subtick);
 void scene_terminate(scene_t *scn);
 

@@ -20,8 +20,6 @@ area_t area_read_from_file(FILE *file, T3DModel *scene_mdl, const int index)
 	char col_name[16];
 	memset(col_name, 0, 16);
 	snprintf(col_name, 16, "Col.%u", index);
-	// a.scene_material_ptr = t3d_model_get_material(scene_mdl, "mat");
-	a.scene_obj_ptr = t3d_model_get_object(scene_mdl, col_name);
 	a.matrix = malloc_uncached(sizeof *a.matrix);
 	t3d_mat4fp_from_srt_euler(a.matrix, (float[3]){ 1, 1, 1 },
 				  (float[3]){ 0, 0, 0 }, a.offset.v);
@@ -29,15 +27,23 @@ area_t area_read_from_file(FILE *file, T3DModel *scene_mdl, const int index)
 	/* scene obj displaylist */
 	rspq_block_begin();
 	t3d_matrix_push(a.matrix);
-	// t3d_model_draw_material(a.scene_material_ptr, NULL);
-	t3d_model_draw_object(a.scene_obj_ptr, NULL);
+	T3DModelIter iter =
+		t3d_model_iter_create(scene_mdl, T3D_CHUNK_TYPE_OBJECT);
+	while (t3d_model_iter_next(&iter)) {
+		if (strncmp(iter.object->name, col_name, 16)) {
+			continue;
+		}
+		t3d_model_draw_material(iter.object->material, NULL);
+		t3d_model_draw_object(iter.object, NULL);
+	}
 	t3d_matrix_pop(1);
-	a.scene_obj_ptr->userBlock = rspq_block_end();
+	a.area_block = rspq_block_end();
 
 	return a;
 }
 
-object_t *area_find_door_by_dest_index(area_t *a, const uint16_t dest_index)
+object_t *area_find_door_by_dest_index(const area_t *a,
+				       const uint16_t dest_index)
 {
 	for (uint16_t i = 0; i < a->num_objects; i++) {
 		object_t *obj = a->objects + i;
@@ -71,7 +77,7 @@ void area_render(const area_t *a, const float subtick)
 	}
 
 	/* static geometry */
-	rspq_block_run(a->scene_obj_ptr->userBlock);
+	rspq_block_run(a->area_block);
 }
 
 void area_terminate(area_t *a)

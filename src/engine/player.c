@@ -16,18 +16,15 @@
 #define PLAYER_MOVE_UNITS_PER_SEC \
 	((INPUT_GET_BTN(Z, HELD) ? 4.4704f : 1.34112f) * T3DM_TO_N64_SCALE)
 
+#define PLAYER_ENABLE_COLLISION 1
+
 player_t player_init(const scene_t *scn)
 {
 	player_t p;
 
 	p.pos = p.pos_old = T3D_VEC3_ZERO;
 	p.yaw = p.yaw_old = p.pitch = p.pitch_old = 0.f;
-
-	p.collision_mesh_ptrs[0] = &scn->areas[scn->area_index].colmesh;
-	if (scn->area_index_old ^ scn->area_index) {
-		p.collision_mesh_ptrs[1] =
-			&scn->areas[scn->area_index_old].colmesh;
-	}
+	p.collision_mesh_ptrs[0] = p.collision_mesh_ptrs[1] = NULL;
 
 	return p;
 }
@@ -173,12 +170,15 @@ void player_update(player_t *p, const scene_t *scn, const float dt)
 	p->pitch_old = p->pitch;
 	p->pos_old = p->pos;
 
-	/* update collision parameters */
+#if PLAYER_ENABLE_COLLISION
 	p->collision_mesh_ptrs[0] = &scn->areas[scn->area_index].colmesh;
 	p->collision_mesh_ptrs[1] =
 		(scn->flags & SCENE_FLAG_PROCESS_AREA_LAST) ?
 			&scn->areas[scn->area_index_old].colmesh :
 			NULL;
+#else
+	p->collision_mesh_ptrs[0] = p->collision_mesh_ptrs[1] = NULL;
+#endif
 
 	_player_update_look_angles(p, dt);
 	_player_update_position(p, dt);
@@ -191,12 +191,6 @@ void player_update(player_t *p, const scene_t *scn, const float dt)
 	}
 
 	/* collision with objects */
-	/*
-	area_t *area = scn->areas + scn->area_index;
-	for (uint16_t i = 0; i < area->num_objects; i++) {
-		object_update(area->objects + i, &p->pos, dt);
-	}
-	*/
 }
 
 void player_to_viewport(T3DViewport *vp, const player_t *p, const float interp)

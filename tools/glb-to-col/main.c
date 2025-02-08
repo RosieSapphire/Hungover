@@ -221,8 +221,6 @@ static void matrix_to_quaternion(float quat[4], const float matrix[4][4])
 		quat[2] = r * 0.5f;
 		quat[3] = rinv * (matrix[0][1] - matrix[1][0]);
 	}
-
-	printf("%f, %f, %f, %f\n", quat[0], quat[1], quat[2], quat[3]);
 }
 
 /*
@@ -351,7 +349,11 @@ static void scene_process_area(area_t *a, const struct aiScene *aiscn,
 			};
 			matrix_to_quaternion(onew->rotation.v, matrix);
 			// quaternion_to_euler(onew->rotation.v, quat);
-			onew->scale = (T3DVec3){ { 1, 1, 1 } };
+			onew->scale = (T3DVec3){ {
+				ch->mTransformation.a1,
+				ch->mTransformation.b2,
+				ch->mTransformation.c3,
+			} };
 		} else {
 			exitf("ERROR: Invalid Item Type.\n");
 		}

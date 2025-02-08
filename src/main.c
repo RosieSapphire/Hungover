@@ -9,6 +9,7 @@
 
 #include "engine/scene.h"
 #include "engine/player.h"
+#include "engine/ui.h"
 
 /* general */
 static float time_accumulated = 0.f;
@@ -21,9 +22,12 @@ static int dfs_handle;
 
 /* tiny3D */
 static T3DViewport viewport;
+static uint8_t ambient_color[4] = { 0xFF, 0xFF, 0xFF, 0xFF };
+/*
 static uint8_t ambient_color[4] = { 0x10, 0x10, 0x10, 0xFF };
 static uint8_t light_color[4] = { 0xFF, 0xFF, 0xFF, 0xFF };
 static T3DVec3 light_dir = { { 0.577f, 0.577f, 0.577f } };
+*/
 
 static scene_t scene;
 
@@ -69,6 +73,7 @@ static void _init(void)
 #endif
 	dfs_handle = dfs_init(DFS_DEFAULT_LOCATION);
 	asset_init_compression(1);
+	ui_init();
 	input_init();
 
 	viewport = t3d_viewport_create();
@@ -86,7 +91,11 @@ static void _update(const float dt)
 	input_poll();
 
 	player_update(&player, &scene, dt);
-	scene_update(&scene, &player.pos, dt);
+
+	T3DVec3 player_eye, player_focus, player_dir;
+	player_get_look_values(&player_eye, &player_focus, &player, 1.f);
+	t3d_vec3_diff(&player_dir, &player_focus, &player_eye);
+	scene_update(&scene, &player.pos, &player_dir, dt);
 }
 
 static float _update_renderer(const float dt)
@@ -106,21 +115,18 @@ static void _render(const float subtick)
 	rdpq_attach(display_get(), display_get_zbuf());
 
 	t3d_frame_start();
-	t3d_screen_clear_color(RGBA16(0x3, 0x6, 0x9, 0x1F));
+	t3d_screen_clear_color(color_from_packed16(0x0001));
 	t3d_screen_clear_depth();
 
 	t3d_light_set_ambient(ambient_color);
+	/*
 	t3d_light_set_count(1);
 	t3d_light_set_directional(0, light_color, &light_dir);
+	*/
 
 	scene_render(&scene, subtick);
-	/*
-	t3d_mat4fp_from_srt_euler(mdl_mfp, (float[3]){ 1, 1, 1 },
-				  (float[3]){ 0, 0, 0 }, (float[3]){ 0, 0, 0 });
-	t3d_matrix_push(mdl_mfp);
-	t3d_model_draw(mdl);
-	t3d_matrix_pop(1);
-	*/
+
+	ui_render();
 
 	rdpq_detach_show();
 }
@@ -132,6 +138,7 @@ static void _terminate(void)
 
 	t3d_destroy();
 
+	ui_terminate();
 	dfs_close(dfs_handle);
 	dfs_handle = -1;
 

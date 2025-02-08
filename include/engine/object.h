@@ -15,12 +15,14 @@ enum {
 	OBJECT_UPDATE_RETURN_NONE,
 	OBJECT_UPDATE_RETURN_LOAD_NEXT_AREA,
 	OBJECT_UPDATE_RETURN_UNLOAD_PREV_AREA,
+	OBJECT_UPDATE_RETURN_UNLOAD_NEXT_AREA,
 	OBJECT_NUM_UPDATE_RETURNS
 };
 
 enum {
 	OBJECT_FLAG_IS_ACTIVE = (1 << 0),
-	OBJECT_FLAG_MUST_REENTER_RADIUS_TO_INTERACT = (1 << 1)
+	OBJECT_FLAG_MUST_REENTER_RADIUS = (1 << 1),
+	OBJECT_FLAG_WAS_UPDATED_THIS_FRAME = (1 << 2)
 };
 
 #define OBJECT_MAX_NUM_ARGIS 4
@@ -28,6 +30,8 @@ enum {
 
 enum {
 	OBJECT_DOOR_ARGI_NEXT_AREA,
+	OBJECT_DOOR_ARGI_IS_OPENING,
+	OBJECT_DOOR_ARGI_SIDE_ENTERED,
 };
 
 enum {
@@ -66,6 +70,8 @@ typedef struct {
 
 #ifndef IS_USING_SCENE_CONVERTER
 object_t object_read_from_file(FILE *file, const T3DVec3 *offset);
+void object_setup_frame_static_vars(void);
+void object_update_ui_with_static_vars(void);
 /*
 object_t object_init_from_model_path(const char *path, const T3DVec3 *pos,
 				     const T3DVec3 *rot, const T3DVec3 *scale);
@@ -73,7 +79,8 @@ object_t object_init_from_model_pointer(T3DModel *mdl, const T3DVec3 *pos,
 					const T3DVec3 *rot,
 					const T3DVec3 *scale);
 					*/
-int object_update(object_t *obj, const T3DVec3 *player_pos, const float dt);
+int object_update(object_t *obj, const T3DVec3 *player_pos,
+		  const T3DVec3 *player_dir, const float dt);
 void object_render(const object_t *obj);
 rspq_block_t *objects_instanced_gen_dl(const int num_objs, object_t *objs,
 				       const T3DModel *common_mdl);

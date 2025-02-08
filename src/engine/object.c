@@ -1,11 +1,15 @@
 #include "t3d_ext.h"
+#include "input.h"
 
+#include "engine/ui.h"
 #include "engine/object.h"
 
 #define OBJECT_NAME_MAX_LENGTH 32
 
 #define OBJECT_DOOR_TURN_DEG_PER_SEC 179.f
-#define OBJECT_DOOR_CHECK_RADIUS 64.f
+#define OBJECT_DOOR_CHECK_RADIUS 100.f
+
+static int num_doors_in_range_of = 0;
 
 object_t object_read_from_file(FILE *file, const T3DVec3 *offset)
 {
@@ -32,15 +36,6 @@ object_t object_read_from_file(FILE *file, const T3DVec3 *offset)
 		} else {
 			strncpy(obj_name_new, obj_name, OBJECT_NAME_MAX_LENGTH);
 		}
-		/*
-		debugf("'%s' -> '%s'", obj_name, obj_name_new);
-		if (has_num) {
-			debugf(" (%ld)\n", obj_val);
-		} else {
-			debugf("\n");
-		}
-		debugf("\n");
-		*/
 	}
 
 	snprintf(mdl_path, OBJECT_NAME_MAX_LENGTH << 1, "rom:/%s.t3dm",
@@ -79,11 +74,18 @@ object_t object_read_from_file(FILE *file, const T3DVec3 *offset)
 	if (!strncmp("Door", obj_name + 4, strlen("Door"))) {
 		o.type = OBJECT_TYPE_DOOR;
 		o.argi[OBJECT_DOOR_ARGI_NEXT_AREA] = obj_val;
+		o.argi[OBJECT_DOOR_ARGI_IS_OPENING] = false;
+		o.argi[OBJECT_DOOR_ARGI_SIDE_ENTERED] = -1;
 		o.argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] = 0.f;
 		o.argf[OBJECT_DOOR_ARGF_SWING_AMOUNT_OLD] = 0.f;
 	} else {
 		o.type = OBJECT_TYPE_STATIC;
-		o.argi[OBJECT_DOOR_ARGI_NEXT_AREA] = 0;
+		for (int i = 0; i < OBJECT_MAX_NUM_ARGIS; i++) {
+			o.argi[i] = 0;
+		}
+		for (int i = 0; i < OBJECT_MAX_NUM_ARGFS; i++) {
+			o.argf[i] = 0.f;
+		}
 	}
 
 	o.flags = OBJECT_FLAG_IS_ACTIVE;
@@ -91,24 +93,63 @@ object_t object_read_from_file(FILE *file, const T3DVec3 *offset)
 	return o;
 }
 
-static int _object_update_door(object_t *obj, const float dist_from_player,
-			       const float dt)
+void object_setup_frame_static_vars(void)
+{
+	num_doors_in_range_of = 0;
+}
+
+void object_update_ui_with_static_vars(void)
+{
+	/*
+	debugf("Object Static Vars:\n");
+	debugf("\tnum_doors_in_range_of=%d\n", num_doors_in_range_of);
+	debugf("\n");
+	*/
+
+	ui_toggle_elements(UI_ELEMENT_FLAG_A_BUTTON, num_doors_in_range_of);
+}
+
+static void _object_update_door_inside_radius(object_t *obj,
+					      const float facing_dot)
+{
+	if (facing_dot < 0.6f) {
+		return;
+	}
+
+	num_doors_in_range_of++;
+	if (INPUT_GET_BTN(A, PRESSED)) {
+		obj->argi[OBJECT_DOOR_ARGI_IS_OPENING] ^=
+			obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] == 0.f ||
+			obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] == 90.f;
+	}
+}
+
+static void _object_update_door_outside_radius(object_t *obj)
+{
+	obj->argi[OBJECT_DOOR_ARGI_IS_OPENING] = false;
+}
+
+static int _object_update_door(object_t *obj, const T3DVec3 *player_to_obj_dir,
+			       const float dist_from_player,
+			       const float player_facing_dot, const float dt)
 {
 	obj->rotation_old = obj->rotation;
 	obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT_OLD] =
 		obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT];
 
 	if (dist_from_player < OBJECT_DOOR_CHECK_RADIUS) {
-		if (!(obj->flags &
-		      OBJECT_FLAG_MUST_REENTER_RADIUS_TO_INTERACT)) {
-			obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] +=
-				dt * OBJECT_DOOR_TURN_DEG_PER_SEC;
-			if (obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] > 90.f) {
-				obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] = 90.f;
-			}
+		_object_update_door_inside_radius(obj, player_facing_dot);
+	} else {
+		_object_update_door_outside_radius(obj);
+	}
+
+	if (obj->argi[OBJECT_DOOR_ARGI_IS_OPENING]) {
+		obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] +=
+			dt * OBJECT_DOOR_TURN_DEG_PER_SEC;
+		if (obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] > 90.f) {
+			obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] = 90.f;
 		}
 	} else {
-		obj->flags &= ~(OBJECT_FLAG_MUST_REENTER_RADIUS_TO_INTERACT);
 		obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] -=
 			dt * OBJECT_DOOR_TURN_DEG_PER_SEC;
 		if (obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] < 0.f) {
@@ -120,37 +161,61 @@ static int _object_update_door(object_t *obj, const float dist_from_player,
 	t3d_quat_rotate_euler(
 		&obj->rotation, (float[3]){ 0, 0, 1 },
 		T3D_DEG_TO_RAD(obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT]));
-	// obj->rotation.v[2] = obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT];
 
+	T3DVec3 obj_to_player_dir;
+
+	t3d_vec3_negate(&obj_to_player_dir, player_to_obj_dir);
+	const float pass_door_dot =
+		t3d_vec3_dot(&obj_to_player_dir, &T3D_VEC3_XUP);
+
+	/* door just opened */
 	if (obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] > 0.f &&
 	    obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT_OLD] <= 0.f) {
+		obj->argi[OBJECT_DOOR_ARGI_SIDE_ENTERED] = pass_door_dot >= 0.f;
 		return OBJECT_UPDATE_RETURN_LOAD_NEXT_AREA;
 	}
 
+	/* door just closed */
 	if (obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] <= 0.f &&
 	    obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT_OLD] > 0.f) {
-		return OBJECT_UPDATE_RETURN_UNLOAD_PREV_AREA;
+		int side_old = obj->argi[OBJECT_DOOR_ARGI_SIDE_ENTERED];
+		obj->argi[OBJECT_DOOR_ARGI_SIDE_ENTERED] = pass_door_dot >= 0.f;
+
+		/* we have moved to the other side of the door */
+		if (side_old ^ obj->argi[OBJECT_DOOR_ARGI_SIDE_ENTERED]) {
+			return OBJECT_UPDATE_RETURN_UNLOAD_PREV_AREA;
+		}
+
+		/* ... we have not */
+		return OBJECT_UPDATE_RETURN_UNLOAD_NEXT_AREA;
 	}
 
 	return OBJECT_UPDATE_RETURN_NONE;
 }
 
-int object_update(object_t *obj, const T3DVec3 *player_pos, const float dt)
+int object_update(object_t *obj, const T3DVec3 *player_pos,
+		  const T3DVec3 *player_dir, const float dt)
 {
 	/* This should never really occur, since we check for this in the
 	 * scene update, but it's here if this function were to be called
 	 * somewhere else, for example. */
-	if (!(obj->flags & OBJECT_FLAG_IS_ACTIVE)) {
+	if (!(obj->flags & OBJECT_FLAG_IS_ACTIVE) ||
+	    (obj->flags & OBJECT_FLAG_WAS_UPDATED_THIS_FRAME)) {
 		return OBJECT_UPDATE_RETURN_NONE;
 	}
 
-	T3DVec3 obj_vec;
+	obj->flags |= OBJECT_FLAG_WAS_UPDATED_THIS_FRAME;
+
+	T3DVec3 obj_vec, obj_dir;
 	t3d_vec3_diff(&obj_vec, &obj->position, player_pos);
 	const float obj_dist = t3d_vec3_len(&obj_vec);
+	t3d_vec3_scale(&obj_dir, &obj_vec, 1.f / obj_dist);
+	const float player_obj_dot = t3d_vec3_dot(player_dir, &obj_dir);
 
 	switch (obj->type) {
 	case OBJECT_TYPE_DOOR:
-		return _object_update_door(obj, obj_dist, dt);
+		return _object_update_door(obj, &obj_dir, obj_dist,
+					   player_obj_dot, dt);
 
 	case OBJECT_TYPE_STATIC:
 	default:
@@ -186,6 +251,7 @@ rspq_block_t *objects_instanced_gen_dl(const int num_objs, object_t *objs,
 	return (instdl = rspq_block_end());
 }
 
+/*
 static void _quat_slerp(T3DQuat *res, const T3DQuat *a, const T3DQuat *b,
 			const float t)
 {
@@ -219,6 +285,7 @@ static void _quat_slerp(T3DQuat *res, const T3DQuat *a, const T3DQuat *b,
 	t3d_quat_add(&q1, &q1, &q2);
 	t3d_quat_scale(res, &q1, 1.f / sin_theta);
 }
+*/
 
 void object_matrix_setup(object_t *o, const float subtick)
 {
@@ -226,8 +293,8 @@ void object_matrix_setup(object_t *o, const float subtick)
 	T3DQuat rot_lerp;
 
 	t3d_vec3_lerp(&pos_lerp, &o->position_old, &o->position, subtick);
-	_quat_slerp(&rot_lerp, &o->rotation_old, &o->rotation, subtick);
-	/* TODO: Clamp rotation */
+	// t3d_quat_slerp(&rot_lerp, &o->rotation_old, &o->rotation, subtick);
+	t3d_quat_nlerp(&rot_lerp, &o->rotation_old, &o->rotation, subtick);
 	t3d_vec3_lerp(&scale_lerp, &o->scale_old, &o->scale, subtick);
 
 	t3d_mat4fp_from_srt(o->matrix, scale_lerp.v, rot_lerp.v, pos_lerp.v);
