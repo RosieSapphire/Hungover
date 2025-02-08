@@ -5,7 +5,7 @@
 #define OBJECT_NAME_MAX_LENGTH 32
 
 #define OBJECT_DOOR_TURN_DEG_PER_SEC 179.f
-#define OBJECT_DOOR_CHECK_RADIUS 182.f
+#define OBJECT_DOOR_CHECK_RADIUS 64.f
 
 object_t object_read_from_file(FILE *file, const T3DVec3 *offset)
 {

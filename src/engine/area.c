@@ -20,7 +20,7 @@ area_t area_read_from_file(FILE *file, T3DModel *scene_mdl, const int index)
 	char col_name[16];
 	memset(col_name, 0, 16);
 	snprintf(col_name, 16, "Col.%u", index);
-	a.scene_material_ptr = t3d_model_get_material(scene_mdl, "mat");
+	// a.scene_material_ptr = t3d_model_get_material(scene_mdl, "mat");
 	a.scene_obj_ptr = t3d_model_get_object(scene_mdl, col_name);
 	a.matrix = malloc_uncached(sizeof *a.matrix);
 	t3d_mat4fp_from_srt_euler(a.matrix, (float[3]){ 1, 1, 1 },
@@ -29,7 +29,7 @@ area_t area_read_from_file(FILE *file, T3DModel *scene_mdl, const int index)
 	/* scene obj displaylist */
 	rspq_block_begin();
 	t3d_matrix_push(a.matrix);
-	t3d_model_draw_material(a.scene_material_ptr, NULL);
+	// t3d_model_draw_material(a.scene_material_ptr, NULL);
 	t3d_model_draw_object(a.scene_obj_ptr, NULL);
 	t3d_matrix_pop(1);
 	a.scene_obj_ptr->userBlock = rspq_block_end();
