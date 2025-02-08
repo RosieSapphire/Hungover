@@ -36,7 +36,7 @@ void scene_update(scene_t *scn, const T3DVec3 *player_pos, const float dt)
 	uint16_t *inds[2] = { &scn->area_index, &scn->area_index_old };
 
 	for (uint16_t i = 0; i < 2; i++) {
-		if (i == 1 && !(scn->flags & SCENE_FLAG_PROCESS_AREA_LAST)) {
+		if (i && !(scn->flags & SCENE_FLAG_PROCESS_AREA_LAST)) {
 			continue;
 		}
 
@@ -50,23 +50,26 @@ void scene_update(scene_t *scn, const T3DVec3 *player_pos, const float dt)
 
 			switch (object_update(o, player_pos, dt)) {
 			case OBJECT_UPDATE_RETURN_LOAD_NEXT_AREA:
-				debugf("LOAD NEXT AREA\n");
+				debugf("LOAD NEXT AREA (%d)\n",
+				       o->argi[OBJECT_DOOR_ARGI_NEXT_AREA]);
 				*inds[1] = *inds[0];
-				*inds[0] = o->arg;
+				*inds[0] = o->argi[OBJECT_DOOR_ARGI_NEXT_AREA];
 				scn->flags |= SCENE_FLAG_PROCESS_AREA_LAST;
-				object_t *new_door =
-					area_find_door_by_dest_index(
-						scn->areas + o->arg, *inds[1]);
+				object_t *new_door = area_find_door_by_dest_index(
+					scn->areas +
+						o->argi[OBJECT_DOOR_ARGI_NEXT_AREA],
+					*inds[1]);
 				new_door->flags &= ~(OBJECT_FLAG_IS_ACTIVE);
 				debugf("Deactivated next door\n");
 				break;
 
 			case OBJECT_UPDATE_RETURN_UNLOAD_PREV_AREA:
-				debugf("UNLOAD PREV AREA\n");
+				debugf("UNLOAD PREV AREA (%d)\n", *inds[1]);
 				scn->flags &= ~(SCENE_FLAG_PROCESS_AREA_LAST);
-				object_t *cur_door =
-					area_find_door_by_dest_index(
-						scn->areas + o->arg, *inds[1]);
+				object_t *cur_door = area_find_door_by_dest_index(
+					scn->areas +
+						o->argi[OBJECT_DOOR_ARGI_NEXT_AREA],
+					*inds[1]);
 				cur_door->flags |=
 					OBJECT_FLAG_IS_ACTIVE |
 					OBJECT_FLAG_MUST_REENTER_RADIUS_TO_INTERACT;
@@ -76,13 +79,15 @@ void scene_update(scene_t *scn, const T3DVec3 *player_pos, const float dt)
 				break;
 			}
 		}
+		debugf("\n");
 	}
 }
 
 void scene_render(const scene_t *scn, const float subtick)
 {
 	area_render(scn->areas + scn->area_index, subtick);
-	if (scn->flags & SCENE_FLAG_PROCESS_AREA_LAST) {
+	if ((scn->flags & SCENE_FLAG_PROCESS_AREA_LAST) &&
+	    scn->area_index ^ scn->area_index_old) {
 		area_render(scn->areas + scn->area_index_old, subtick);
 	}
 }

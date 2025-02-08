@@ -32,6 +32,7 @@ object_t object_read_from_file(FILE *file, const T3DVec3 *offset)
 		} else {
 			strncpy(obj_name_new, obj_name, OBJECT_NAME_MAX_LENGTH);
 		}
+		/*
 		debugf("'%s' -> '%s'", obj_name, obj_name_new);
 		if (has_num) {
 			debugf(" (%ld)\n", obj_val);
@@ -39,6 +40,7 @@ object_t object_read_from_file(FILE *file, const T3DVec3 *offset)
 			debugf("\n");
 		}
 		debugf("\n");
+		*/
 	}
 
 	snprintf(mdl_path, OBJECT_NAME_MAX_LENGTH << 1, "rom:/%s.t3dm",
@@ -75,10 +77,13 @@ object_t object_read_from_file(FILE *file, const T3DVec3 *offset)
 	/* determining type */
 	if (!strncmp("Door", obj_name + 4, strlen("Door"))) {
 		o.type = OBJECT_TYPE_DOOR;
-		o.arg = obj_val;
+		o.argi[OBJECT_DOOR_ARGI_NEXT_AREA] = obj_val;
+		o.argf[OBJECT_DOOR_ARGF_INITIAL_ROTATION] = o.rotation.v[1];
+		o.argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] = 0.f;
+		o.argf[OBJECT_DOOR_ARGF_SWING_AMOUNT_OLD] = 0.f;
 	} else {
 		o.type = OBJECT_TYPE_STATIC;
-		o.arg = 0;
+		o.argi[OBJECT_DOOR_ARGI_NEXT_AREA] = 0;
 	}
 
 	o.flags = OBJECT_FLAG_IS_ACTIVE;
@@ -90,27 +95,38 @@ static int _object_update_door(object_t *obj, const float dist_from_player,
 			       const float dt)
 {
 	obj->rotation_old.v[1] = obj->rotation.v[1];
+	obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT_OLD] =
+		obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT];
+
 	if (dist_from_player < OBJECT_DOOR_CHECK_RADIUS) {
 		if (!(obj->flags &
 		      OBJECT_FLAG_MUST_REENTER_RADIUS_TO_INTERACT)) {
-			obj->rotation.v[1] += dt * OBJECT_DOOR_TURN_DEG_PER_SEC;
-			if (obj->rotation.v[1] > 90.f) {
-				obj->rotation.v[1] = 90.f;
+			obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] +=
+				dt * OBJECT_DOOR_TURN_DEG_PER_SEC;
+			if (obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] > 90.f) {
+				obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] = 90.f;
 			}
 		}
 	} else {
 		obj->flags &= ~(OBJECT_FLAG_MUST_REENTER_RADIUS_TO_INTERACT);
-		obj->rotation.v[1] -= dt * OBJECT_DOOR_TURN_DEG_PER_SEC;
-		if (obj->rotation.v[1] < 0.f) {
-			obj->rotation.v[1] = 0.f;
+		obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] -=
+			dt * OBJECT_DOOR_TURN_DEG_PER_SEC;
+		if (obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] < 0.f) {
+			obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] = 0.f;
 		}
 	}
 
-	if (obj->rotation.v[1] > 0.f && obj->rotation_old.v[1] <= 0.f) {
+	obj->rotation.v[1] = obj->argf[OBJECT_DOOR_ARGF_INITIAL_ROTATION] -
+			     obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT];
+	debugf("%f\n", obj->rotation.v[1]);
+
+	if (obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] > 0.f &&
+	    obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT_OLD] <= 0.f) {
 		return OBJECT_UPDATE_RETURN_LOAD_NEXT_AREA;
 	}
 
-	if (obj->rotation.v[1] <= 0.f && obj->rotation_old.v[1] > 0.f) {
+	if (obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] <= 0.f &&
+	    obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT_OLD] > 0.f) {
 		return OBJECT_UPDATE_RETURN_UNLOAD_PREV_AREA;
 	}
 

@@ -1,4 +1,4 @@
-DEBUG_ENABLED := 1
+DEBUG_ENABLED := 0
 BUILD_DIR := build
 
 include $(N64_INST)/include/n64.mk

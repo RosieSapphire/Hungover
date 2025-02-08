@@ -15,8 +15,11 @@ typedef struct {
 	collision_mesh_t colmesh;
 	uint16_t num_objects;
 	object_t *objects;
-	T3DObject *scene_obj;
+#ifndef IS_USING_SCENE_CONVERTER
+	T3DObject *scene_obj_ptr;
+	T3DMaterial *scene_material_ptr;
 	T3DMat4FP *matrix;
+#endif
 } area_t;
 
 #ifndef IS_USING_SCENE_CONVERTER

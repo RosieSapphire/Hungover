@@ -23,6 +23,19 @@ enum {
 	OBJECT_FLAG_MUST_REENTER_RADIUS_TO_INTERACT = (1 << 1)
 };
 
+#define OBJECT_MAX_NUM_ARGIS 4
+#define OBJECT_MAX_NUM_ARGFS 4
+
+enum {
+	OBJECT_DOOR_ARGI_NEXT_AREA,
+};
+
+enum {
+	OBJECT_DOOR_ARGF_INITIAL_ROTATION,
+	OBJECT_DOOR_ARGF_SWING_AMOUNT,
+	OBJECT_DOOR_ARGF_SWING_AMOUNT_OLD,
+};
+
 typedef struct {
 #ifndef IS_USING_SCENE_CONVERTER
 	T3DModel *mdl;
@@ -37,7 +50,8 @@ typedef struct {
 
 	/* `arg` means different things depending on the `type`.
 	 * Full list of argument types below object struct definition */
-	uint8_t arg;
+	uint8_t argi[OBJECT_MAX_NUM_ARGIS];
+	float argf[OBJECT_MAX_NUM_ARGFS];
 	uint8_t flags;
 } object_t;
 

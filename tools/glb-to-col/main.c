@@ -1,5 +1,8 @@
 #define IS_USING_SCENE_CONVERTER
 
+#define T3D_PI 3.14159265358979f
+#define T3D_RAD_TO_DEG(deg) (deg * 57.29577951289617186798f)
+
 typedef struct {
 	float v[3];
 } T3DVec3;
@@ -176,6 +179,79 @@ static void collision_mesh_write_to_file(const collision_mesh_t *cm, FILE *file)
 	}
 }
 
+static void matrix_to_quaternion(float quat[4], const float matrix[4][4])
+{
+	float r, rinv;
+	float trace = matrix[0][0] + matrix[1][1] + matrix[2][2];
+	if (trace >= 0.0f) {
+		r = sqrtf(1.0f + trace);
+		rinv = 0.5f / r;
+
+		quat[0] = rinv * (matrix[1][2] - matrix[2][1]);
+		quat[1] = rinv * (matrix[2][0] - matrix[0][2]);
+		quat[2] = rinv * (matrix[0][1] - matrix[1][0]);
+		quat[3] = r * 0.5f;
+	} else if (matrix[0][0] >= matrix[1][1] &&
+		   matrix[0][0] >= matrix[2][2]) {
+		r = sqrtf(1.0f - matrix[1][1] - matrix[2][2] + matrix[0][0]);
+		rinv = 0.5f / r;
+
+		quat[0] = r * 0.5f;
+		quat[1] = rinv * (matrix[0][1] + matrix[1][0]);
+		quat[2] = rinv * (matrix[0][2] + matrix[2][0]);
+		quat[3] = rinv * (matrix[1][2] - matrix[2][1]);
+	} else if (matrix[1][1] >= matrix[2][2]) {
+		r = sqrtf(1.0f - matrix[0][0] - matrix[2][2] + matrix[1][1]);
+		rinv = 0.5f / r;
+
+		quat[0] = rinv * (matrix[0][1] + matrix[1][0]);
+		quat[1] = r * 0.5f;
+		quat[2] = rinv * (matrix[1][2] + matrix[2][1]);
+		quat[3] = rinv * (matrix[2][0] - matrix[0][2]);
+	} else {
+		r = sqrtf(1.0f - matrix[0][0] - matrix[1][1] + matrix[2][2]);
+		rinv = 0.5f / r;
+
+		quat[0] = rinv * (matrix[0][2] + matrix[2][0]);
+		quat[1] = rinv * (matrix[1][2] + matrix[2][1]);
+		quat[2] = r * 0.5f;
+		quat[3] = rinv * (matrix[0][1] - matrix[1][0]);
+	}
+
+	printf("%f, %f, %f, %f\n", quat[0], quat[1], quat[2], quat[3]);
+}
+
+static void quaternion_to_euler(float euler[3], float quat[4])
+{
+	float qx = quat[0];
+	float qy = quat[1];
+	float qz = quat[2];
+	float qw = quat[3];
+
+	// Calculate Euler angles (roll, pitch, yaw)
+
+	// Roll (rotation around x-axis)
+	float sinr_cosp = 2.0f * (qw * qx + qy * qz);
+	float cosr_cosp = 1.0f - 2.0f * (qx * qx + qy * qy);
+	euler[0] = atan2(sinr_cosp, cosr_cosp); // roll (in radians)
+
+	// Pitch (rotation around y-axis)
+	float sinp = 2.0f * (qw * qy - qz * qx);
+	if (fabs(sinp) >= 1) // Avoid gimbal lock
+		euler[1] = copysign(T3D_PI * .5f, sinp); // pitch (in radians)
+	else
+		euler[1] = asin(sinp); // pitch (in radians)
+
+	// Yaw (rotation around z-axis)
+	float siny_cosp = 2.0f * (qw * qz + qx * qy);
+	float cosy_cosp = 1.0f - 2.0f * (qy * qy + qz * qz);
+	euler[2] = atan2(siny_cosp, cosy_cosp); // yaw (in radians)}
+
+	for (int i = 0; i < 3; i++) {
+		euler[i] = T3D_RAD_TO_DEG(euler[i]);
+	}
+}
+
 static void object_write_to_file(const object_t *o, FILE *file)
 {
 	fwrite(o->name, 1, OBJECT_NAME_MAX_LENGTH, file);
@@ -246,7 +322,30 @@ static void scene_process_area(area_t *a, const struct aiScene *aiscn,
 				ch->mTransformation.b4 * T3DM_TO_N64_SCALE;
 			onew->position.v[2] =
 				ch->mTransformation.c4 * T3DM_TO_N64_SCALE;
-			onew->rotation = (T3DVec3){ { 0, 0, 0 } };
+			float quat[4];
+			const float matrix[4][4] = {
+				{ ch->mTransformation.a1,
+				  ch->mTransformation.b1,
+				  ch->mTransformation.c1,
+				  ch->mTransformation.d1 },
+
+				{ ch->mTransformation.a2,
+				  ch->mTransformation.b2,
+				  ch->mTransformation.c2,
+				  ch->mTransformation.d2 },
+
+				{ ch->mTransformation.a3,
+				  ch->mTransformation.b3,
+				  ch->mTransformation.c3,
+				  ch->mTransformation.d3 },
+
+				{ ch->mTransformation.a4,
+				  ch->mTransformation.b4,
+				  ch->mTransformation.c4,
+				  ch->mTransformation.d4 },
+			};
+			matrix_to_quaternion(quat, matrix);
+			quaternion_to_euler(onew->rotation.v, quat);
 			onew->scale = (T3DVec3){ { 1, 1, 1 } };
 		} else {
 			exitf("ERROR: Invalid Item Type.\n");
@@ -317,15 +416,18 @@ static scene_t handle_scene(const struct aiScene *aiscn, const char *scn_path)
 	scn.num_areas = 0;
 	scn.areas = malloc(0);
 
+	assimp_scene_process_node(&scn, aiscn, aiscn->mRootNode);
+	scene_debug(&scn, scn_path);
+
 	FILE *scn_file = fopen(scn_path, "wb");
 
 	if (!scn_file) {
 		exitf("Failed to write scene to '%s'\n", scn_path);
 	}
 
-	assimp_scene_process_node(&scn, aiscn, aiscn->mRootNode);
-	scene_debug(&scn, scn_path);
 	scene_write_to_file(&scn, scn_file);
+
+	fclose(scn_file);
 
 	return scn;
 }
@@ -360,17 +462,7 @@ int main(int argc, char **argv)
 		exitf("Failed to load scene from '%s'\n", glb_path);
 	}
 
-	/* transferring mesh over */
-	// scene_t scn = scene_from_assimp(scene);
 	handle_scene(scene, scn_path);
-	// collision_mesh_t meshes_combined = collision_mesh_from_assimp(scene);
-
-	/* writing collision data out to file */
-	FILE *file = fopen(scn_path, "wb");
-
-	if (!file) {
-		exitf("Failed to open collision file from '%s'\n", scn_path);
-	}
 
 	return 0;
 }
