@@ -79,7 +79,6 @@ void scene_update(scene_t *scn, const T3DVec3 *player_pos, const float dt)
 				break;
 			}
 		}
-		debugf("\n");
 	}
 }
 

@@ -7,6 +7,10 @@ typedef struct {
 	float v[3];
 } T3DVec3;
 
+typedef struct {
+	float v[4];
+} T3DQuat;
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -221,6 +225,7 @@ static void matrix_to_quaternion(float quat[4], const float matrix[4][4])
 	printf("%f, %f, %f, %f\n", quat[0], quat[1], quat[2], quat[3]);
 }
 
+/*
 static void quaternion_to_euler(float euler[3], float quat[4])
 {
 	float qx = quat[0];
@@ -251,6 +256,7 @@ static void quaternion_to_euler(float euler[3], float quat[4])
 		euler[i] = T3D_RAD_TO_DEG(euler[i]);
 	}
 }
+*/
 
 static void object_write_to_file(const object_t *o, FILE *file)
 {
@@ -260,7 +266,7 @@ static void object_write_to_file(const object_t *o, FILE *file)
 		fwrite_ef32(o->position.v + i, file);
 	}
 
-	for (int i = 0; i < 3; i++) {
+	for (int i = 0; i < 4; i++) {
 		fwrite_ef32(o->rotation.v + i, file);
 	}
 
@@ -322,7 +328,6 @@ static void scene_process_area(area_t *a, const struct aiScene *aiscn,
 				ch->mTransformation.b4 * T3DM_TO_N64_SCALE;
 			onew->position.v[2] =
 				ch->mTransformation.c4 * T3DM_TO_N64_SCALE;
-			float quat[4];
 			const float matrix[4][4] = {
 				{ ch->mTransformation.a1,
 				  ch->mTransformation.b1,
@@ -344,8 +349,8 @@ static void scene_process_area(area_t *a, const struct aiScene *aiscn,
 				  ch->mTransformation.c4,
 				  ch->mTransformation.d4 },
 			};
-			matrix_to_quaternion(quat, matrix);
-			quaternion_to_euler(onew->rotation.v, quat);
+			matrix_to_quaternion(onew->rotation.v, matrix);
+			// quaternion_to_euler(onew->rotation.v, quat);
 			onew->scale = (T3DVec3){ { 1, 1, 1 } };
 		} else {
 			exitf("ERROR: Invalid Item Type.\n");
@@ -401,9 +406,9 @@ static void scene_debug(const scene_t *s, const char *scn_path)
 			printf("\t\t\tPosition: (%f, %f, %f):\n",
 			       o->position.v[0], o->position.v[1],
 			       o->position.v[2]);
-			printf("\t\t\tRotation: (%f, %f, %f):\n",
+			printf("\t\t\tRotation: (%f, %f, %f, %f):\n",
 			       o->rotation.v[0], o->rotation.v[1],
-			       o->rotation.v[2]);
+			       o->rotation.v[2], o->rotation.v[3]);
 			printf("\t\t\tScale: (%f, %f, %f):\n", o->scale.v[0],
 			       o->scale.v[1], o->scale.v[2]);
 		}

@@ -31,7 +31,6 @@ enum {
 };
 
 enum {
-	OBJECT_DOOR_ARGF_INITIAL_ROTATION,
 	OBJECT_DOOR_ARGF_SWING_AMOUNT,
 	OBJECT_DOOR_ARGF_SWING_AMOUNT_OLD,
 };
@@ -44,8 +43,9 @@ typedef struct {
 #else
 	char name[OBJECT_NAME_MAX_LENGTH];
 #endif
-	T3DVec3 position, position_old, rotation, rotation_old, scale,
-		scale_old;
+	T3DVec3 position, position_old, position_init, scale, scale_old,
+		scale_init;
+	T3DQuat rotation, rotation_old, rotation_init;
 	uint8_t type;
 
 	/* `arg` means different things depending on the `type`.

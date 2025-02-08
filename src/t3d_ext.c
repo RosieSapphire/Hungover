@@ -7,6 +7,27 @@ void t3d_vec3_negate(T3DVec3 *dst, const T3DVec3 *src)
 	}
 }
 
+void t3d_quat_negate(T3DQuat *dst, const T3DQuat *src)
+{
+	for (int i = 0; i < 4; i++) {
+		dst->v[i] = -src->v[i];
+	}
+}
+
+void t3d_quat_scale(T3DQuat *dst, const T3DQuat *src, const float scale)
+{
+	for (int i = 0; i < 4; i++) {
+		dst->v[i] = src->v[i] * scale;
+	}
+}
+
+void t3d_quat_add(T3DQuat *dst, const T3DQuat *a, const T3DQuat *b)
+{
+	for (int i = 0; i < 4; i++) {
+		dst->v[i] = a->v[i] + b->v[i];
+	}
+}
+
 int t3d_raycast_triangle(const T3DVec3 *eye, const T3DVec3 *dir,
 			 const T3DVec3 positions[3], float *distance)
 {

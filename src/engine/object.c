@@ -55,13 +55,14 @@ object_t object_read_from_file(FILE *file, const T3DVec3 *offset)
 	t3d_matrix_pop(1);
 	o.displaylist = rspq_block_end();
 
-	T3DVec3 pos, rot, scale;
+	T3DVec3 pos, scale;
+	T3DQuat rot;
 
 	for (int i = 0; i < 3; i++) {
 		fread(pos.v + i, 4, 1, file);
 	}
 
-	for (int i = 0; i < 3; i++) {
+	for (int i = 0; i < 4; i++) {
 		fread(rot.v + i, 4, 1, file);
 	}
 
@@ -70,15 +71,14 @@ object_t object_read_from_file(FILE *file, const T3DVec3 *offset)
 	}
 
 	t3d_vec3_add(&pos, &pos, offset);
-	o.position = o.position_old = pos;
-	o.rotation = o.rotation_old = rot;
-	o.scale = o.scale_old = scale;
+	o.position = o.position_old = o.position_init = pos;
+	o.rotation = o.rotation_old = o.rotation_init = rot;
+	o.scale = o.scale_old = o.scale_init = scale;
 
 	/* determining type */
 	if (!strncmp("Door", obj_name + 4, strlen("Door"))) {
 		o.type = OBJECT_TYPE_DOOR;
 		o.argi[OBJECT_DOOR_ARGI_NEXT_AREA] = obj_val;
-		o.argf[OBJECT_DOOR_ARGF_INITIAL_ROTATION] = o.rotation.v[1];
 		o.argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] = 0.f;
 		o.argf[OBJECT_DOOR_ARGF_SWING_AMOUNT_OLD] = 0.f;
 	} else {
@@ -94,7 +94,7 @@ object_t object_read_from_file(FILE *file, const T3DVec3 *offset)
 static int _object_update_door(object_t *obj, const float dist_from_player,
 			       const float dt)
 {
-	obj->rotation_old.v[1] = obj->rotation.v[1];
+	obj->rotation_old = obj->rotation;
 	obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT_OLD] =
 		obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT];
 
@@ -116,9 +116,11 @@ static int _object_update_door(object_t *obj, const float dist_from_player,
 		}
 	}
 
-	obj->rotation.v[1] = obj->argf[OBJECT_DOOR_ARGF_INITIAL_ROTATION] -
-			     obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT];
-	debugf("%f\n", obj->rotation.v[1]);
+	obj->rotation = obj->rotation_init;
+	t3d_quat_rotate_euler(
+		&obj->rotation, (float[3]){ 0, 0, 1 },
+		T3D_DEG_TO_RAD(obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT]));
+	// obj->rotation.v[2] = obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT];
 
 	if (obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] > 0.f &&
 	    obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT_OLD] <= 0.f) {
@@ -184,26 +186,57 @@ rspq_block_t *objects_instanced_gen_dl(const int num_objs, object_t *objs,
 	return (instdl = rspq_block_end());
 }
 
+static void _quat_slerp(T3DQuat *res, const T3DQuat *a, const T3DQuat *b,
+			const float t)
+{
+	T3DQuat q1, q2;
+	float cos_theta, sin_theta, angle;
+
+	cos_theta = t3d_quat_dot(a, b);
+	q1 = *a;
+
+	if (fabsf(cos_theta) >= 1.f) {
+		*res = q1;
+		return;
+	}
+
+	if (cos_theta < 0.0f) {
+		t3d_quat_negate(&q1, &q1);
+		cos_theta = -cos_theta;
+	}
+
+	sin_theta = sqrtf(1.f - cos_theta * cos_theta);
+
+	if (fabsf(sin_theta) < 0.001f) {
+		t3d_quat_nlerp(res, a, b, t);
+		return;
+	}
+
+	angle = acosf(cos_theta);
+	t3d_quat_scale(&q1, &q1, sinf((1.f - t) * angle));
+	t3d_quat_scale(&q2, b, sinf(t * angle));
+
+	t3d_quat_add(&q1, &q1, &q2);
+	t3d_quat_scale(res, &q1, 1.f / sin_theta);
+}
+
 void object_matrix_setup(object_t *o, const float subtick)
 {
-	T3DVec3 pos_lerp, rot_lerp, scale_lerp;
+	T3DVec3 pos_lerp, scale_lerp;
+	T3DQuat rot_lerp;
 
 	t3d_vec3_lerp(&pos_lerp, &o->position_old, &o->position, subtick);
-	t3d_vec3_lerp(&rot_lerp, &o->rotation_old, &o->rotation, subtick);
+	_quat_slerp(&rot_lerp, &o->rotation_old, &o->rotation, subtick);
 	/* TODO: Clamp rotation */
-	for (int i = 0; i < 3; i++) {
-		rot_lerp.v[i] = T3D_DEG_TO_RAD(rot_lerp.v[i]);
-	}
 	t3d_vec3_lerp(&scale_lerp, &o->scale_old, &o->scale, subtick);
 
-	t3d_mat4fp_from_srt_euler(o->matrix, scale_lerp.v, rot_lerp.v,
-				  pos_lerp.v);
+	t3d_mat4fp_from_srt(o->matrix, scale_lerp.v, rot_lerp.v, pos_lerp.v);
 }
 
 void object_terminate(object_t *o, const int should_free_model)
 {
-	o->position = o->position_old = o->rotation = o->rotation_old =
-		o->scale = o->scale_old = T3D_VEC3_ZERO;
+	o->position = o->position_old = o->scale = o->scale_old = T3D_VEC3_ZERO;
+	o->rotation = o->rotation_old = T3D_QUAT_IDENTITY;
 
 	free_uncached(o->matrix);
 	o->matrix = NULL;
