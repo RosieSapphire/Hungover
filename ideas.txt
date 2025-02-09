@@ -1,0 +1,293 @@
+PLOT:
+
+	Intro:
+
+		Richard is in his car driving down the road to Square C (Circle
+		K rippoff) to buy a pack of Oldports and some chips. He goes in
+		to greet the cashier, Jared,
+
+LORE:
+
+CHARACTERS:
+
+	Richard Kaniff (Main Character):
+
+		- Somewhat aggressive, but usually calm
+
+		- Severe drug addict
+
+		- Blacks out a lot and forgets what he did
+
+			- Usually his friends will recount what happened
+
+	Kennith Kaniff (Brother of Main Character):
+
+		- Sex addict
+
+		- Really raspy voice (like how Eminem portrays him)
+
+		- Absolute faggot
+
+		- Somewhat resourceful
+
+			- He can give the player drugs or ammo
+
+		- Has entirely too many dildos
+
+		- Always has a metal buttplug in
+
+			- Can be used as weapon
+
+	Jared Parker (Square C Cashier):
+
+		- Very polite, but really weird
+
+			- Probably has dead bodies in his basement
+
+			- Do not open his fucking trunk
+
+		- Somewhat unreliable, outside of doing his job
+	
+	Cracky the Clown:
+
+		- Constantly smoking crack from a dirty lightbulb
+
+		- Has a severe case of meth-face
+
+			- Like pinkie's mugshot from party.mov
+
+			- Also like Patrick from Mr Krabs overdoses on ketamine
+
+		- Red and blue afro, also extremely decrepet
+
+		- Regrows any injury (eldrich-like powers)
+
+			- Usually has tentacles coming out of decap'd limbs
+
+			- You can shoot him with a pistol, and he'll laugh
+
+			- You can shoot him with a shotgun and it'll gib them 
+
+				- He will soon grow it back
+
+		- Can tie his dick into a balloon animal
+
+			- Yes, I will model a clown dick
+
+		- His powers were taught to him by Chuckles the Clown (dnd)
+
+		- He functions as the main merchant for the game.
+
+			- You can give him drugs or bullets in exchange for
+			  either or, or something else.
+
+			- He may have special items on sale for limited time
+			  at certain parts of the game.
+
+GAMEPLAY:
+
+	Robbing Houses:
+
+		- In order to effectivey rob a house, you will need a lockpick
+		  (This may end up being given at the beginning of the game, or
+		   may need to be collected. Not sure yet).
+
+		- Regarding stuff you'll find in the houses, most of the time
+		  there will be drugs, and still a lot of the time you will
+		  find ammo, because the area that Richard lives is pretty
+		  crime-ridden and so it makes sense that the civilians would
+		  be carrying weapons. Mostly drugs though, a LOT of drugs.
+		  All different variaties too (with various drop-rates).
+
+		- If you go into a house with nobody in it (ideal), you will
+		  be able to just go in and take whatever drugs or ammo they
+		  have lying around.
+
+		- If somebody IS in the house, you will have to kill them. If
+		  you don't, you will get the police called on you and you will
+		  have to retry from an earlier point. (The pigs in this game
+		  don't fuck around)
+
+		- You can also only kill them either with a supressor on your
+		  gun, or strictly using melee weapons. Anything else will be
+		  too loud and alert other neighbors to call the police, or just
+		  the police themselves hearing it.
+
+		- (MAYBE) Once done robbing a house, you will have to re-lock
+		  the door or window you came in from, or it will suspicious
+		  to the police. This may only be in a higher-end
+		  living condition area of the game. (AGAIN, MAYBE) 
+
+		- (ALSO MAYBE) You will have to wear a pair of gloves in order
+		  to make sure no fingerprints are going to get all over stuff,
+		  but then again, you'd have to wear a whole damn suit in order
+		  to not get any identifiable undisputed evidence you were
+		  there, so I don't really know about this one.
+		  (AGAIN, ALSO MAYBE)
+
+	Taking Drugs:
+
+		Weed:
+		
+			- In general, it will make time slower, but this isn't
+			  always a gaurantee, and may even speed up time
+			  (maybe).
+
+			- IN LOW QUANTITIES:
+
+				- It can make you calmer and able to shoot
+				  better for having a increased ability
+				  to focus and shooting accuracy.
+
+				- It can make you more sensitive to sounds, and
+				  may even give a visual indicator of the
+				  direction the sound came from.
+
+				- Slightly decreases responce to damage, but
+				  not by much.
+
+			- IN HIGH QUANTITIES:
+
+				- It can make you less clear-headed, blurrier
+				  vision and severely increased sensitivity
+				  to sounds that it causes you to over-react.
+
+				- You won't be able to shoot as well, as it will
+				  be shakier and more sluggish
+
+				- It can actually increase your sensitivity to
+				  pain, causing you to effectively be one-hit.
+
+		Opiates:
+
+			- IN LOW QUANTITIES:
+				
+				- Significantly decrease responce to pain,
+				  causing you to take more bullets than you
+				  normally would, but you still have to pull
+				  them out after a battle and patch them up,
+				  or you WILL die from blood loss.
+
+				- Decreased overall stress and anxiety about
+				  being in battles, causing you to aim much
+				  better.
+
+			- IN HIGH QUANTITIES:
+
+				- Slightly decrease aiming accuracy from
+				  the sedation.
+
+				- Markedly slower walking/running speed, also
+				  due to the sedation.
+
+				- Almost no pain experienced per hit, but you
+				  can very much still die if hit in a vital
+				  area.
+
+				- You may possibly have a harder time breathing
+				  causing you to not be as mobile, and if you
+				  take too high of a dose, you will just black
+				  out and die. Maybe because the enemies shot
+				  you, but primarily due to resperatory
+				  depression and/or suffocating on your
+				  own vomit.
+
+		Health:
+			- TYPES OF DAMAGE:
+
+				- BULLET DAMAGE:
+
+					- This will always affect you after
+					  the battle is over, since you will
+					  have to remove them and patch the
+					  area in order to not die of
+					  blood-loss.
+
+				  	- It is cumulative; the more bullets
+					  you have in your body, the faster
+					  you will die of blood loss and the
+					  more damage you will take.
+
+				- BLADE DAMAGE:
+
+					- This will similarly cause bleeding
+				  	  if you've been stabbed, but if you're
+				  	  cut, (not very deep) you can usually
+				  	  just leave it how it is to heal. If
+				  	  it's big enough, you'll have to wrap
+				  	  it or suffer the consequenses of
+				  	  blood-loss.
+
+				  	- If you're stabbed however, you have
+					  to pack the area with gauze before
+					  wrapping it.
+
+				- DRUG DAMAGE:
+					
+					- Poisoning specifically from opiates
+					  will cause you to need to use
+					  narcan to revive yourself
+					  (unrealistic, I know, but we'll see).
+
+					- There's also a rare chance that if
+					  you overdose around and NPC, one of
+					  them will have narcan to be able to
+					  revive you themselves if you don't
+					  have any. You shouldn't rely on this,
+					  as it's not super common, but it can
+					  happen.
+
+					- Meth and crack specifically can cause
+					  serious heart problems, and cause you
+					  to not be able to be as agile. This
+					  may possibly be counteractable with
+					  blood pressure medication, but it
+					  might be kinda rare.
+
+				- BLUNT FORCE DAMAGE
+
+			- Each segment of health is represented by a blotter
+			  sheet of acid, and every point of health taken away
+			  or regained is a tab of acid being removed or placed.
+
+				- Either a 4x4 acid sheet (16 units), 4x8
+				  acid sheet (32 units), or 4x6 acid sheet (24
+				  units of health).
+
+			- Either that or it's represented by a pill bottle
+			  or pill organizer of some sort, so it's still easily
+			  determinable what your health is.
+
+				- Personally, I think it would be easier to
+				  tell your health from the blotter-sheet,
+				  specifically because it's in square segments,
+				  and you can kinda use the sihlouette of the
+				  squares to easily determine at a glance what
+				  your health is currently at.
+
+			- Depending on what chemicals are active in your body
+			  (This is not just limited to drugs, but also natural
+			   chemicals produced in the body, such as adrenaline),
+			  you will either lose health right away, or it will
+			  be marked/highlighted for when the chemicals wear off.
+			  Until that time, you haven't actually lost health yet,
+			  unless of course you lose ALL your health, in which
+			  case, you're just dead no matter what.
+
+			- There can be certain drugs, like meth or crack for
+			  example, which will temporarily increase your maximum
+			  health for the duration it is active.
+
+				- Any damage taken from these extended
+				  portions of health will not count towards
+				  the rest of your health bar. However, if you
+				  have taken a few bullets, you will have to
+				  remove them like normal.
+
+				- Visually, they will be methed-out so to speak.
+				  For example, they looks kinda crystally,
+				  maybe they're yellowed and ripped, possibly
+				  pealing at one of the corners, and
+				  significantly darker than the rest of
+				  the tabs.
+
