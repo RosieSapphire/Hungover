@@ -1,29 +1,28 @@
 #include "engine/scene.h"
 
-scene_t scene_init_from_file(const char *path)
+Scene sceneInitFromFile(const char *path)
 {
-	scene_t scn;
+	Scene scn;
+	char mdlName[32];
+	char mdlPath[64];
 
-	char mdl_name[32];
-	char mdl_path[64];
-	memset(mdl_name, 0, 32);
-	memset(mdl_path, 0, 64);
+	memset(mdlName, 0, 32);
+	memset(mdlPath, 0, 64);
 
-	strncpy(mdl_name, path, strlen(path) - 4);
-	snprintf(mdl_path, 64, "%s.t3dm", mdl_name);
-	scn.mdl = t3d_model_load(mdl_path);
+	strncpy(mdlName, path, strlen(path) - 4);
+	snprintf(mdlPath, 64, "%s.t3dm", mdlName);
+	scn.mdl = t3d_model_load(mdlPath);
 
-	scn.area_index = scn.area_index_old = 0;
+	scn.areaIndex = scn.areaIndexOld = 0;
 	scn.flags = 0;
 
 	FILE *file = asset_fopen(path, NULL);
 	assertf(file, "Failed to load scene from '%s'\n", path);
 
-	fread(&scn.num_areas, 2, 1, file);
-	// debugf("Scene '%s' has %d areas\n", path, scn.num_areas);
-	scn.areas = calloc(scn.num_areas, sizeof *scn.areas);
-	for (uint16_t i = 0; i < scn.num_areas; i++) {
-		scn.areas[i] = area_read_from_file(file, scn.mdl, i);
+	fread(&scn.numAreas, 2, 1, file);
+	scn.areas = calloc(scn.numAreas, sizeof *scn.areas);
+	for (uint16_t i = 0; i < scn.numAreas; i++) {
+		scn.areas[i] = areaInitFromFile(file, scn.mdl, i);
 	}
 
 	fclose(file);
@@ -31,37 +30,37 @@ scene_t scene_init_from_file(const char *path)
 	return scn;
 }
 
-static void _scene_update_area_object(object_t *o, scene_t *scn,
-				      const T3DVec3 *player_pos,
-				      const T3DVec3 *player_dir,
-				      uint16_t *inds[2], const float dt)
+static void _sceneUpdateAreaObject(Object *o, Scene *scn,
+				   const T3DVec3 *playerPos,
+				   const T3DVec3 *playerDir, uint16_t *inds[2],
+				   const float dt)
 {
 	if (!(o->flags & OBJECT_FLAG_IS_ACTIVE)) {
 		return;
 	}
 
-	switch (object_update(o, player_pos, player_dir, dt)) {
+	switch (objectUpdate(o, playerPos, playerDir, dt)) {
 	case OBJECT_UPDATE_RETURN_LOAD_NEXT_AREA:
 		*inds[1] = *inds[0];
 		*inds[0] = o->argi[OBJECT_DOOR_ARGI_NEXT_AREA];
 		scn->flags |= SCENE_FLAG_PROCESS_AREA_LAST;
-		object_t *new_door = area_find_door_by_dest_index(
+		Object *newDoor = areaFindDoorFromDestIndex(
 			scn->areas + o->argi[OBJECT_DOOR_ARGI_NEXT_AREA],
 			*inds[1]);
-		new_door->flags &= ~(OBJECT_FLAG_IS_ACTIVE);
+		newDoor->flags &= ~(OBJECT_FLAG_IS_ACTIVE);
 		return;
 
 	case OBJECT_UPDATE_RETURN_UNLOAD_PREV_AREA:
 		scn->flags &= ~(SCENE_FLAG_PROCESS_AREA_LAST);
-		object_t *cur_door = area_find_door_by_dest_index(
+		Object *curDoor = areaFindDoorFromDestIndex(
 			scn->areas + o->argi[OBJECT_DOOR_ARGI_NEXT_AREA],
 			*inds[1]);
-		cur_door->flags |= OBJECT_FLAG_IS_ACTIVE;
+		curDoor->flags |= OBJECT_FLAG_IS_ACTIVE;
 		return;
 
 	case OBJECT_UPDATE_RETURN_UNLOAD_NEXT_AREA:
 		scn->flags &= ~(SCENE_FLAG_PROCESS_AREA_LAST);
-		scn->area_index = scn->area_index_old;
+		scn->areaIndex = scn->areaIndexOld;
 		return;
 
 	default:
@@ -69,10 +68,10 @@ static void _scene_update_area_object(object_t *o, scene_t *scn,
 	}
 }
 
-void scene_update(scene_t *scn, const T3DVec3 *player_pos,
-		  const T3DVec3 *player_dir, const float dt)
+void sceneUpdate(Scene *scn, const T3DVec3 *playerPos, const T3DVec3 *playerDir,
+		 const float dt)
 {
-	uint16_t *inds[2] = { &scn->area_index, &scn->area_index_old };
+	uint16_t *inds[2] = { &scn->areaIndex, &scn->areaIndexOld };
 
 	/*
 	 * This is to ensure all objects are only updated once per frame.
@@ -81,12 +80,12 @@ void scene_update(scene_t *scn, const T3DVec3 *player_pos,
 	 * causing that same door object to be updated twice,
 	 * causing various issues. This loop mitigates that.
 	 */
-	object_setup_frame_static_vars();
-	for (uint16_t i = 0; i < scn->num_areas; i++) {
-		area_t *a = scn->areas + i;
+	objectSetupFrameStaticVars();
+	for (uint16_t i = 0; i < scn->numAreas; i++) {
+		Area *a = scn->areas + i;
 
-		for (uint16_t j = 0; j < a->num_objects; j++) {
-			object_t *o = a->objects + j;
+		for (uint16_t j = 0; j < a->numObjects; j++) {
+			Object *o = a->objects + j;
 
 			o->flags &= ~(OBJECT_FLAG_WAS_UPDATED_THIS_FRAME);
 		}
@@ -97,31 +96,30 @@ void scene_update(scene_t *scn, const T3DVec3 *player_pos,
 			continue;
 		}
 
-		area_t *area = scn->areas + *inds[i];
-		for (uint16_t j = 0; j < area->num_objects; j++) {
-			_scene_update_area_object(area->objects + j, scn,
-						  player_pos, player_dir, inds,
-						  dt);
+		Area *area = scn->areas + *inds[i];
+		for (uint16_t j = 0; j < area->numObjects; j++) {
+			_sceneUpdateAreaObject(area->objects + j, scn,
+					       playerPos, playerDir, inds, dt);
 		}
 	}
-	object_update_ui_with_static_vars();
+	objectUpdateUIWithStaticVars();
 }
 
-void scene_render(const scene_t *scn, const float subtick)
+void sceneRender(const Scene *scn, const float subtick)
 {
-	area_render(scn->areas + scn->area_index, subtick);
+	areaRender(scn->areas + scn->areaIndex, subtick);
 	if ((scn->flags & SCENE_FLAG_PROCESS_AREA_LAST) &&
-	    scn->area_index ^ scn->area_index_old) {
-		area_render(scn->areas + scn->area_index_old, subtick);
+	    scn->areaIndex ^ scn->areaIndexOld) {
+		areaRender(scn->areas + scn->areaIndexOld, subtick);
 	}
 }
 
-void scene_terminate(scene_t *scn)
+void sceneFree(Scene *scn)
 {
-	for (uint16_t i = 0; i < scn->num_areas; i++) {
-		area_terminate(scn->areas + i);
+	for (uint16_t i = 0; i < scn->numAreas; i++) {
+		areaFree(scn->areas + i);
 	}
 	free(scn->areas);
 	scn->areas = NULL;
-	scn->num_areas = 0;
+	scn->numAreas = 0;
 }

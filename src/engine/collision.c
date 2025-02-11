@@ -5,24 +5,23 @@
 
 // #define DEBUG_COLLISION
 
-collision_mesh_t collision_mesh_read_from_file(FILE *file,
-					       const T3DVec3 *offset)
+CollisionMesh collisionMeshInitFromFile(FILE *file, const T3DVec3 *offset)
 {
-	collision_mesh_t cm;
+	CollisionMesh cm;
 
-	fread(&cm.num_triangles, 2, 1, file);
+	fread(&cm.numTriangles, 2, 1, file);
 #ifdef DEBUG_COLLISION
-	debugf("%d tris\n", cm.num_triangles);
+	debugf("%d tris\n", cm.numTriangles);
 #endif
-	cm.triangles = calloc(cm.num_triangles, sizeof *cm.triangles);
-	for (uint16_t i = 0; i < cm.num_triangles; i++) {
-		collision_triangle_t *f = cm.triangles + i;
+	cm.triangles = calloc(cm.numTriangles, sizeof *cm.triangles);
+	for (uint16_t i = 0; i < cm.numTriangles; i++) {
+		CollisionTriangle *f = cm.triangles + i;
 
 #ifdef DEBUG_COLLISION
 		debugf("\tface %d\n", i);
 #endif
 		for (uint16_t j = 0; j < 3; j++) {
-			collision_vertex_t *v = f->verts + j;
+			CollisionVertex *v = f->verts + j;
 
 			for (uint16_t k = 0; k < 3; k++) {
 				fread(v->pos + k, 4, 1, file);
@@ -50,9 +49,9 @@ collision_mesh_t collision_mesh_read_from_file(FILE *file,
 	return cm;
 }
 
-void collision_mesh_terminate(collision_mesh_t *cm)
+void collisionMeshFree(CollisionMesh *cm)
 {
 	free(cm->triangles);
 	cm->triangles = NULL;
-	cm->num_triangles = 0;
+	cm->numTriangles = 0;
 }

@@ -9,21 +9,20 @@
 
 typedef struct {
 	float pos[3];
-} collision_vertex_t;
+} CollisionVertex;
 
 typedef struct {
-	collision_vertex_t verts[3];
+	CollisionVertex verts[3];
 	float norm[3];
-} collision_triangle_t;
+} CollisionTriangle;
 
 typedef struct {
-	uint16_t num_triangles;
-	collision_triangle_t *triangles;
+	uint16_t numTriangles;
+	CollisionTriangle *triangles;
 	T3DVec3 offset;
-} collision_mesh_t;
+} CollisionMesh;
 
-collision_mesh_t collision_mesh_read_from_file(FILE *file,
-					       const T3DVec3 *offset);
-void collision_mesh_terminate(collision_mesh_t *cm);
+CollisionMesh collisionMeshInitFromFile(FILE *file, const T3DVec3 *offset);
+void collisionMeshFree(CollisionMesh *cm);
 
 #endif /* _ENGINE_COLLISION_H_ */

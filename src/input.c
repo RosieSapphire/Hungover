@@ -2,20 +2,20 @@
 
 #include "input.h"
 
-input_t input_new, input_old;
+input_t inputNew, inputOld;
 
-void input_init(void)
+void inputInit(void)
 {
 	joypad_init();
 	for (int i = 0; i < BUTTON_COUNT; i++) {
-		input_new.button_flags[i] = 0;
-		input_old.button_flags[i] = 0;
+		inputNew.buttonFlags[i] = 0;
+		inputOld.buttonFlags[i] = 0;
 	}
-	input_new.stick[0] = input_new.stick[1] = input_old.stick[0] =
-		input_old.stick[1] = 0.f;
+	inputNew.stick[0] = inputNew.stick[1] = inputOld.stick[0] =
+		inputOld.stick[1] = 0.f;
 }
 
-void input_poll(void)
+void inputPoll(void)
 {
 	joypad_inputs_t jp;
 
@@ -30,59 +30,58 @@ void input_poll(void)
 		jp.btn.c_up, jp.btn.c_down,
 	};
 
-	input_old = input_new;
+	inputOld = inputNew;
 	for (int i = 0; i < BUTTON_COUNT; i++) {
-		input_new.button_flags[i] = 0;
-		input_new.button_flags[i] |= jp_vals[i]
-					     << BUTTON_FLAG_HELD_SHIFT;
-		input_new.button_flags[i] |=
-			(((input_new.button_flags[i] & BUTTON_FLAG_HELD) >>
+		inputNew.buttonFlags[i] = 0;
+		inputNew.buttonFlags[i] |= jp_vals[i] << BUTTON_FLAG_HELD_SHIFT;
+		inputNew.buttonFlags[i] |=
+			(((inputNew.buttonFlags[i] & BUTTON_FLAG_HELD) >>
 			  BUTTON_FLAG_HELD_SHIFT) &&
-			 (((input_old.button_flags[i] & BUTTON_FLAG_HELD) >>
+			 (((inputOld.buttonFlags[i] & BUTTON_FLAG_HELD) >>
 			   BUTTON_FLAG_HELD_SHIFT) ^
-			  ((input_new.button_flags[i] & BUTTON_FLAG_HELD) >>
+			  ((inputNew.buttonFlags[i] & BUTTON_FLAG_HELD) >>
 			   BUTTON_FLAG_HELD_SHIFT)))
 			<< BUTTON_FLAG_PRESSED_SHIFT;
-		input_new.button_flags[i] |=
-			(((input_old.button_flags[i] & BUTTON_FLAG_HELD) >>
+		inputNew.buttonFlags[i] |=
+			(((inputOld.buttonFlags[i] & BUTTON_FLAG_HELD) >>
 			  BUTTON_FLAG_HELD_SHIFT) &&
-			 (((input_old.button_flags[i] & BUTTON_FLAG_HELD) >>
+			 (((inputOld.buttonFlags[i] & BUTTON_FLAG_HELD) >>
 			   BUTTON_FLAG_HELD_SHIFT) ^
-			  ((input_new.button_flags[i] & BUTTON_FLAG_HELD) >>
+			  ((inputNew.buttonFlags[i] & BUTTON_FLAG_HELD) >>
 			   BUTTON_FLAG_HELD_SHIFT)))
 			<< BUTTON_FLAG_RELEASED_SHIFT;
 	}
 
 	/* stick */
-	input_new.stick[0] = (float)jp.stick_x;
-	input_new.stick[1] = (float)jp.stick_y;
-	input_new.stick_mag = sqrtf(input_new.stick[0] * input_new.stick[0] +
-				    input_new.stick[1] * input_new.stick[1]);
+	inputNew.stick[0] = (float)jp.stick_x;
+	inputNew.stick[1] = (float)jp.stick_y;
+	inputNew.stickMag = sqrtf(inputNew.stick[0] * inputNew.stick[0] +
+				  inputNew.stick[1] * inputNew.stick[1]);
 
 	/* normalize the stick so it can't go farther than 64 units */
-	if (input_new.stick_mag < STICK_MAG_MIN) {
-		input_new.stick_mag = 0.f;
-		input_new.stick[0] = input_new.stick[1] = 0.f;
+	if (inputNew.stickMag < STICK_MAG_MIN) {
+		inputNew.stickMag = 0.f;
+		inputNew.stick[0] = inputNew.stick[1] = 0.f;
 	}
-	if (input_new.stick_mag > STICK_MAG_MAX) {
-		const float mul = (float)STICK_MAG_MAX / input_new.stick_mag;
-		input_new.stick[0] *= mul;
-		input_new.stick[1] *= mul;
-		input_new.stick_mag = STICK_MAG_MAX;
+	if (inputNew.stickMag > STICK_MAG_MAX) {
+		const float mul = (float)STICK_MAG_MAX / inputNew.stickMag;
+		inputNew.stick[0] *= mul;
+		inputNew.stick[1] *= mul;
+		inputNew.stickMag = STICK_MAG_MAX;
 	}
 
-	input_new.stick[0] /= STICK_MAG_MAX;
-	input_new.stick[1] /= STICK_MAG_MAX;
-	input_new.stick_mag /= STICK_MAG_MAX;
+	inputNew.stick[0] /= STICK_MAG_MAX;
+	inputNew.stick[1] /= STICK_MAG_MAX;
+	inputNew.stickMag /= STICK_MAG_MAX;
 }
 
-void input_terminate(void)
+void inputFree(void)
 {
 	for (int i = 0; i < BUTTON_COUNT; i++) {
-		input_new.button_flags[i] = 0;
-		input_old.button_flags[i] = 0;
+		inputNew.buttonFlags[i] = 0;
+		inputOld.buttonFlags[i] = 0;
 	}
-	input_new.stick[0] = input_new.stick[1] = input_old.stick[0] =
-		input_old.stick[1] = 0.f;
+	inputNew.stick[0] = inputNew.stick[1] = inputOld.stick[0] =
+		inputOld.stick[1] = 0.f;
 	joypad_close();
 }

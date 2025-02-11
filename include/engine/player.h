@@ -11,16 +11,16 @@
 #define PLAYER_NUM_COLLISION_MESH_PTRS 2
 
 typedef struct {
-	T3DVec3 pos, pos_old;
-	float yaw, yaw_old, pitch, pitch_old;
-	collision_mesh_t *collision_mesh_ptrs[PLAYER_NUM_COLLISION_MESH_PTRS];
-} player_t;
+	T3DVec3 pos, posOld;
+	float yaw, yawOld, pitch, pitchOld;
+	CollisionMesh *collisionMeshPtrs[PLAYER_NUM_COLLISION_MESH_PTRS];
+} Player;
 
-player_t player_init(const scene_t *scn);
-void player_get_look_values(T3DVec3 *eye, T3DVec3 *focus, const player_t *p,
-			    const float interp);
-void player_update(player_t *p, const scene_t *scn, const float dt);
-void player_to_viewport(T3DViewport *vp, const player_t *p, const float interp);
-void player_terminate(player_t *p);
+Player playerInit(void);
+void playerGetLookValues(T3DVec3 *eye, T3DVec3 *focus, const Player *p,
+			 const float interp);
+void playerUpdate(Player *p, const Scene *scn, const float dt);
+void playerToViewport(T3DViewport *vp, const Player *p, const float interp);
+void playerFree(Player *p);
 
 #endif /* _ENGINE_PLAYER_H_ */

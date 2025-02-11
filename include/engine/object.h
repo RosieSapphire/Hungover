@@ -47,17 +47,17 @@ typedef struct {
 #else
 	char name[OBJECT_NAME_MAX_LENGTH];
 #endif
-	T3DVec3 position, position_old, position_init, scale, scale_old,
-		scale_init;
-	T3DQuat rotation, rotation_old, rotation_init;
+	T3DVec3 position, positionOld, positionInit, scale, scaleOld, scaleInit;
+	T3DQuat rotation, rotationOld, rotationInit;
 	uint8_t type;
 
+	/* FIXME: Defer this to a specific object type per object */
 	/* `arg` means different things depending on the `type`.
 	 * Full list of argument types below object struct definition */
 	uint8_t argi[OBJECT_MAX_NUM_ARGIS];
 	float argf[OBJECT_MAX_NUM_ARGFS];
 	uint8_t flags;
-} object_t;
+} Object;
 
 /*
  * ARGUMENT TYPES:
@@ -69,23 +69,16 @@ typedef struct {
  */
 
 #ifndef IS_USING_SCENE_CONVERTER
-object_t object_read_from_file(FILE *file, const T3DVec3 *offset);
-void object_setup_frame_static_vars(void);
-void object_update_ui_with_static_vars(void);
-/*
-object_t object_init_from_model_path(const char *path, const T3DVec3 *pos,
-				     const T3DVec3 *rot, const T3DVec3 *scale);
-object_t object_init_from_model_pointer(T3DModel *mdl, const T3DVec3 *pos,
-					const T3DVec3 *rot,
-					const T3DVec3 *scale);
-					*/
-int object_update(object_t *obj, const T3DVec3 *player_pos,
-		  const T3DVec3 *player_dir, const float dt);
-void object_render(const object_t *obj);
-rspq_block_t *objects_instanced_gen_dl(const int num_objs, object_t *objs,
-				       const T3DModel *common_mdl);
-void object_matrix_setup(object_t *o, const float subtick);
-void object_terminate(object_t *o, const int should_free_model);
+Object objectInitFromFile(FILE *file, const T3DVec3 *offset);
+void objectSetupFrameStaticVars(void);
+void objectUpdateUIWithStaticVars(void);
+int objectUpdate(Object *obj, const T3DVec3 *playerPos,
+		 const T3DVec3 *playerDir, const float dt);
+void objectRender(const Object *obj);
+rspq_block_t *objectsInstancedGenDL(const int numObjs, Object *objs,
+				    const T3DModel *commonModel);
+void objectMatrixSetup(Object *o, const float subtick);
+void objectFree(Object *o, const int shouldFreeModel);
 #endif
 
 #endif /* _ENGINE_OBJECT_H_ */

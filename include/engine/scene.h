@@ -8,19 +8,19 @@ enum {
 };
 
 typedef struct {
-	uint16_t num_areas;
-	area_t *areas;
+	uint16_t numAreas;
+	Area *areas;
 #ifndef IS_USING_SCENE_CONVERTER
 	T3DModel *mdl;
-	uint16_t area_index, area_index_old;
+	uint16_t areaIndex, areaIndexOld;
 	uint8_t flags;
 #endif
-} scene_t;
+} Scene;
 
-scene_t scene_init_from_file(const char *path);
-void scene_update(scene_t *scn, const T3DVec3 *player_pos,
-		  const T3DVec3 *player_dir, const float dt);
-void scene_render(const scene_t *scn, const float subtick);
-void scene_terminate(scene_t *scn);
+Scene sceneInitFromFile(const char *path);
+void sceneUpdate(Scene *scn, const T3DVec3 *playerPos, const T3DVec3 *playerDir,
+		 const float dt);
+void sceneRender(const Scene *scn, const float subtick);
+void sceneFree(Scene *scn);
 
 #endif /* _ENGINE_SCENE_H_ */

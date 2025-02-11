@@ -2,24 +2,24 @@
 
 #include "engine/area.h"
 
-area_t area_read_from_file(FILE *file, T3DModel *scene_mdl, const int index)
+Area areaInitFromFile(FILE *file, T3DModel *sceneModel, const int index)
 {
-	area_t a;
+	Area a;
 
 	for (int i = 0; i < 3; i++) {
 		fread(a.offset.v + i, 4, 1, file);
 	}
-	a.colmesh = collision_mesh_read_from_file(file, &a.offset);
-	fread(&a.num_objects, 2, 1, file);
-	a.objects = calloc(a.num_objects, sizeof *a.objects);
-	for (uint16_t i = 0; i < a.num_objects; i++) {
-		a.objects[i] = object_read_from_file(file, &a.offset);
+	a.colmesh = collisionMeshInitFromFile(file, &a.offset);
+	fread(&a.numObjects, 2, 1, file);
+	a.objects = calloc(a.numObjects, sizeof *a.objects);
+	for (uint16_t i = 0; i < a.numObjects; i++) {
+		a.objects[i] = objectInitFromFile(file, &a.offset);
 	}
 
 	/* respective scene object */
-	char col_name[16];
-	memset(col_name, 0, 16);
-	snprintf(col_name, 16, "Col.%u", index);
+	char colName[16];
+	memset(colName, 0, 16);
+	snprintf(colName, 16, "Col.%u", index);
 	a.matrix = malloc_uncached(sizeof *a.matrix);
 	t3d_mat4fp_from_srt_euler(a.matrix, (float[3]){ 1, 1, 1 },
 				  (float[3]){ 0, 0, 0 }, a.offset.v);
@@ -28,31 +28,30 @@ area_t area_read_from_file(FILE *file, T3DModel *scene_mdl, const int index)
 	rspq_block_begin();
 	t3d_matrix_push(a.matrix);
 	T3DModelIter iter =
-		t3d_model_iter_create(scene_mdl, T3D_CHUNK_TYPE_OBJECT);
+		t3d_model_iter_create(sceneModel, T3D_CHUNK_TYPE_OBJECT);
 	while (t3d_model_iter_next(&iter)) {
-		if (strncmp(iter.object->name, col_name, 16)) {
+		if (strncmp(iter.object->name, colName, 16)) {
 			continue;
 		}
 		t3d_model_draw_material(iter.object->material, NULL);
 		t3d_model_draw_object(iter.object, NULL);
 	}
 	t3d_matrix_pop(1);
-	a.area_block = rspq_block_end();
+	a.areaBlock = rspq_block_end();
 
 	return a;
 }
 
-object_t *area_find_door_by_dest_index(const area_t *a,
-				       const uint16_t dest_index)
+Object *areaFindDoorFromDestIndex(const Area *a, const uint16_t destIndex)
 {
-	for (uint16_t i = 0; i < a->num_objects; i++) {
-		object_t *obj = a->objects + i;
+	for (uint16_t i = 0; i < a->numObjects; i++) {
+		Object *obj = a->objects + i;
 
 		if (obj->type != OBJECT_TYPE_DOOR) {
 			continue;
 		}
 
-		if (obj->argi[OBJECT_DOOR_ARGI_NEXT_AREA] != dest_index) {
+		if (obj->argi[OBJECT_DOOR_ARGI_NEXT_AREA] != destIndex) {
 			continue;
 		}
 
@@ -62,34 +61,34 @@ object_t *area_find_door_by_dest_index(const area_t *a,
 	return NULL;
 }
 
-void area_render(const area_t *a, const float subtick)
+void areaRender(const Area *a, const float subtick)
 {
 	/* objects */
-	for (uint16_t i = 0; i < a->num_objects; i++) {
-		object_t *o = a->objects + i;
+	for (uint16_t i = 0; i < a->numObjects; i++) {
+		Object *o = a->objects + i;
 
 		if (!(o->flags & OBJECT_FLAG_IS_ACTIVE)) {
 			continue;
 		}
 
-		object_matrix_setup(o, subtick);
-		object_render(o);
+		objectMatrixSetup(o, subtick);
+		objectRender(o);
 	}
 
 	/* static geometry */
-	rspq_block_run(a->area_block);
+	rspq_block_run(a->areaBlock);
 }
 
-void area_terminate(area_t *a)
+void areaFree(Area *a)
 {
 	free_uncached(a->matrix);
 	a->matrix = NULL;
-	for (uint16_t i = 0; i < a->num_objects; i++) {
-		object_terminate(a->objects + i, true);
+	for (uint16_t i = 0; i < a->numObjects; i++) {
+		objectFree(a->objects + i, true);
 	}
 	free(a->objects);
 	a->objects = NULL;
-	a->num_objects = 0;
-	collision_mesh_terminate(&a->colmesh);
+	a->numObjects = 0;
+	collisionMeshFree(&a->colmesh);
 	a->offset = T3D_VEC3_ZERO;
 }

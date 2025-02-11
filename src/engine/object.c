@@ -9,39 +9,39 @@
 #define OBJECT_DOOR_TURN_DEG_PER_SEC 179.f
 #define OBJECT_DOOR_CHECK_RADIUS 100.f
 
-static int num_doors_in_range_of = 0;
+static int numDoorsInRangeOf = 0;
 
-object_t object_read_from_file(FILE *file, const T3DVec3 *offset)
+Object objectInitFromFile(FILE *file, const T3DVec3 *offset)
 {
-	object_t o;
-	char obj_name[OBJECT_NAME_MAX_LENGTH];
-	char obj_name_new[OBJECT_NAME_MAX_LENGTH];
-	char mdl_path[OBJECT_NAME_MAX_LENGTH << 1];
-	memset(obj_name, 0, OBJECT_NAME_MAX_LENGTH);
-	memset(obj_name_new, 0, OBJECT_NAME_MAX_LENGTH);
-	memset(mdl_path, 0, OBJECT_NAME_MAX_LENGTH << 1);
+	Object o;
+	char objName[OBJECT_NAME_MAX_LENGTH];
+	char objNameNew[OBJECT_NAME_MAX_LENGTH];
+	char mdlPath[OBJECT_NAME_MAX_LENGTH << 1];
+	memset(objName, 0, OBJECT_NAME_MAX_LENGTH);
+	memset(objNameNew, 0, OBJECT_NAME_MAX_LENGTH);
+	memset(mdlPath, 0, OBJECT_NAME_MAX_LENGTH << 1);
 
-	fread(obj_name, 1, OBJECT_NAME_MAX_LENGTH, file);
-	long int obj_val;
+	fread(objName, 1, OBJECT_NAME_MAX_LENGTH, file);
+	long int objVal;
 	{
-		const char *last_dot_str = strrchr(obj_name, '.') + 1;
-		const int last_dot_str_len = strlen(last_dot_str) + 1;
+		const char *lastDotStr = strrchr(objName, '.') + 1;
+		const int lastDotStrLen = strlen(lastDotStr) + 1;
 
 		char *endptr;
-		obj_val = strtol(last_dot_str, &endptr, 10);
-		const int has_num = endptr != (strrchr(obj_name, '.') + 1);
-		if (has_num) {
-			strncpy(obj_name_new, obj_name,
-				strlen(obj_name) - last_dot_str_len);
+		objVal = strtol(lastDotStr, &endptr, 10);
+		const int hasNum = endptr != (strrchr(objName, '.') + 1);
+		if (hasNum) {
+			strncpy(objNameNew, objName,
+				strlen(objName) - lastDotStrLen);
 		} else {
-			strncpy(obj_name_new, obj_name, OBJECT_NAME_MAX_LENGTH);
+			strncpy(objNameNew, objName, OBJECT_NAME_MAX_LENGTH);
 		}
 	}
 
-	snprintf(mdl_path, OBJECT_NAME_MAX_LENGTH << 1, "rom:/%s.t3dm",
-		 obj_name_new);
+	snprintf(mdlPath, OBJECT_NAME_MAX_LENGTH << 1, "rom:/%s.t3dm",
+		 objNameNew);
 
-	o.mdl = t3d_model_load(mdl_path);
+	o.mdl = t3d_model_load(mdlPath);
 	o.matrix = malloc_uncached(sizeof *o.matrix);
 
 	rspq_block_begin();
@@ -66,14 +66,14 @@ object_t object_read_from_file(FILE *file, const T3DVec3 *offset)
 	}
 
 	t3d_vec3_add(&pos, &pos, offset);
-	o.position = o.position_old = o.position_init = pos;
-	o.rotation = o.rotation_old = o.rotation_init = rot;
-	o.scale = o.scale_old = o.scale_init = scale;
+	o.position = o.positionOld = o.positionInit = pos;
+	o.rotation = o.rotationOld = o.rotationInit = rot;
+	o.scale = o.scaleOld = o.scaleInit = scale;
 
 	/* determining type */
-	if (!strncmp("Door", obj_name + 4, strlen("Door"))) {
+	if (!strncmp("Door", objName + 4, strlen("Door"))) {
 		o.type = OBJECT_TYPE_DOOR;
-		o.argi[OBJECT_DOOR_ARGI_NEXT_AREA] = obj_val;
+		o.argi[OBJECT_DOOR_ARGI_NEXT_AREA] = objVal;
 		o.argi[OBJECT_DOOR_ARGI_IS_OPENING] = false;
 		o.argi[OBJECT_DOOR_ARGI_SIDE_ENTERED] = -1;
 		o.argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] = 0.f;
@@ -93,30 +93,23 @@ object_t object_read_from_file(FILE *file, const T3DVec3 *offset)
 	return o;
 }
 
-void object_setup_frame_static_vars(void)
+void objectSetupFrameStaticVars(void)
 {
-	num_doors_in_range_of = 0;
+	numDoorsInRangeOf = 0;
 }
 
-void object_update_ui_with_static_vars(void)
+void objectUpdateUIWithStaticVars(void)
 {
-	/*
-	debugf("Object Static Vars:\n");
-	debugf("\tnum_doors_in_range_of=%d\n", num_doors_in_range_of);
-	debugf("\n");
-	*/
-
-	ui_toggle_elements(UI_ELEMENT_FLAG_A_BUTTON, num_doors_in_range_of);
+	uiToggleElements(UI_ELEMENT_FLAG_A_BUTTON, numDoorsInRangeOf);
 }
 
-static void _object_update_door_inside_radius(object_t *obj,
-					      const float facing_dot)
+static void _objectUpdateDoor_inside_radius(Object *obj, const float facing_dot)
 {
 	if (facing_dot < 0.6f) {
 		return;
 	}
 
-	num_doors_in_range_of++;
+	numDoorsInRangeOf++;
 	if (INPUT_GET_BTN(A, PRESSED)) {
 		obj->argi[OBJECT_DOOR_ARGI_IS_OPENING] ^=
 			obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] == 0.f ||
@@ -124,23 +117,23 @@ static void _object_update_door_inside_radius(object_t *obj,
 	}
 }
 
-static void _object_update_door_outside_radius(object_t *obj)
+static void _objectUpdateDoor_outside_radius(Object *obj)
 {
 	obj->argi[OBJECT_DOOR_ARGI_IS_OPENING] = false;
 }
 
-static int _object_update_door(object_t *obj, const T3DVec3 *player_to_obj_dir,
-			       const float dist_from_player,
-			       const float player_facing_dot, const float dt)
+static int _objectUpdateDoor(Object *obj, const T3DVec3 *player_to_objDir,
+			     const float dist_from_player,
+			     const float player_facing_dot, const float dt)
 {
-	obj->rotation_old = obj->rotation;
+	obj->rotationOld = obj->rotation;
 	obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT_OLD] =
 		obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT];
 
 	if (dist_from_player < OBJECT_DOOR_CHECK_RADIUS) {
-		_object_update_door_inside_radius(obj, player_facing_dot);
+		_objectUpdateDoor_inside_radius(obj, player_facing_dot);
 	} else {
-		_object_update_door_outside_radius(obj);
+		_objectUpdateDoor_outside_radius(obj);
 	}
 
 	if (obj->argi[OBJECT_DOOR_ARGI_IS_OPENING]) {
@@ -157,16 +150,16 @@ static int _object_update_door(object_t *obj, const T3DVec3 *player_to_obj_dir,
 		}
 	}
 
-	obj->rotation = obj->rotation_init;
+	obj->rotation = obj->rotationInit;
 	t3d_quat_rotate_euler(
 		&obj->rotation, (float[3]){ 0, 0, 1 },
 		T3D_DEG_TO_RAD(obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT]));
 
-	T3DVec3 obj_to_player_dir;
+	T3DVec3 obj_to_playerDir;
 
-	t3d_vec3_negate(&obj_to_player_dir, player_to_obj_dir);
+	t3d_vec3_negate(&obj_to_playerDir, player_to_objDir);
 	const float pass_door_dot =
-		t3d_vec3_dot(&obj_to_player_dir, &T3D_VEC3_XUP);
+		t3d_vec3_dot(&obj_to_playerDir, &T3D_VEC3_XUP);
 
 	/* door just opened */
 	if (obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] > 0.f &&
@@ -178,11 +171,11 @@ static int _object_update_door(object_t *obj, const T3DVec3 *player_to_obj_dir,
 	/* door just closed */
 	if (obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] <= 0.f &&
 	    obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT_OLD] > 0.f) {
-		int side_old = obj->argi[OBJECT_DOOR_ARGI_SIDE_ENTERED];
+		int sideOld = obj->argi[OBJECT_DOOR_ARGI_SIDE_ENTERED];
 		obj->argi[OBJECT_DOOR_ARGI_SIDE_ENTERED] = pass_door_dot >= 0.f;
 
 		/* we have moved to the other side of the door */
-		if (side_old ^ obj->argi[OBJECT_DOOR_ARGI_SIDE_ENTERED]) {
+		if (sideOld ^ obj->argi[OBJECT_DOOR_ARGI_SIDE_ENTERED]) {
 			return OBJECT_UPDATE_RETURN_UNLOAD_PREV_AREA;
 		}
 
@@ -193,8 +186,8 @@ static int _object_update_door(object_t *obj, const T3DVec3 *player_to_obj_dir,
 	return OBJECT_UPDATE_RETURN_NONE;
 }
 
-int object_update(object_t *obj, const T3DVec3 *player_pos,
-		  const T3DVec3 *player_dir, const float dt)
+int objectUpdate(Object *obj, const T3DVec3 *playerPos,
+		 const T3DVec3 *playerDir, const float dt)
 {
 	/* This should never really occur, since we check for this in the
 	 * scene update, but it's here if this function were to be called
@@ -206,16 +199,16 @@ int object_update(object_t *obj, const T3DVec3 *player_pos,
 
 	obj->flags |= OBJECT_FLAG_WAS_UPDATED_THIS_FRAME;
 
-	T3DVec3 obj_vec, obj_dir;
-	t3d_vec3_diff(&obj_vec, &obj->position, player_pos);
-	const float obj_dist = t3d_vec3_len(&obj_vec);
-	t3d_vec3_scale(&obj_dir, &obj_vec, 1.f / obj_dist);
-	const float player_obj_dot = t3d_vec3_dot(player_dir, &obj_dir);
+	T3DVec3 objVec, objDir;
+	t3d_vec3_diff(&objVec, &obj->position, playerPos);
+	const float objDist = t3d_vec3_len(&objVec);
+	t3d_vec3_scale(&objDir, &objVec, 1.f / objDist);
+	const float playerObjDot = t3d_vec3_dot(playerDir, &objDir);
 
 	switch (obj->type) {
 	case OBJECT_TYPE_DOOR:
-		return _object_update_door(obj, &obj_dir, obj_dist,
-					   player_obj_dot, dt);
+		return _objectUpdateDoor(obj, &objDir, objDist, playerObjDot,
+					 dt);
 
 	case OBJECT_TYPE_STATIC:
 	default:
@@ -225,7 +218,7 @@ int object_update(object_t *obj, const T3DVec3 *player_pos,
 	return OBJECT_UPDATE_RETURN_NONE;
 }
 
-void object_render(const object_t *obj)
+void objectRender(const Object *obj)
 {
 	if (!(obj->flags & OBJECT_FLAG_IS_ACTIVE)) {
 		return;
@@ -234,19 +227,19 @@ void object_render(const object_t *obj)
 	rspq_block_run(obj->displaylist);
 }
 
-rspq_block_t *objects_instanced_gen_dl(const int num_objs, object_t *objs,
-				       const T3DModel *common_mdl)
+rspq_block_t *objectsInstancedGenDL(const int numObjs, Object *objs,
+				    const T3DModel *commonModel)
 {
 	rspq_block_t *instdl = NULL;
 
 	rspq_block_begin();
-	for (int i = 0; i < num_objs; i++) {
-		object_t *o = objs + i;
-		assertf(o->mdl == common_mdl,
+	for (int i = 0; i < numObjs; i++) {
+		Object *o = objs + i;
+		assertf(o->mdl == commonModel,
 			"Object %d in array of %d does not share "
 			"a common model, and cannot be instanced\n",
-			i, num_objs);
-		object_render(o);
+			i, numObjs);
+		objectRender(o);
 	}
 	return (instdl = rspq_block_end());
 }
@@ -287,23 +280,23 @@ static void _quat_slerp(T3DQuat *res, const T3DQuat *a, const T3DQuat *b,
 }
 */
 
-void object_matrix_setup(object_t *o, const float subtick)
+void objectMatrixSetup(Object *o, const float subtick)
 {
 	T3DVec3 pos_lerp, scale_lerp;
 	T3DQuat rot_lerp;
 
-	t3d_vec3_lerp(&pos_lerp, &o->position_old, &o->position, subtick);
-	// t3d_quat_slerp(&rot_lerp, &o->rotation_old, &o->rotation, subtick);
-	t3d_quat_nlerp(&rot_lerp, &o->rotation_old, &o->rotation, subtick);
-	t3d_vec3_lerp(&scale_lerp, &o->scale_old, &o->scale, subtick);
+	t3d_vec3_lerp(&pos_lerp, &o->positionOld, &o->position, subtick);
+	// t3d_quat_slerp(&rot_lerp, &o->rotationOld, &o->rotation, subtick);
+	t3d_quat_nlerp(&rot_lerp, &o->rotationOld, &o->rotation, subtick);
+	t3d_vec3_lerp(&scale_lerp, &o->scaleOld, &o->scale, subtick);
 
 	t3d_mat4fp_from_srt(o->matrix, scale_lerp.v, rot_lerp.v, pos_lerp.v);
 }
 
-void object_terminate(object_t *o, const int should_free_model)
+void objectFree(Object *o, const int shouldFreeModel)
 {
-	o->position = o->position_old = o->scale = o->scale_old = T3D_VEC3_ZERO;
-	o->rotation = o->rotation_old = T3D_QUAT_IDENTITY;
+	o->position = o->positionOld = o->scale = o->scaleOld = T3D_VEC3_ZERO;
+	o->rotation = o->rotationOld = T3D_QUAT_IDENTITY;
 
 	free_uncached(o->matrix);
 	o->matrix = NULL;
@@ -311,7 +304,7 @@ void object_terminate(object_t *o, const int should_free_model)
 	rspq_block_free(o->displaylist);
 	o->displaylist = NULL;
 
-	if (should_free_model) {
+	if (shouldFreeModel) {
 		t3d_model_free(o->mdl);
 	}
 	o->mdl = NULL;

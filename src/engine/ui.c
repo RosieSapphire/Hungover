@@ -2,37 +2,37 @@
 
 #include "engine/ui.h"
 
-static sprite_t *button_a_spr = NULL;
-static int element_flags = 0;
+static sprite_t *buttonASpr = NULL;
+static int elementFlags = 0;
 
-void ui_init(void)
+void uiInit(void)
 {
-	button_a_spr = sprite_load("rom:/ButtonA.ci4.sprite");
-	element_flags = 0;
+	buttonASpr = sprite_load("rom:/ButtonA.ci4.sprite");
+	elementFlags = 0;
 }
 
-void ui_toggle_elements(const int flags, const int toggle)
+void uiToggleElements(const int flags, const int toggle)
 {
 	if (toggle) {
-		element_flags |= flags;
+		elementFlags |= flags;
 	} else {
-		element_flags &= ~(flags);
+		elementFlags &= ~(flags);
 	}
 }
 
-void ui_render(void)
+void uiRender(void)
 {
 	rspq_wait();
 	rdpq_set_mode_copy(true);
 
-	if (element_flags & UI_ELEMENT_FLAG_A_BUTTON) {
-		rdpq_sprite_blit(button_a_spr, 144, 170, NULL);
+	if (elementFlags & UI_ELEMENT_FLAG_A_BUTTON) {
+		rdpq_sprite_blit(buttonASpr, 144, 170, NULL);
 	}
 }
 
-void ui_terminate(void)
+void uiFree(void)
 {
-	sprite_free(button_a_spr);
-	button_a_spr = NULL;
-	element_flags = 0;
+	sprite_free(buttonASpr);
+	buttonASpr = NULL;
+	elementFlags = 0;
 }

@@ -3,13 +3,13 @@
 
 #include <stdint.h>
 
-#define INPUT_GET_BTN(BUTTON, STATE)                                        \
-	((input_new.button_flags[BUTTON_##BUTTON] & BUTTON_FLAG_##STATE) >> \
+#define INPUT_GET_BTN(BUTTON, STATE)                                      \
+	((inputNew.buttonFlags[BUTTON_##BUTTON] & BUTTON_FLAG_##STATE) >> \
 	 BUTTON_FLAG_##STATE##_SHIFT)
-#define INPUT_GET_STICK(COMP)                         \
-	((STICK_COMP_##COMP < STICK_COMP_MAG) ?       \
-		 input_new.stick[STICK_COMP_##COMP] : \
-		 input_new.stick_mag)
+#define INPUT_GET_STICK(COMP)                        \
+	((STICK_COMP_##COMP < STICK_COMP_MAG) ?      \
+		 inputNew.stick[STICK_COMP_##COMP] : \
+		 inputNew.stickMag)
 
 #define STICK_MAG_MIN 10
 #define STICK_MAG_MAX 64
@@ -51,14 +51,14 @@ enum {
 };
 
 typedef struct {
-	uint8_t button_flags[BUTTON_COUNT];
-	float stick[2], stick_mag;
+	uint8_t buttonFlags[BUTTON_COUNT];
+	float stick[2], stickMag;
 } input_t;
 
-extern input_t input_new, input_old;
+extern input_t inputNew, inputOld;
 
-void input_init(void);
-void input_poll(void);
-void input_terminate(void);
+void inputInit(void);
+void inputPoll(void);
+void inputFree(void);
 
 #endif /* _INPUT_H_ */
