@@ -2,16 +2,13 @@
 #include "input.h"
 
 #include "engine/ui.h"
+#include "engine/object_door.h"
 #include "engine/object.h"
 
 #define OBJECT_NAME_MAX_LENGTH 32
 
-#define OBJECT_DOOR_TURN_DEG_PER_SEC 179.f
-#define OBJECT_DOOR_CHECK_RADIUS 100.f
-
-static int numDoorsInRangeOf = 0;
-
-Object objectInitFromFile(FILE *file, const T3DVec3 *offset)
+Object objectInitFromFile(FILE *file, const T3DVec3 *offset,
+			  const int areaIndex)
 {
 	Object o;
 	char objName[OBJECT_NAME_MAX_LENGTH];
@@ -73,19 +70,9 @@ Object objectInitFromFile(FILE *file, const T3DVec3 *offset)
 	/* determining type */
 	if (!strncmp("Door", objName + 4, strlen("Door"))) {
 		o.type = OBJECT_TYPE_DOOR;
-		o.argi[OBJECT_DOOR_ARGI_NEXT_AREA] = objVal;
-		o.argi[OBJECT_DOOR_ARGI_IS_OPENING] = false;
-		o.argi[OBJECT_DOOR_ARGI_SIDE_ENTERED] = -1;
-		o.argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] = 0.f;
-		o.argf[OBJECT_DOOR_ARGF_SWING_AMOUNT_OLD] = 0.f;
+		o.subobjectIndex = doorObjectInit(objVal, areaIndex);
 	} else {
 		o.type = OBJECT_TYPE_STATIC;
-		for (int i = 0; i < OBJECT_MAX_NUM_ARGIS; i++) {
-			o.argi[i] = 0;
-		}
-		for (int i = 0; i < OBJECT_MAX_NUM_ARGFS; i++) {
-			o.argf[i] = 0.f;
-		}
 	}
 
 	o.flags = OBJECT_FLAG_IS_ACTIVE;
@@ -101,89 +88,6 @@ void objectSetupFrameStaticVars(void)
 void objectUpdateUIWithStaticVars(void)
 {
 	uiToggleElements(UI_ELEMENT_FLAG_A_BUTTON, numDoorsInRangeOf);
-}
-
-static void _objectUpdateDoor_inside_radius(Object *obj, const float facing_dot)
-{
-	if (facing_dot < 0.6f) {
-		return;
-	}
-
-	numDoorsInRangeOf++;
-	if (INPUT_GET_BTN(A, PRESSED)) {
-		obj->argi[OBJECT_DOOR_ARGI_IS_OPENING] ^=
-			obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] == 0.f ||
-			obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] == 90.f;
-	}
-}
-
-static void _objectUpdateDoor_outside_radius(Object *obj)
-{
-	obj->argi[OBJECT_DOOR_ARGI_IS_OPENING] = false;
-}
-
-static int _objectUpdateDoor(Object *obj, const T3DVec3 *player_to_objDir,
-			     const float dist_from_player,
-			     const float player_facing_dot, const float dt)
-{
-	obj->rotationOld = obj->rotation;
-	obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT_OLD] =
-		obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT];
-
-	if (dist_from_player < OBJECT_DOOR_CHECK_RADIUS) {
-		_objectUpdateDoor_inside_radius(obj, player_facing_dot);
-	} else {
-		_objectUpdateDoor_outside_radius(obj);
-	}
-
-	if (obj->argi[OBJECT_DOOR_ARGI_IS_OPENING]) {
-		obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] +=
-			dt * OBJECT_DOOR_TURN_DEG_PER_SEC;
-		if (obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] > 90.f) {
-			obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] = 90.f;
-		}
-	} else {
-		obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] -=
-			dt * OBJECT_DOOR_TURN_DEG_PER_SEC;
-		if (obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] < 0.f) {
-			obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] = 0.f;
-		}
-	}
-
-	obj->rotation = obj->rotationInit;
-	t3d_quat_rotate_euler(
-		&obj->rotation, (float[3]){ 0, 0, 1 },
-		T3D_DEG_TO_RAD(obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT]));
-
-	T3DVec3 obj_to_playerDir;
-
-	t3d_vec3_negate(&obj_to_playerDir, player_to_objDir);
-	const float pass_door_dot =
-		t3d_vec3_dot(&obj_to_playerDir, &T3D_VEC3_XUP);
-
-	/* door just opened */
-	if (obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] > 0.f &&
-	    obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT_OLD] <= 0.f) {
-		obj->argi[OBJECT_DOOR_ARGI_SIDE_ENTERED] = pass_door_dot >= 0.f;
-		return OBJECT_UPDATE_RETURN_LOAD_NEXT_AREA;
-	}
-
-	/* door just closed */
-	if (obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT] <= 0.f &&
-	    obj->argf[OBJECT_DOOR_ARGF_SWING_AMOUNT_OLD] > 0.f) {
-		int sideOld = obj->argi[OBJECT_DOOR_ARGI_SIDE_ENTERED];
-		obj->argi[OBJECT_DOOR_ARGI_SIDE_ENTERED] = pass_door_dot >= 0.f;
-
-		/* we have moved to the other side of the door */
-		if (sideOld ^ obj->argi[OBJECT_DOOR_ARGI_SIDE_ENTERED]) {
-			return OBJECT_UPDATE_RETURN_UNLOAD_PREV_AREA;
-		}
-
-		/* ... we have not */
-		return OBJECT_UPDATE_RETURN_UNLOAD_NEXT_AREA;
-	}
-
-	return OBJECT_UPDATE_RETURN_NONE;
 }
 
 int objectUpdate(Object *obj, const T3DVec3 *playerPos,
@@ -204,18 +108,27 @@ int objectUpdate(Object *obj, const T3DVec3 *playerPos,
 	const float objDist = t3d_vec3_len(&objVec);
 	t3d_vec3_scale(&objDir, &objVec, 1.f / objDist);
 	const float playerObjDot = t3d_vec3_dot(playerDir, &objDir);
+	int ret = OBJECT_UPDATE_RETURN_NONE;
 
 	switch (obj->type) {
 	case OBJECT_TYPE_DOOR:
-		return _objectUpdateDoor(obj, &objDir, objDist, playerObjDot,
-					 dt);
+		DoorObject *door = doorObjects + obj->subobjectIndex;
+		obj->rotationOld = obj->rotation;
+		ret = doorObjectUpdate(door, &objDir, objDist, playerObjDot,
+				       dt);
+		obj->rotation = obj->rotationInit;
+		t3d_quat_rotate_euler(&obj->rotation, (float[3]){ 0, 0, 1 },
+				      T3D_DEG_TO_RAD(door->swingAmount));
+
+		break;
 
 	case OBJECT_TYPE_STATIC:
 	default:
-		return OBJECT_UPDATE_RETURN_NONE;
+		ret = OBJECT_UPDATE_RETURN_NONE;
+		break;
 	}
 
-	return OBJECT_UPDATE_RETURN_NONE;
+	return ret;
 }
 
 void objectRender(const Object *obj)

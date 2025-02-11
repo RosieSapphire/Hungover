@@ -13,7 +13,7 @@ Area areaInitFromFile(FILE *file, T3DModel *sceneModel, const int index)
 	fread(&a.numObjects, 2, 1, file);
 	a.objects = calloc(a.numObjects, sizeof *a.objects);
 	for (uint16_t i = 0; i < a.numObjects; i++) {
-		a.objects[i] = objectInitFromFile(file, &a.offset);
+		a.objects[i] = objectInitFromFile(file, &a.offset, index);
 	}
 
 	/* respective scene object */
@@ -40,25 +40,6 @@ Area areaInitFromFile(FILE *file, T3DModel *sceneModel, const int index)
 	a.areaBlock = rspq_block_end();
 
 	return a;
-}
-
-Object *areaFindDoorFromDestIndex(const Area *a, const uint16_t destIndex)
-{
-	for (uint16_t i = 0; i < a->numObjects; i++) {
-		Object *obj = a->objects + i;
-
-		if (obj->type != OBJECT_TYPE_DOOR) {
-			continue;
-		}
-
-		if (obj->argi[OBJECT_DOOR_ARGI_NEXT_AREA] != destIndex) {
-			continue;
-		}
-
-		return obj;
-	}
-
-	return NULL;
 }
 
 void areaRender(const Area *a, const float subtick)

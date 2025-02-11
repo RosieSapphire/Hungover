@@ -1,3 +1,4 @@
+#include "engine/object_door.h"
 #include "engine/scene.h"
 
 Scene sceneInitFromFile(const char *path)
@@ -32,30 +33,45 @@ Scene sceneInitFromFile(const char *path)
 
 static void _sceneUpdateAreaObject(Object *o, Scene *scn,
 				   const T3DVec3 *playerPos,
-				   const T3DVec3 *playerDir, uint16_t *inds[2],
-				   const float dt)
+				   const T3DVec3 *playerDir, const float dt)
 {
-	if (!(o->flags & OBJECT_FLAG_IS_ACTIVE)) {
+	if (!(o->flags & OBJECT_FLAG_IS_ACTIVE) ||
+	    (o->flags & OBJECT_FLAG_WAS_UPDATED_THIS_FRAME)) {
 		return;
 	}
 
+	Area *areaProc = NULL;
+	DoorObject *door = NULL;
+
 	switch (objectUpdate(o, playerPos, playerDir, dt)) {
 	case OBJECT_UPDATE_RETURN_LOAD_NEXT_AREA:
-		*inds[1] = *inds[0];
-		*inds[0] = o->argi[OBJECT_DOOR_ARGI_NEXT_AREA];
+		door = doorObjects + o->subobjectIndex;
+		scn->areaIndexOld = scn->areaIndex;
+		scn->areaIndex = door->nextArea;
 		scn->flags |= SCENE_FLAG_PROCESS_AREA_LAST;
-		Object *newDoor = areaFindDoorFromDestIndex(
-			scn->areas + o->argi[OBJECT_DOOR_ARGI_NEXT_AREA],
-			*inds[1]);
-		newDoor->flags &= ~(OBJECT_FLAG_IS_ACTIVE);
+		DoorObject *newDoor = doorObjectFindByNextAreaInArea(
+			scn->areaIndexOld, scn->areaIndex);
+		areaProc = scn->areas + scn->areaIndex;
+		for (uint16_t i = 0; i < areaProc->numObjects; i++) {
+			Object *obj = areaProc->objects + i;
+			if ((doorObjects + obj->subobjectIndex) == newDoor) {
+				obj->flags &= ~(OBJECT_FLAG_IS_ACTIVE);
+			}
+		}
 		return;
 
 	case OBJECT_UPDATE_RETURN_UNLOAD_PREV_AREA:
+		door = doorObjects + o->subobjectIndex;
 		scn->flags &= ~(SCENE_FLAG_PROCESS_AREA_LAST);
-		Object *curDoor = areaFindDoorFromDestIndex(
-			scn->areas + o->argi[OBJECT_DOOR_ARGI_NEXT_AREA],
-			*inds[1]);
-		curDoor->flags |= OBJECT_FLAG_IS_ACTIVE;
+		DoorObject *curDoor = doorObjectFindByNextAreaInArea(
+			scn->areaIndexOld, door->nextArea);
+		areaProc = scn->areas + door->nextArea;
+		for (uint16_t i = 0; i < areaProc->numObjects; i++) {
+			Object *obj = areaProc->objects + i;
+			if ((doorObjects + obj->subobjectIndex) == curDoor) {
+				obj->flags |= OBJECT_FLAG_IS_ACTIVE;
+			}
+		}
 		return;
 
 	case OBJECT_UPDATE_RETURN_UNLOAD_NEXT_AREA:
@@ -71,8 +87,6 @@ static void _sceneUpdateAreaObject(Object *o, Scene *scn,
 void sceneUpdate(Scene *scn, const T3DVec3 *playerPos, const T3DVec3 *playerDir,
 		 const float dt)
 {
-	uint16_t *inds[2] = { &scn->areaIndex, &scn->areaIndexOld };
-
 	/*
 	 * This is to ensure all objects are only updated once per frame.
 	 * The reason this is done is because if, say, a door were to 
@@ -96,10 +110,12 @@ void sceneUpdate(Scene *scn, const T3DVec3 *playerPos, const T3DVec3 *playerDir,
 			continue;
 		}
 
-		Area *area = scn->areas + *inds[i];
+		Area *area =
+			scn->areas + (!i ? scn->areaIndex : scn->areaIndexOld);
+
 		for (uint16_t j = 0; j < area->numObjects; j++) {
 			_sceneUpdateAreaObject(area->objects + j, scn,
-					       playerPos, playerDir, inds, dt);
+					       playerPos, playerDir, dt);
 		}
 	}
 	objectUpdateUIWithStaticVars();

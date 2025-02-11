@@ -23,7 +23,6 @@ typedef struct {
 
 #ifndef IS_USING_SCENE_CONVERTER
 Area areaInitFromFile(FILE *file, T3DModel *sceneModel, const int index);
-Object *areaFindDoorFromDestIndex(const Area *a, const uint16_t destIndex);
 void areaRender(const Area *a, const float subtick);
 void areaFree(Area *a);
 #endif

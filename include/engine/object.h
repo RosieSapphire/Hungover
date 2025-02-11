@@ -25,20 +25,6 @@ enum {
 	OBJECT_FLAG_WAS_UPDATED_THIS_FRAME = (1 << 2)
 };
 
-#define OBJECT_MAX_NUM_ARGIS 4
-#define OBJECT_MAX_NUM_ARGFS 4
-
-enum {
-	OBJECT_DOOR_ARGI_NEXT_AREA,
-	OBJECT_DOOR_ARGI_IS_OPENING,
-	OBJECT_DOOR_ARGI_SIDE_ENTERED,
-};
-
-enum {
-	OBJECT_DOOR_ARGF_SWING_AMOUNT,
-	OBJECT_DOOR_ARGF_SWING_AMOUNT_OLD,
-};
-
 typedef struct {
 #ifndef IS_USING_SCENE_CONVERTER
 	T3DModel *mdl;
@@ -49,14 +35,15 @@ typedef struct {
 #endif
 	T3DVec3 position, positionOld, positionInit, scale, scaleOld, scaleInit;
 	T3DQuat rotation, rotationOld, rotationInit;
-	uint8_t type;
+	uint8_t type, flags;
 
-	/* FIXME: Defer this to a specific object type per object */
-	/* `arg` means different things depending on the `type`.
-	 * Full list of argument types below object struct definition */
-	uint8_t argi[OBJECT_MAX_NUM_ARGIS];
-	float argf[OBJECT_MAX_NUM_ARGFS];
-	uint8_t flags;
+	/*
+	 * Each object with a type that's not static will have its own
+	 * struct allocated for it elsewhere in memory. For example, doors.
+	 * There's a separate file for the door struct and functionality,
+	 * but this value indexes the array in that file.
+	 */
+	uint8_t subobjectIndex;
 } Object;
 
 /*
@@ -69,7 +56,8 @@ typedef struct {
  */
 
 #ifndef IS_USING_SCENE_CONVERTER
-Object objectInitFromFile(FILE *file, const T3DVec3 *offset);
+Object objectInitFromFile(FILE *file, const T3DVec3 *offset,
+			  const int areaIndex);
 void objectSetupFrameStaticVars(void);
 void objectUpdateUIWithStaticVars(void);
 int objectUpdate(Object *obj, const T3DVec3 *playerPos,

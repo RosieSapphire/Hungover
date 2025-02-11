@@ -111,7 +111,6 @@ static void _render(const float subtick)
 	t3d_frame_start();
 	t3d_screen_clear_color(color_from_packed16(0x0001));
 	t3d_screen_clear_depth();
-
 	t3d_light_set_ambient(ambientColor);
 
 	sceneRender(&scene, subtick);
