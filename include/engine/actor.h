@@ -32,6 +32,13 @@ enum {
 	ACTOR_FLAG_WAS_UPDATED_THIS_FRAME = (1 << 2)
 };
 
+struct actor_update_params {
+	const T3DVec3 *player_to_actor_dir;
+	const T3DVec3 *player_dir;
+	f32 player_dist;
+	f32 dt;
+};
+
 struct actor_header {
 #ifndef IS_USING_SCENE_CONVERTER
 	T3DModel *mdl;

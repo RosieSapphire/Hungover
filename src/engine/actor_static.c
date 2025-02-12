@@ -14,3 +14,10 @@ struct actor_header *actor_static_init(void)
 
 	return h;
 }
+
+u8 actor_static_update(__attribute__((unused)) const u8 index,
+		       __attribute__((unused))
+		       const struct actor_update_params *params)
+{
+	return ACTOR_RETURN_NONE;
+}

@@ -63,33 +63,40 @@ static void _actor_door_update_outside_range(struct actor_door *door)
 	door->is_opening = false;
 }
 
-u8 actor_door_update(struct actor_door *door,
-		     const T3DVec3 *player_to_actor_dir, const f32 player_dist,
-		     const f32 player_to_actor_dot, const f32 dt)
+u8 actor_door_update(const u8 index, const struct actor_update_params *params)
 {
+	struct actor_door *door = actor_doors + index;
+
 	door->swing_amount_old = door->swing_amount;
 
-	if (player_dist < DOOR_ACTOR_CHECK_RADIUS) {
+	const f32 player_to_actor_dot =
+		t3d_vec3_dot(params->player_dir, params->player_to_actor_dir);
+	if (params->player_dist < DOOR_ACTOR_CHECK_RADIUS) {
 		_actor_door_update_inside_range(door, player_to_actor_dot);
 	} else {
 		_actor_door_update_outside_range(door);
 	}
 
 	if (door->is_opening) {
-		door->swing_amount += dt * DOOR_ACTOR_TURN_DEG_PER_SEC;
+		door->swing_amount += params->dt * DOOR_ACTOR_TURN_DEG_PER_SEC;
 		if (door->swing_amount > 90.f) {
 			door->swing_amount = 90.f;
 		}
 	} else {
-		door->swing_amount -= dt * DOOR_ACTOR_TURN_DEG_PER_SEC;
+		door->swing_amount -= params->dt * DOOR_ACTOR_TURN_DEG_PER_SEC;
 		if (door->swing_amount < 0.f) {
 			door->swing_amount = 0.f;
 		}
 	}
 
+	struct actor_header *head = (struct actor_header *)door;
+	head->rotation = head->rotation_init;
+	t3d_quat_rotate_euler(&head->rotation, (f32[3]){ 0, 0, 1 },
+			      T3D_DEG_TO_RAD(door->swing_amount));
+
 	T3DVec3 actor_to_player_dir;
 
-	t3d_vec3_negate(&actor_to_player_dir, player_to_actor_dir);
+	t3d_vec3_negate(&actor_to_player_dir, params->player_to_actor_dir);
 	const f32 pass_door_dot =
 		t3d_vec3_dot(&actor_to_player_dir, &T3D_VEC3_XUP);
 

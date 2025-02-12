@@ -20,9 +20,7 @@ extern struct actor_door actor_doors[ACTOR_DOOR_MAX_COUNT];
 
 struct actor_header *actor_door_init(const u16 area_next, const u16 area_index);
 struct actor_door *actor_door_find_by_area_next(const u16 area_next);
-u8 actor_door_update(struct actor_door *door,
-		     const T3DVec3 *player_to_actor_dir, const f32 player_dist,
-		     const f32 player_to_actor_dot, const f32 dt);
+u8 actor_door_update(const u8 index, const struct actor_update_params *params);
 void actor_door_free(struct actor_door *door);
 
 #endif /* _ENGINE_ACTOR_DOOR_H_ */

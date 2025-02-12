@@ -31,7 +31,7 @@ extern u8 actor_microwave_count;
 extern struct actor_microwave actor_microwaves[ACTOR_MICROWAVE_COUNT_MAX];
 
 struct actor_header *actor_microwave_init(void);
-u8 actor_microwave_update(struct actor_microwave *mic, const f32 dist,
-			  const f32 dt);
+u8 actor_microwave_update(const u8 index,
+			  const struct actor_update_params *params);
 
 #endif /* _ENGINE_MICROWAVE_ACTOR_H_ */

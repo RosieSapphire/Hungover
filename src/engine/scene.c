@@ -56,6 +56,7 @@ static void _scene_area_actor_update(struct actor_header *actor,
 	struct actor_door *door = NULL;
 
 	switch (actor_update(actor, player_pos, player_dir, dt)) {
+	/* When we open a door and it leads to a new room. */
 	case ACTOR_RETURN_LOAD_NEXT_AREA:
 		door = actor_doors + actor->type_index;
 		scn->area_index_old = scn->area_index;
@@ -67,6 +68,7 @@ static void _scene_area_actor_update(struct actor_header *actor,
 			~(ACTOR_FLAG_IS_ACTIVE);
 		return;
 
+	/* When we close a door after entering through to the next area. */
 	case ACTOR_RETURN_UNLOAD_PREV_AREA:
 		door = actor_doors + actor->type_index;
 		scn->flags &= ~(SCENE_FLAG_PROCESS_AREA_LAST);
@@ -76,6 +78,7 @@ static void _scene_area_actor_update(struct actor_header *actor,
 			(ACTOR_FLAG_IS_ACTIVE);
 		return;
 
+	/* When we close a door without going through it. */
 	case ACTOR_RETURN_UNLOAD_NEXT_AREA:
 		scn->flags &= ~(SCENE_FLAG_PROCESS_AREA_LAST);
 		scn->area_index = scn->area_index_old;

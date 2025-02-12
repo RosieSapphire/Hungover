@@ -9,6 +9,13 @@
 
 #define ACTOR_NAME_MAX_LENGTH 32
 
+static u8 (*actor_update_funcs[ACTOR_TYPE_COUNT])(
+	const u8, const struct actor_update_params *) = {
+	actor_static_update,
+	actor_door_update,
+	actor_microwave_update,
+};
+
 struct actor_header *actor_init_from_file(FILE *file, const T3DVec3 *offset,
 					  const u16 area_index)
 {
@@ -116,33 +123,19 @@ u8 actor_update(struct actor_header *act, const T3DVec3 *player_pos,
 	t3d_vec3_diff(&act_vec, &act->position, player_pos);
 	const f32 act_dist = t3d_vec3_len(&act_vec);
 	t3d_vec3_scale(&act_dir, &act_vec, 1.f / act_dist);
-	const f32 player_dir_dot = t3d_vec3_dot(player_dir, &act_dir);
-	u8 ret = ACTOR_RETURN_NONE;
 
-	switch (act->type) {
-	case ACTOR_TYPE_DOOR:
-		struct actor_door *door = actor_doors + act->type_index;
-		act->rotation_old = act->rotation;
-		ret = actor_door_update(door, &act_dir, act_dist,
-					player_dir_dot, dt);
-		act->rotation = act->rotation_init;
-		t3d_quat_rotate_euler(&act->rotation, (f32[3]){ 0, 0, 1 },
-				      T3D_DEG_TO_RAD(door->swing_amount));
-		break;
+	struct actor_update_params params = { .player_to_actor_dir = &act_vec,
+					      .player_dir = player_dir,
+					      .player_dist = act_dist,
+					      .dt = dt };
 
-	case ACTOR_TYPE_MICROWAVE:
-		struct actor_microwave *microwave =
-			actor_microwaves + act->type_index;
-		ret = actor_microwave_update(microwave, act_dist, dt);
-		break;
+	act->position_old = act->position;
+	act->rotation_old = act->rotation;
+	act->scale_old = act->scale;
 
-	case ACTOR_TYPE_STATIC:
-	default:
-		ret = ACTOR_RETURN_NONE;
-		break;
-	}
-
-	return ret;
+	assertf(act->type < ACTOR_TYPE_COUNT, "Invalid Actor Type (%d)\n",
+		act->type);
+	return (*actor_update_funcs[act->type])(act->type_index, &params);
 }
 
 void actor_render(const struct actor_header *act)

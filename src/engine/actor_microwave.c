@@ -27,11 +27,13 @@ struct actor_header *actor_microwave_init(void)
 	return h;
 }
 
-u8 actor_microwave_update(struct actor_microwave *mic, const f32 dist,
-			  const f32 dt)
+u8 actor_microwave_update(const u8 index,
+			  const struct actor_update_params *params)
 {
+	struct actor_microwave *mic = actor_microwaves + index;
+
 	mic->state_old = mic->state;
-	if (dist < 80.f) {
+	if (params->player_dist < 80.f) {
 		actor_microwave_count_in_range++;
 		if (INPUT_GET_BTN(A, PRESSED) &&
 		    mic->state == MICROWAVE_STATE_IDLE) {
@@ -42,7 +44,7 @@ u8 actor_microwave_update(struct actor_microwave *mic, const f32 dist,
 	}
 
 	if (mic->cook_time_left > 0.f) {
-		mic->cook_time_left -= dt;
+		mic->cook_time_left -= params->dt;
 		if (mic->cook_time_left <= 0.f) {
 			mic->cook_time_left = 0.f;
 			mic->state = MICROWAVE_STATE_FOOD_DONE;
@@ -52,7 +54,7 @@ u8 actor_microwave_update(struct actor_microwave *mic, const f32 dist,
 
 	if (mic->beep_count > 0) {
 		if (mic->beep_timer > 0.f) {
-			mic->beep_timer -= dt;
+			mic->beep_timer -= params->dt;
 		} else {
 			mic->beep_count--;
 			mic->beep_timer = MICROWAVE_BEEP_INTERVAL;
