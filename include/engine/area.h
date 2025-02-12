@@ -4,27 +4,30 @@
 #include <stdio.h>
 
 #ifndef IS_USING_SCENE_CONVERTER
+#include "types.h"
+
 #include <t3d/t3dmodel.h>
 #endif
 
+#include "engine/actor.h"
 #include "engine/collision.h"
-#include "engine/object.h"
 
-typedef struct {
+struct area {
 	T3DVec3 offset;
-	CollisionMesh colmesh;
-	uint16_t numObjects;
-	Object *objects;
+	struct collision_mesh colmesh;
+	u16 actor_header_count;
+	struct actor_header *actor_headers;
 #ifndef IS_USING_SCENE_CONVERTER
-	rspq_block_t *areaBlock;
+	rspq_block_t *displaylist;
 	T3DMat4FP *matrix;
 #endif
-} Area;
+};
 
 #ifndef IS_USING_SCENE_CONVERTER
-Area areaInitFromFile(FILE *file, T3DModel *sceneModel, const int index);
-void areaRender(const Area *a, const float subtick);
-void areaFree(Area *a);
+struct area area_init_from_file(FILE *file, T3DModel *scene_model,
+				const u16 index);
+void area_render(const struct area *a, const f32 subtick);
+void area_free(struct area *a);
 #endif
 
 #endif /* _ENGINE_AREA_H_ */

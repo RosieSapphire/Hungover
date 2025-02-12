@@ -1,29 +1,30 @@
-#include <stdio.h>
 #include <libdragon.h>
+#include <stdio.h>
 
 #include "engine/collision.h"
 
 // #define DEBUG_COLLISION
 
-CollisionMesh collisionMeshInitFromFile(FILE *file, const T3DVec3 *offset)
+struct collision_mesh collision_mesh_init_from_file(FILE *file,
+						    const T3DVec3 *offset)
 {
-	CollisionMesh cm;
+	struct collision_mesh cm;
 
-	fread(&cm.numTriangles, 2, 1, file);
+	fread(&cm.triangle_count, 2, 1, file);
 #ifdef DEBUG_COLLISION
-	debugf("%d tris\n", cm.numTriangles);
+	debugf("%d tris\n", cm.triangle_count);
 #endif
-	cm.triangles = calloc(cm.numTriangles, sizeof *cm.triangles);
-	for (uint16_t i = 0; i < cm.numTriangles; i++) {
-		CollisionTriangle *f = cm.triangles + i;
+	cm.triangles = calloc(cm.triangle_count, sizeof *cm.triangles);
+	for (u16 i = 0; i < cm.triangle_count; i++) {
+		struct collision_triangle *f = cm.triangles + i;
 
 #ifdef DEBUG_COLLISION
 		debugf("\tface %d\n", i);
 #endif
-		for (uint16_t j = 0; j < 3; j++) {
-			CollisionVertex *v = f->verts + j;
+		for (u16 j = 0; j < 3; j++) {
+			struct collision_vertex *v = f->verts + j;
 
-			for (uint16_t k = 0; k < 3; k++) {
+			for (u16 k = 0; k < 3; k++) {
 				fread(v->pos + k, 4, 1, file);
 			}
 #ifdef DEBUG_COLLISION
@@ -32,7 +33,7 @@ CollisionMesh collisionMeshInitFromFile(FILE *file, const T3DVec3 *offset)
 #endif
 		}
 
-		for (uint16_t j = 0; j < 3; j++) {
+		for (u16 j = 0; j < 3; j++) {
 			fread(f->norm + j, 4, 1, file);
 		}
 #ifdef DEBUG_COLLISION
@@ -41,7 +42,7 @@ CollisionMesh collisionMeshInitFromFile(FILE *file, const T3DVec3 *offset)
 #endif
 	}
 
-	for (uint16_t i = 0; i < 3; i++) {
+	for (u16 i = 0; i < 3; i++) {
 		fread(cm.offset.v + i, 4, 1, file);
 		cm.offset.v[i] += offset->v[i];
 	}
@@ -49,9 +50,9 @@ CollisionMesh collisionMeshInitFromFile(FILE *file, const T3DVec3 *offset)
 	return cm;
 }
 
-void collisionMeshFree(CollisionMesh *cm)
+void collision_mesh_free(struct collision_mesh *cm)
 {
 	free(cm->triangles);
 	cm->triangles = NULL;
-	cm->numTriangles = 0;
+	cm->triangle_count = 0;
 }

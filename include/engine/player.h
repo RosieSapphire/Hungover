@@ -4,23 +4,29 @@
 #include <t3d/t3d.h>
 
 #include "config.h"
+#include "types.h"
 
 #include "engine/collision.h"
 #include "engine/scene.h"
 
-#define PLAYER_NUM_COLLISION_MESH_PTRS 2
+#define PLAYER_COLMESH_PTR_COUNT 2
 
-typedef struct {
-	T3DVec3 pos, posOld;
-	float yaw, yawOld, pitch, pitchOld;
-	CollisionMesh *collisionMeshPtrs[PLAYER_NUM_COLLISION_MESH_PTRS];
-} Player;
+struct player {
+	T3DVec3 pos;
+	T3DVec3 pos_old;
+	f32 yaw;
+	f32 yaw_old;
+	f32 pitch;
+	f32 pitch_old;
+	struct collision_mesh *colmesh_ptrs[PLAYER_COLMESH_PTR_COUNT];
+};
 
-Player playerInit(void);
-void playerGetLookValues(T3DVec3 *eye, T3DVec3 *focus, const Player *p,
-			 const float interp);
-void playerUpdate(Player *p, const Scene *scn, const float dt);
-void playerToViewport(T3DViewport *vp, const Player *p, const float interp);
-void playerFree(Player *p);
+struct player player_init(void);
+void player_look_values_get(T3DVec3 *eye, T3DVec3 *focus,
+			    const struct player *p, const f32 interp);
+void player_update(struct player *p, const struct scene *scn, const f32 dt);
+void player_to_viewport(T3DViewport *vp, const struct player *p,
+			const f32 interp);
+void player_free(struct player *p);
 
 #endif /* _ENGINE_PLAYER_H_ */

@@ -19,4 +19,4 @@ clean:
 	rm -rf $(TARGET) $(O_FILES) *.col *.json
 
 format: $(C_FILES)
-	clang-format --style=file -i $^
+	clang-format-15 --style=file -i $^

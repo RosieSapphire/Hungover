@@ -1,15 +1,15 @@
 #ifndef _INPUT_H_
 #define _INPUT_H_
 
-#include <stdint.h>
+#include "types.h"
 
-#define INPUT_GET_BTN(BUTTON, STATE)                                      \
-	((inputNew.buttonFlags[BUTTON_##BUTTON] & BUTTON_FLAG_##STATE) >> \
+#define INPUT_GET_BTN(BUTTON, STATE)                                        \
+	((input_new.button_flags[BUTTON_##BUTTON] & BUTTON_FLAG_##STATE) >> \
 	 BUTTON_FLAG_##STATE##_SHIFT)
-#define INPUT_GET_STICK(COMP)                        \
-	((STICK_COMP_##COMP < STICK_COMP_MAG) ?      \
-		 inputNew.stick[STICK_COMP_##COMP] : \
-		 inputNew.stickMag)
+#define INPUT_GET_STICK(COMP)                         \
+	((STICK_COMP_##COMP < STICK_COMP_MAG) ?       \
+		 input_new.stick[STICK_COMP_##COMP] : \
+		 input_new.stick_mag)
 
 #define STICK_MAG_MIN 10
 #define STICK_MAG_MAX 64
@@ -50,15 +50,15 @@ enum {
 	BUTTON_FLAG_RELEASED = (1 << BUTTON_FLAG_RELEASED_SHIFT)
 };
 
-typedef struct {
-	uint8_t buttonFlags[BUTTON_COUNT];
-	float stick[2], stickMag;
-} input_t;
+struct input {
+	u8 button_flags[BUTTON_COUNT];
+	f32 stick[2], stick_mag;
+};
 
-extern input_t inputNew, inputOld;
+extern struct input input_new, input_old;
 
-void inputInit(void);
-void inputPoll(void);
-void inputFree(void);
+void input_init(void);
+void input_poll(void);
+void input_free(void);
 
 #endif /* _INPUT_H_ */

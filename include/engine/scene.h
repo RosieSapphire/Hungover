@@ -1,26 +1,29 @@
 #ifndef _ENGINE_SCENE_H_
 #define _ENGINE_SCENE_H_
 
+#include "types.h"
+
 #include "engine/area.h"
 
 enum {
 	SCENE_FLAG_PROCESS_AREA_LAST = (1 << 0),
 };
 
-typedef struct {
-	uint16_t numAreas;
-	Area *areas;
+struct scene {
+	u16 area_count;
+	struct area *areas;
 #ifndef IS_USING_SCENE_CONVERTER
 	T3DModel *mdl;
-	uint16_t areaIndex, areaIndexOld;
-	uint8_t flags;
+	u16 area_index;
+	u16 area_index_old;
+	u8 flags;
 #endif
-} Scene;
+};
 
-Scene sceneInitFromFile(const char *path);
-void sceneUpdate(Scene *scn, const T3DVec3 *playerPos, const T3DVec3 *playerDir,
-		 const float dt);
-void sceneRender(const Scene *scn, const float subtick);
-void sceneFree(Scene *scn);
+struct scene scene_init_from_file(const char *path);
+void scene_update(struct scene *scn, const T3DVec3 *player_pos,
+		  const T3DVec3 *player_dir, const f32 dt);
+void scene_render(const struct scene *scn, const f32 subtick);
+void scene_free(struct scene *scn);
 
 #endif /* _ENGINE_SCENE_H_ */

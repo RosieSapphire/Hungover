@@ -2,27 +2,29 @@
 #define _ENGINE_COLLISION_H_
 
 #include <stdio.h>
-#include <stdint.h>
 #ifndef IS_USING_SCENE_CONVERTER
+#include "types.h"
+
 #include <t3d/t3d.h>
 #endif
 
-typedef struct {
-	float pos[3];
-} CollisionVertex;
+struct collision_vertex {
+	f32 pos[3];
+};
 
-typedef struct {
-	CollisionVertex verts[3];
-	float norm[3];
-} CollisionTriangle;
+struct collision_triangle {
+	struct collision_vertex verts[3];
+	f32 norm[3];
+};
 
-typedef struct {
-	uint16_t numTriangles;
-	CollisionTriangle *triangles;
+struct collision_mesh {
+	u16 triangle_count;
+	struct collision_triangle *triangles;
 	T3DVec3 offset;
-} CollisionMesh;
+};
 
-CollisionMesh collisionMeshInitFromFile(FILE *file, const T3DVec3 *offset);
-void collisionMeshFree(CollisionMesh *cm);
+struct collision_mesh collision_mesh_init_from_file(FILE *file,
+						    const T3DVec3 *offset);
+void collision_mesh_free(struct collision_mesh *cm);
 
 #endif /* _ENGINE_COLLISION_H_ */

@@ -66,12 +66,12 @@ filesystem/Scn.%.scn: assets/Scn.%.glb
 	@mkdir -p $(dir $@)
 	@echo "    [SCENE] $@"
 	$(GLB_TO_COL) $< $@
-	$(N64_BINDIR)/mkasset $(GLB_TO_COL_FLAGS) -o filesystem $@
+	# $(N64_BINDIR)/mkasset -v $(GLB_TO_COL_FLAGS) -o filesystem $@
 
 clean:
 	rm -rf $(ROM) $(BUILD_DIR) filesystem
 
 format: $(H_FILES) $(C_FILES)
-	clang-format --style=file -i $^
+	clang-format-15 --style=file -i $^
 
 -include $(wildcard $(BUILD_DIR)/*.d)
