@@ -53,7 +53,6 @@ static void _scene_area_actor_update(struct actor_header *actor,
 		return;
 	}
 
-	struct area *area_proc = NULL;
 	struct actor_door *door = NULL;
 
 	switch (actor_update(actor, player_pos, player_dir, dt)) {
@@ -64,14 +63,8 @@ static void _scene_area_actor_update(struct actor_header *actor,
 		scn->flags |= SCENE_FLAG_PROCESS_AREA_LAST;
 		struct actor_door *door_new =
 			actor_door_find_by_area_next(scn->area_index_old);
-		area_proc = scn->areas + scn->area_index;
-		for (u16 i = 0; i < area_proc->actor_header_count; i++) {
-			struct actor_header *actor =
-				area_proc->actor_headers[i];
-			if ((actor_doors + actor->type_index) == door_new) {
-				actor->flags &= ~(ACTOR_FLAG_IS_ACTIVE);
-			}
-		}
+		((struct actor_header *)door_new)->flags &=
+			~(ACTOR_FLAG_IS_ACTIVE);
 		return;
 
 	case ACTOR_RETURN_UNLOAD_PREV_AREA:
@@ -79,14 +72,8 @@ static void _scene_area_actor_update(struct actor_header *actor,
 		scn->flags &= ~(SCENE_FLAG_PROCESS_AREA_LAST);
 		struct actor_door *door_cur =
 			actor_door_find_by_area_next(scn->area_index_old);
-		area_proc = scn->areas + door->area_next;
-		for (u16 i = 0; i < area_proc->actor_header_count; i++) {
-			struct actor_header *actor =
-				area_proc->actor_headers[i];
-			if ((actor_doors + actor->type_index) == door_cur) {
-				actor->flags |= ACTOR_FLAG_IS_ACTIVE;
-			}
-		}
+		((struct actor_header *)door_cur)->flags |=
+			(ACTOR_FLAG_IS_ACTIVE);
 		return;
 
 	case ACTOR_RETURN_UNLOAD_NEXT_AREA:

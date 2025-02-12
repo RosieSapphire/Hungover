@@ -96,7 +96,6 @@ u8 actor_door_update(struct actor_door *door,
 	/* door just opened */
 	if (door->swing_amount > 0.f && door->swing_amount_old <= 0.f) {
 		door->side_entered = pass_door_dot >= 0.f;
-		debugf("Loading next area from door %d\n", door - actor_doors);
 		return ACTOR_RETURN_LOAD_NEXT_AREA;
 	}
 
