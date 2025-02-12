@@ -74,4 +74,8 @@ clean:
 format: $(H_FILES) $(C_FILES)
 	clang-format-15 --style=file -i $^
 
+todo: $(H_FILES) $(C_FILES)
+	grep -i "todo" $^
+	grep -i "fixme" $^
+
 -include $(wildcard $(BUILD_DIR)/*.d)
