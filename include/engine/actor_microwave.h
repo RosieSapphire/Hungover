@@ -3,6 +3,8 @@
 
 #include "types.h"
 
+#include "engine/actor.h"
+
 enum {
 	MICROWAVE_STATE_IDLE,
 	MICROWAVE_STATE_COOKING,
@@ -16,6 +18,7 @@ enum {
 #define ACTOR_MICROWAVE_COUNT_MAX 1
 
 struct actor_microwave {
+	struct actor_header header;
 	u8 state;
 	u8 state_old;
 	u8 beep_count;
@@ -27,7 +30,7 @@ extern u8 actor_microwave_count_in_range;
 extern u8 actor_microwave_count;
 extern struct actor_microwave actor_microwaves[ACTOR_MICROWAVE_COUNT_MAX];
 
-u8 actor_microwave_init(void);
+struct actor_header *actor_microwave_init(void);
 u8 actor_microwave_update(struct actor_microwave *mic, const f32 dist,
 			  const f32 dt);
 

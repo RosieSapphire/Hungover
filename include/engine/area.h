@@ -16,10 +16,16 @@ struct area {
 	T3DVec3 offset;
 	struct collision_mesh colmesh;
 	u16 actor_header_count;
-	struct actor_header *actor_headers;
 #ifndef IS_USING_SCENE_CONVERTER
+	struct actor_header **actor_headers;
 	rspq_block_t *displaylist;
 	T3DMat4FP *matrix;
+#else
+	/*
+	 * I need to use single pointers for the scene converter because
+	 * otherwise it's a cocksucking motherfucking nightmare to work with.
+	 */
+	struct actor_header *actor_headers;
 #endif
 };
 

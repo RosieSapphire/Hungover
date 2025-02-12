@@ -4,14 +4,15 @@
 #include "engine/actor.h"
 #include "engine/actor_door.h"
 #include "engine/actor_microwave.h"
+#include "engine/actor_static.h"
 #include "engine/ui.h"
 
 #define ACTOR_NAME_MAX_LENGTH 32
 
-struct actor_header actor_init_from_file(FILE *file, const T3DVec3 *offset,
-					 const u16 area_index)
+struct actor_header *actor_init_from_file(FILE *file, const T3DVec3 *offset,
+					  const u16 area_index)
 {
-	struct actor_header o;
+	struct actor_header *actor;
 	char act_name[ACTOR_NAME_MAX_LENGTH];
 	char act_name_new[ACTOR_NAME_MAX_LENGTH];
 	char mdl_path[ACTOR_NAME_MAX_LENGTH << 1];
@@ -40,15 +41,6 @@ struct actor_header actor_init_from_file(FILE *file, const T3DVec3 *offset,
 	snprintf(mdl_path, ACTOR_NAME_MAX_LENGTH << 1, "rom:/%s.t3dm",
 		 act_name_new);
 
-	o.mdl = t3d_model_load(mdl_path);
-	o.matrix = malloc_uncached(sizeof *o.matrix);
-
-	rspq_block_begin();
-	t3d_matrix_push(o.matrix);
-	t3d_model_draw(o.mdl);
-	t3d_matrix_pop(1);
-	o.displaylist = rspq_block_end();
-
 	T3DVec3 pos, scale;
 	T3DQuat rot;
 
@@ -64,25 +56,31 @@ struct actor_header actor_init_from_file(FILE *file, const T3DVec3 *offset,
 		fread(scale.v + i, 4, 1, file);
 	}
 
-	t3d_vec3_add(&pos, &pos, offset);
-	o.position = o.position_old = o.position_init = pos;
-	o.rotation = o.rotation_old = o.rotation_init = rot;
-	o.scale = o.scale_old = o.scale_init = scale;
-
 	/* determining type */
 	if (!strncmp("Door", act_name + 4, strlen("Door"))) {
-		o.type = ACTOR_TYPE_DOOR;
-		o.type_index = actor_door_init(act_val, area_index);
+		actor = actor_door_init(act_val, area_index);
 	} else if (!strncmp("Microwave", act_name + 4, strlen("Microwave"))) {
-		o.type = ACTOR_TYPE_MICROWAVE;
-		o.type_index = actor_microwave_init();
+		actor = actor_microwave_init();
 	} else {
-		o.type = ACTOR_TYPE_STATIC;
+		actor = actor_static_init();
 	}
 
-	o.flags = ACTOR_FLAG_IS_ACTIVE;
+	actor->flags = ACTOR_FLAG_IS_ACTIVE;
+	actor->mdl = t3d_model_load(mdl_path);
+	actor->matrix = malloc_uncached(sizeof(*actor->matrix));
 
-	return o;
+	rspq_block_begin();
+	t3d_matrix_push(actor->matrix);
+	t3d_model_draw(actor->mdl);
+	t3d_matrix_pop(1);
+	actor->displaylist = rspq_block_end();
+
+	t3d_vec3_add(&pos, &pos, offset);
+	actor->position = actor->position_old = actor->position_init = pos;
+	actor->rotation = actor->rotation_old = actor->rotation_init = rot;
+	actor->scale = actor->scale_old = actor->scale_init = scale;
+
+	return actor;
 }
 
 void actor_static_vars_setup(void)

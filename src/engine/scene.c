@@ -23,7 +23,7 @@ struct scene scene_init_from_file(const char *path)
 	assertf(file, "Failed to load scene from '%s'\n", path);
 
 	fread(&scn.area_count, 2, 1, file);
-	scn.areas = calloc(scn.area_count, sizeof *scn.areas);
+	scn.areas = calloc(scn.area_count, sizeof(*scn.areas));
 	for (u16 i = 0; i < scn.area_count; i++) {
 		scn.areas[i] = area_init_from_file(file, scn.mdl, i);
 	}
@@ -62,13 +62,12 @@ static void _scene_area_actor_update(struct actor_header *actor,
 		scn->area_index_old = scn->area_index;
 		scn->area_index = door->area_next;
 		scn->flags |= SCENE_FLAG_PROCESS_AREA_LAST;
-		/* FIXME: Replace this with the handle thingy */
-		struct actor_door *door_new = actor_door_find_by_area_next(
-			scn->area_index_old, scn->area_index);
+		struct actor_door *door_new =
+			actor_door_find_by_area_next(scn->area_index_old);
 		area_proc = scn->areas + scn->area_index;
 		for (u16 i = 0; i < area_proc->actor_header_count; i++) {
 			struct actor_header *actor =
-				area_proc->actor_headers + i;
+				area_proc->actor_headers[i];
 			if ((actor_doors + actor->type_index) == door_new) {
 				actor->flags &= ~(ACTOR_FLAG_IS_ACTIVE);
 			}
@@ -78,12 +77,12 @@ static void _scene_area_actor_update(struct actor_header *actor,
 	case ACTOR_RETURN_UNLOAD_PREV_AREA:
 		door = actor_doors + actor->type_index;
 		scn->flags &= ~(SCENE_FLAG_PROCESS_AREA_LAST);
-		struct actor_door *door_cur = actor_door_find_by_area_next(
-			scn->area_index_old, door->area_next);
+		struct actor_door *door_cur =
+			actor_door_find_by_area_next(scn->area_index_old);
 		area_proc = scn->areas + door->area_next;
 		for (u16 i = 0; i < area_proc->actor_header_count; i++) {
 			struct actor_header *actor =
-				area_proc->actor_headers + i;
+				area_proc->actor_headers[i];
 			if ((actor_doors + actor->type_index) == door_cur) {
 				actor->flags |= ACTOR_FLAG_IS_ACTIVE;
 			}
@@ -115,7 +114,7 @@ void scene_update(struct scene *scn, const T3DVec3 *player_pos,
 		struct area *a = scn->areas + i;
 
 		for (u16 j = 0; j < a->actor_header_count; j++) {
-			struct actor_header *actor = a->actor_headers + j;
+			struct actor_header *actor = a->actor_headers[j];
 
 			actor->flags &= ~(ACTOR_FLAG_WAS_UPDATED_THIS_FRAME);
 		}
@@ -130,7 +129,7 @@ void scene_update(struct scene *scn, const T3DVec3 *player_pos,
 						       scn->area_index_old);
 
 		for (u16 j = 0; j < area->actor_header_count; j++) {
-			_scene_area_actor_update(area->actor_headers + j, scn,
+			_scene_area_actor_update(area->actor_headers[j], scn,
 						 player_pos, player_dir, dt);
 		}
 	}

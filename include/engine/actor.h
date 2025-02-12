@@ -55,8 +55,8 @@ struct actor_header {
 };
 
 #ifndef IS_USING_SCENE_CONVERTER
-struct actor_header actor_init_from_file(FILE *file, const T3DVec3 *offset,
-					 const u16 area_index);
+struct actor_header *actor_init_from_file(FILE *file, const T3DVec3 *offset,
+					  const u16 area_index);
 void actor_static_vars_setup(void);
 void actor_static_vars_to_ui(void);
 u8 actor_update(struct actor_header *act, const T3DVec3 *player_pos,

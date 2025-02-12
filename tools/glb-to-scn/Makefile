@@ -1,4 +1,4 @@
-TARGET := glb-to-col
+TARGET := glb-to-scn
 
 C_FILES := main.c
 O_FILES := $(C_FILES:%.c=%.o)
@@ -16,7 +16,7 @@ $(TARGET): $(O_FILES)
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 clean:
-	rm -rf $(TARGET) $(O_FILES) *.col *.json
+	rm -rf $(TARGET) $(O_FILES) *.scn *.json
 
 format: $(C_FILES)
 	clang-format-15 --style=file -i $^

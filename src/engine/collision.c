@@ -14,7 +14,7 @@ struct collision_mesh collision_mesh_init_from_file(FILE *file,
 #ifdef DEBUG_COLLISION
 	debugf("%d tris\n", cm.triangle_count);
 #endif
-	cm.triangles = calloc(cm.triangle_count, sizeof *cm.triangles);
+	cm.triangles = calloc(cm.triangle_count, sizeof(*cm.triangles));
 	for (u16 i = 0; i < cm.triangle_count; i++) {
 		struct collision_triangle *f = cm.triangles + i;
 

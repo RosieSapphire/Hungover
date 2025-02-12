@@ -42,9 +42,9 @@ $(ELF): $(O_FILES)
 AUDIOCONV_FLAGS := --wav-compress 1
 MKSPRITE_FLAGS := --compress 1
 MKMODEL_FLAGS := --compress 1
-GLB_TO_COL_FLAGS := --compress 1
+GLB_TO_SCN_FLAGS := --compress 1
 
-GLB_TO_COL := ./tools/glb-to-col/glb-to-col
+GLB_TO_SCN := ./tools/glb-to-scn/glb-to-scn
 
 filesystem/%.sprite: assets/%.png
 	@mkdir -p $(dir $@)
@@ -65,8 +65,8 @@ filesystem/%.t3dm: assets/%.glb
 filesystem/Scn.%.scn: assets/Scn.%.glb
 	@mkdir -p $(dir $@)
 	@echo "    [SCENE] $@"
-	$(GLB_TO_COL) $< $@
-	# $(N64_BINDIR)/mkasset -v $(GLB_TO_COL_FLAGS) -o filesystem $@
+	$(GLB_TO_SCN) $< $@
+	# $(N64_BINDIR)/mkasset -v $(GLB_TO_SCN_FLAGS) -o filesystem $@
 
 clean:
 	rm -rf $(ROM) $(BUILD_DIR) filesystem

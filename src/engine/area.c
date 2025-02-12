@@ -14,7 +14,8 @@ struct area area_init_from_file(FILE *file, T3DModel *scene_model,
 	}
 	a.colmesh = collision_mesh_init_from_file(file, &a.offset);
 	fread(&a.actor_header_count, 2, 1, file);
-	a.actor_headers = calloc(a.actor_header_count, sizeof *a.actor_headers);
+	a.actor_headers =
+		calloc(a.actor_header_count, sizeof(*a.actor_headers));
 	for (u16 i = 0; i < a.actor_header_count; i++) {
 		a.actor_headers[i] =
 			actor_init_from_file(file, &a.offset, index);
@@ -24,7 +25,7 @@ struct area area_init_from_file(FILE *file, T3DModel *scene_model,
 	char colmesh_name[16];
 	memset(colmesh_name, 0, 16);
 	snprintf(colmesh_name, 16, "Col.%u", index);
-	a.matrix = malloc_uncached(sizeof *a.matrix);
+	a.matrix = malloc_uncached(sizeof(*a.matrix));
 	t3d_mat4fp_from_srt_euler(a.matrix, (float[3]){ 1, 1, 1 },
 				  (float[3]){ 0, 0, 0 }, a.offset.v);
 
@@ -61,7 +62,7 @@ void area_render(const struct area *a, const f32 subtick)
 {
 	/* actors */
 	for (u16 i = 0; i < a->actor_header_count; i++) {
-		struct actor_header *ah = a->actor_headers + i;
+		struct actor_header *ah = a->actor_headers[i];
 
 		if (!(ah->flags & ACTOR_FLAG_IS_ACTIVE)) {
 			continue;
@@ -80,7 +81,7 @@ void area_free(struct area *a)
 	free_uncached(a->matrix);
 	a->matrix = NULL;
 	for (u16 i = 0; i < a->actor_header_count; i++) {
-		actor_free(a->actor_headers + i, true);
+		actor_free(a->actor_headers[i], true);
 	}
 	free(a->actor_headers);
 	a->actor_headers = NULL;

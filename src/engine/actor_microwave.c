@@ -5,21 +5,26 @@
 #include "engine/sfx.h"
 
 // #define MICROWAVE_DEBUG
+
 u8 actor_microwave_count_in_range;
 u8 actor_microwave_count;
 struct actor_microwave actor_microwaves[ACTOR_MICROWAVE_COUNT_MAX];
 
-u8 actor_microwave_init(void)
+struct actor_header *actor_microwave_init(void)
 {
 	u8 ind = actor_microwave_count++;
 	struct actor_microwave *mic = actor_microwaves + ind;
+	struct actor_header *h = (struct actor_header *)mic;
 
 	mic->state = mic->state_old = MICROWAVE_STATE_IDLE;
 	mic->cook_time_left = 0.f;
 	mic->beep_timer = 0.f;
 	mic->beep_count = 0;
 
-	return ind;
+	h->type = ACTOR_TYPE_MICROWAVE;
+	h->type_index = ind;
+
+	return h;
 }
 
 u8 actor_microwave_update(struct actor_microwave *mic, const f32 dist,

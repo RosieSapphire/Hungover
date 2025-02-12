@@ -2,6 +2,8 @@
 
 #define T3D_RAD_TO_DEG(deg) (deg * 57.29577951289617186798f)
 
+// #define GLB_TO_SCN_DEBUG
+
 typedef struct {
 	float v[3];
 } T3DVec3;
@@ -224,20 +226,20 @@ static void quaternionFromMatrix(float quat[4], const float matrix[4][4])
 	}
 }
 
-static void actor_write_to_file(const struct actor_header *o, FILE *file)
+static void actor_write_to_file(const struct actor_header *actor, FILE *file)
 {
-	fwrite(o->name, 1, ACTOR_NAME_MAX_LEN, file);
+	fwrite(actor->name, 1, ACTOR_NAME_MAX_LEN, file);
 
 	for (int i = 0; i < 3; i++) {
-		fwrite_ef32(o->position.v + i, file);
+		fwrite_ef32(actor->position.v + i, file);
 	}
 
 	for (int i = 0; i < 4; i++) {
-		fwrite_ef32(o->rotation.v + i, file);
+		fwrite_ef32(actor->rotation.v + i, file);
 	}
 
 	for (int i = 0; i < 3; i++) {
-		fwrite_ef32(o->scale.v + i, file);
+		fwrite_ef32(actor->scale.v + i, file);
 	}
 }
 
@@ -259,7 +261,9 @@ static void scene_write_to_file(const struct scene *scn, FILE *file)
 	for (u16 i = 0; i < scn->area_count; i++) {
 		area_write_to_file(scn->areas + i, file);
 	}
+#ifdef GLB_TO_SCN_DEBUG
 	printf("Successfully wrote scene to file\n");
+#endif /* GLB_TO_SCN_DEBUG */
 }
 
 static void scene_area_process(struct area *a, const struct aiScene *aiscn,
@@ -284,7 +288,7 @@ static void scene_area_process(struct area *a, const struct aiScene *aiscn,
 		} else if (!strncmp(ch->mName.data, "Act", 3)) {
 			a->actor_headers =
 				realloc(a->actor_headers,
-					sizeof *a->actor_headers *
+					sizeof(*a->actor_headers) *
 						++a->actor_header_count);
 			struct actor_header *onew =
 				a->actor_headers + a->actor_header_count - 1;
@@ -345,6 +349,10 @@ static void assimp_scene_node_process(struct scene *scn,
 
 static void scene_debug(const struct scene *s, const char *scene_path)
 {
+#ifndef GLB_TO_SCN_DEBUG
+	return;
+#endif /* GLB_TO_SCN_DEBUG */
+
 	printf("DEBUGGING SCENE '%s' (%d areas)\n", scene_path, s->area_count);
 	for (u16 i = 0; i < s->area_count; i++) {
 		struct area *a = s->areas + i;
@@ -373,18 +381,19 @@ static void scene_debug(const struct scene *s, const char *scene_path)
 		}
 
 		for (u16 j = 0; j < a->actor_header_count; j++) {
-			struct actor_header *o = a->actor_headers + j;
+			struct actor_header *actor = a->actor_headers + j;
 
 			printf("\t\tstruct actor_header %d ('%s'):\n", j,
-			       o->name);
+			       actor->name);
 			printf("\t\t\tPosition: (%f, %f, %f):\n",
-			       o->position.v[0], o->position.v[1],
-			       o->position.v[2]);
+			       actor->position.v[0], actor->position.v[1],
+			       actor->position.v[2]);
 			printf("\t\t\tRotation: (%f, %f, %f, %f):\n",
-			       o->rotation.v[0], o->rotation.v[1],
-			       o->rotation.v[2], o->rotation.v[3]);
-			printf("\t\t\tScale: (%f, %f, %f):\n", o->scale.v[0],
-			       o->scale.v[1], o->scale.v[2]);
+			       actor->rotation.v[0], actor->rotation.v[1],
+			       actor->rotation.v[2], actor->rotation.v[3]);
+			printf("\t\t\tScale: (%f, %f, %f):\n",
+			       actor->scale.v[0], actor->scale.v[1],
+			       actor->scale.v[2]);
 		}
 	}
 }
