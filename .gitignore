@@ -3,3 +3,4 @@ filesystem/
 *.z64
 *.json
 *.sh
+assets/*.blend1
