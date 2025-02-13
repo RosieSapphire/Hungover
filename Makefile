@@ -62,7 +62,11 @@ filesystem/%.t3dm: assets/%.glb
 	$(T3D_GLTF_TO_3D) "$<" $@ --base-scale=64
 	$(N64_BINDIR)/mkasset $(MKMODEL_FLAGS) -o filesystem $@
 
-filesystem/Scn.%.scn: assets/Scn.%.glb
+$(GLB_TO_SCN):
+	@echo "[COMPILING GLB-TO-SCN] $@"
+	@make -C tools/glb-to-scn
+
+filesystem/Scn.%.scn: assets/Scn.%.glb $(GLB_TO_SCN)
 	@mkdir -p $(dir $@)
 	@echo "    [SCENE] $@"
 	$(GLB_TO_SCN) $< $@
