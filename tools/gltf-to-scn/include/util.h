@@ -1,5 +1,5 @@
-#ifndef _GLB_TO_SCN_UTIL_H_
-#define _GLB_TO_SCN_UTIL_H_
+#ifndef _GLTF_TO_SCN_UTIL_H_
+#define _GLTF_TO_SCN_UTIL_H_
 
 #ifndef IS_USING_SCENE_CONVERTER
 #define IS_USING_SCENE_CONVERTER
@@ -13,4 +13,4 @@ void triangle_calc_normal(struct collision_triangle *tri);
 void quaternion_from_matrix(float quat[4], float matrix[4][4]);
 void scene_debug(const struct scene *s, const char *scene_path);
 
-#endif /* _GLB_TO_SCN_UTIL_H_ */
+#endif /* _GLTF_TO_SCN_UTIL_H_ */

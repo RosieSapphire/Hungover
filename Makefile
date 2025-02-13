@@ -25,13 +25,13 @@ endif
 
 ASSETS_PNG := $(wildcard assets/*.png)
 ASSETS_WAV := $(wildcard assets/*.wav)
-ASSETS_GLB := $(wildcard assets/*.glb)
-ASSETS_SCN_GLB := $(wildcard assets/Scn.*.glb)
+ASSETS_GLTF := $(wildcard assets/*.gltf)
+ASSETS_SCN_GLTF := $(wildcard assets/Scn.*.gltf)
 ASSETS_CONV := \
 	$(ASSETS_PNG:assets/%.png=filesystem/%.sprite) \
 	$(ASSETS_WAV:assets/%.wav=filesystem/%.wav64) \
-	$(ASSETS_GLB:assets/%.glb=filesystem/%.t3dm) \
-	$(ASSETS_GLB:assets/Scn.%.glb=filesystem/Scn.%.scn)
+	$(ASSETS_GLTF:assets/%.gltf=filesystem/%.t3dm) \
+	$(ASSETS_GLTF:assets/Scn.%.gltf=filesystem/Scn.%.scn)
 
 final: $(ROM)
 $(ROM): N64_ROM_TITLE=$(TARGET_STR)
@@ -42,9 +42,9 @@ $(ELF): $(O_FILES)
 AUDIOCONV_FLAGS := --wav-compress 1
 MKSPRITE_FLAGS := --compress 1
 MKMODEL_FLAGS := --compress 1
-GLB_TO_SCN_FLAGS := --compress 1
+GLTF_TO_SCN_FLAGS := --compress 1
 
-GLB_TO_SCN := ./tools/glb-to-scn/glb-to-scn
+GLTF_TO_SCN := ./tools/gltf-to-scn/gltf-to-scn
 
 filesystem/%.sprite: assets/%.png
 	@mkdir -p $(dir $@)
@@ -56,21 +56,21 @@ filesystem/%.wav64: assets/%.wav
 	@echo "    [AUDIO] $@"
 	$(N64_AUDIOCONV) $(AUDIOCONV_FLAGS) -o filesystem "$<"
 
-filesystem/%.t3dm: assets/%.glb
+filesystem/%.t3dm: assets/%.gltf
 	@mkdir -p $(dir $@)
 	@echo "    [T3D-MODEL] $@"
 	$(T3D_GLTF_TO_3D) "$<" $@ --base-scale=64
 	$(N64_BINDIR)/mkasset $(MKMODEL_FLAGS) -o filesystem $@
 
-$(GLB_TO_SCN):
-	@echo "[COMPILING GLB-TO-SCN] $@"
-	@make -C tools/glb-to-scn
+$(GLTF_TO_SCN):
+	@echo "[COMPILING GLTF-TO-SCN] $@"
+	@make -C tools/gltf-to-scn
 
-filesystem/Scn.%.scn: assets/Scn.%.glb $(GLB_TO_SCN)
+filesystem/Scn.%.scn: assets/Scn.%.gltf $(GLTF_TO_SCN)
 	@mkdir -p $(dir $@)
 	@echo "    [SCENE] $@"
-	$(GLB_TO_SCN) $< $@
-	# $(N64_BINDIR)/mkasset -v $(GLB_TO_SCN_FLAGS) -o filesystem $@
+	$(GLTF_TO_SCN) $< $@
+	# $(N64_BINDIR)/mkasset -v $(GLTF_TO_SCN_FLAGS) -o filesystem $@
 
 clean:
 	rm -rf $(ROM) $(BUILD_DIR) filesystem

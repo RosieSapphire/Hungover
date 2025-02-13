@@ -10,9 +10,9 @@ void scene_export_to_file(const struct scene *scn, FILE *file)
 	for (i = 0; i < scn->area_count; i++) {
 		area_export_to_file(scn->areas + i, file);
 	}
-#ifdef GLB_TO_SCN_DEBUG
+#ifdef GLTF_TO_SCN_DEBUG
 	printf("Successfully wrote scene to file\n");
-#endif /* GLB_TO_SCN_DEBUG */
+#endif /* GLTF_TO_SCN_DEBUG */
 }
 
 void area_export_to_file(const struct area *a, FILE *file)

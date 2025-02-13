@@ -1,5 +1,5 @@
-#ifndef _GLB_TO_SCN_EXPORT_H_
-#define _GLB_TO_SCN_EXPORT_H_
+#ifndef _GLTF_TO_SCN_EXPORT_H_
+#define _GLTF_TO_SCN_EXPORT_H_
 
 #ifndef IS_USING_SCENE_CONVERTER
 #define IS_USING_SCENE_CONVERTER
@@ -15,4 +15,4 @@ void area_export_to_file(const struct area *a, FILE *file);
 void collision_mesh_export_to_file(const struct collision_mesh *cm, FILE *file);
 void actor_export_to_file(const struct actor_header *actor, FILE *file);
 
-#endif /* _GLB_TO_SCN_EXPORT_H_ */
+#endif /* _GLTF_TO_SCN_EXPORT_H_ */

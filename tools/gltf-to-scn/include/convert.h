@@ -1,5 +1,5 @@
-#ifndef _GLB_TO_SCN_CONVERT_H_
-#define _GLB_TO_SCN_CONVERT_H_
+#ifndef _GLTF_TO_SCN_CONVERT_H_
+#define _GLTF_TO_SCN_CONVERT_H_
 
 #ifndef IS_USING_SCENE_CONVERTER
 #define IS_USING_SCENE_CONVERTER
@@ -21,4 +21,4 @@ struct collision_mesh assimp_node_to_collision_mesh(const struct aiScene *aiscn,
 			      const struct aiNode *ainode);
 
 
-#endif /* _GLB_TO_SCN_CONVERT_H_ */
+#endif /* _GLTF_TO_SCN_CONVERT_H_ */

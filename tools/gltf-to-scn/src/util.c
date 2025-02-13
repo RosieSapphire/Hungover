@@ -92,9 +92,9 @@ void scene_debug(const struct scene *s, const char *scene_path)
 {
 	u16 i, j, k;
 
-#ifndef GLB_TO_SCN_DEBUG
+#ifndef GLTF_TO_SCN_DEBUG
 	return;
-#endif /* GLB_TO_SCN_DEBUG */
+#endif /* GLTF_TO_SCN_DEBUG */
 
 	printf("Scene '%s' (%d areas)\n", scene_path, s->area_count);
 	for (i = 0; i < s->area_count; i++) {

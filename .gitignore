@@ -4,3 +4,5 @@ filesystem/
 *.json
 *.sh
 assets/*.blend1
+tools/tmp
+tools/gltf-to-scn/gltf-to-scn

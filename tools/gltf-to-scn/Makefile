@@ -1,6 +1,6 @@
-DEBUG_ENABLED := 0
+DEBUG_ENABLED := 1
 BUILD_DIR := build
-TARGET := glb-to-scn
+TARGET := gltf-to-scn
 
 INC_DIRS := include .
 SRC_DIRS := src
@@ -11,7 +11,7 @@ O_FILES := $(C_FILES:%.c=$(BUILD_DIR)/%.o)
 CC := gcc
 CFLAGS := -Wall -Wextra -Werror -pedantic -ansi -ggdb3 $(INC_DIRS:%=-I%)
 ifeq ($(DEBUG_ENABLED),1)
-	CFLAGS += -DGLB_TO_SCN_DEBUG
+	CFLAGS += -DGLTF_TO_SCN_DEBUG
 endif
 
 LIB := $(shell pkg-config --libs assimp) -lm
@@ -26,7 +26,7 @@ $(BUILD_DIR)/%.o: %.c
 	$(CC) $(CFLAGS) -o $@ -c $<
 
 clean:
-	rm -rf $(TARGET) $(O_FILES) *.scn *.json
+	rm -rf $(TARGET) $(BUILD_DIR) *.scn *.json
 
 format: $(H_FILES) $(C_FILES)
 	clang-format-15 --style=file -i $^

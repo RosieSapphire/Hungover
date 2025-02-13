@@ -1,5 +1,5 @@
-#ifndef _GLB_TO_SCN_ENDIAN_H_
-#define _GLB_TO_SCN_ENDIAN_H_
+#ifndef _GLTF_TO_SCN_ENDIAN_H_
+#define _GLTF_TO_SCN_ENDIAN_H_
 
 #ifndef IS_USING_SCENE_CONVERTER
 #define IS_USING_SCENE_CONVERTER
@@ -14,4 +14,4 @@ u64 fwrite_ef32(const float *ptr, FILE *file);
 u64 fread_ef16(u16 *ptr, FILE *file);
 u64 fread_ef32(float *ptr, FILE *file);
 
-#endif /* _GLB_TO_SCN_ENDIAN_H_ */
+#endif /* _GLTF_TO_SCN_ENDIAN_H_ */
