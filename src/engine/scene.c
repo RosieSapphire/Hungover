@@ -97,13 +97,6 @@ static void _scene_area_actor_update(struct actor_header *actor,
 void scene_update(struct scene *scn, const T3DVec3 *player_pos,
 		  const T3DVec3 *player_dir, const f32 dt)
 {
-	for (u16 i = 0; i < actor_door_count; i++) {
-		debugf("Door %d: %d\n", i,
-		       (((struct actor_header *)(actor_doors + i))->flags &
-			ACTOR_FLAG_IS_ACTIVE));
-	}
-	debugf("\n");
-
 	/*
   	 * This is to ensure all actors are only updated once per frame.
   	 * The reason this is done is because if, say, a door were to
