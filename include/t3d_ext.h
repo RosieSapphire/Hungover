@@ -3,6 +3,8 @@
 
 #include <t3d/t3d.h>
 
+#include "types.h"
+
 /* macro for constructing a vector */
 #define T3D_VEC3(X, Y, Z) ((const T3DVec3){ { X, Y, Z } })
 #define T3D_QUAT(X, Y, Z, W) ((const T3DQuat){ { X, Y, Z, W } })
@@ -21,9 +23,9 @@ void t3d_vec3_negate(T3DVec3 *dst, const T3DVec3 *src);
 
 void t3d_quat_negate(T3DQuat *dst, const T3DQuat *src);
 void t3d_quat_add(T3DQuat *dst, const T3DQuat *a, const T3DQuat *b);
-void t3d_quat_scale(T3DQuat *dst, const T3DQuat *src, const float scale);
+void t3d_quat_scale(T3DQuat *dst, const T3DQuat *src, const f32 scale);
 
-int t3d_raycast_triangle(const T3DVec3 *eye, const T3DVec3 *dir,
-			 const T3DVec3 positions[3], float *distance);
+boolean t3d_raycast_triangle(const T3DVec3 *eye, const T3DVec3 *dir,
+			     const T3DVec3 positions[3], f32 *distance);
 
 #endif /* _T3D_EXT_H_ */

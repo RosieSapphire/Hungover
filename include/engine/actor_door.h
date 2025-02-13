@@ -19,7 +19,8 @@ extern u8 actor_door_count_in_range;
 extern struct actor_door actor_doors[ACTOR_DOOR_MAX_COUNT];
 
 struct actor_header *actor_door_init(const u16 area_next, const u16 area_index);
-struct actor_door *actor_door_find_by_area_next(const u16 area_next);
+struct actor_door *actor_door_find_by_area_next(const u16 door_area_next,
+						const u16 door_area_in);
 u8 actor_door_update(const u8 index, const struct actor_update_params *params);
 void actor_door_free(struct actor_door *door);
 

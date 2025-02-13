@@ -1,13 +1,17 @@
 #ifndef _ENGINE_SCENE_H_
 #define _ENGINE_SCENE_H_
 
+#ifdef IS_USING_SCENE_CONVERTER
+#include "../../include/types.h"
+
+#include "../../include/engine/area.h"
+#else
 #include "types.h"
 
 #include "engine/area.h"
+#endif
 
-enum {
-	SCENE_FLAG_PROCESS_AREA_LAST = (1 << 0),
-};
+enum { SCENE_FLAG_PROCESS_AREA_LAST = (1 << 0) };
 
 struct scene {
 	u16 area_count;

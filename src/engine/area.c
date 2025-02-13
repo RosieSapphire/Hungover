@@ -26,8 +26,8 @@ struct area area_init_from_file(FILE *file, T3DModel *scene_model,
 	memset(colmesh_name, 0, 16);
 	snprintf(colmesh_name, 16, "Col.%u", index);
 	a.matrix = malloc_uncached(sizeof(*a.matrix));
-	t3d_mat4fp_from_srt_euler(a.matrix, (float[3]){ 1, 1, 1 },
-				  (float[3]){ 0, 0, 0 }, a.offset.v);
+	t3d_mat4fp_from_srt_euler(a.matrix, (f32[3]){ 1, 1, 1 },
+				  (f32[3]){ 0, 0, 0 }, a.offset.v);
 
 	/* scene actor displaylist */
 	rspq_block_begin();

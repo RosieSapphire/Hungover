@@ -2,11 +2,13 @@
 #define _ENGINE_COLLISION_H_
 
 #include <stdio.h>
-#ifndef IS_USING_SCENE_CONVERTER
+#ifdef IS_USING_SCENE_CONVERTER
+#include "../../include/types.h"
+#else
 #include "types.h"
 
 #include <t3d/t3d.h>
-#endif
+#endif /* IS_USING_SCENE_CONVERTER */
 
 struct collision_vertex {
 	f32 pos[3];

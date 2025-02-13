@@ -3,14 +3,19 @@
 
 #include <stdio.h>
 
-#ifndef IS_USING_SCENE_CONVERTER
+#ifdef IS_USING_SCENE_CONVERTER
+#include "../../include/types.h"
+
+#include "../../include/engine/actor.h"
+#include "../../include/engine/collision.h"
+#else
 #include "types.h"
 
 #include <t3d/t3dmodel.h>
-#endif
 
 #include "engine/actor.h"
 #include "engine/collision.h"
+#endif
 
 struct area {
 	T3DVec3 offset;

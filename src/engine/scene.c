@@ -5,6 +5,11 @@
 
 struct scene scene_init_from_file(const char *path)
 {
+	/*
+	 * TODO: Change the scene importer to use GLB attribute via JSON.
+	 * That way I don't need to worry about how I label things.
+	 */
+
 	struct scene scn;
 	char mdl_name[32];
 	char mdl_path[64];
@@ -46,7 +51,7 @@ struct scene scene_init_from_file(const char *path)
 static void _scene_area_actor_update(struct actor_header *actor,
 				     struct scene *scn,
 				     const T3DVec3 *player_pos,
-				     const T3DVec3 *player_dir, const float dt)
+				     const T3DVec3 *player_dir, const f32 dt)
 {
 	if (!(actor->flags & ACTOR_FLAG_IS_ACTIVE) ||
 	    (actor->flags & ACTOR_FLAG_WAS_UPDATED_THIS_FRAME)) {
@@ -62,8 +67,8 @@ static void _scene_area_actor_update(struct actor_header *actor,
 		scn->area_index_old = scn->area_index;
 		scn->area_index = door->area_next;
 		scn->flags |= SCENE_FLAG_PROCESS_AREA_LAST;
-		struct actor_door *door_new =
-			actor_door_find_by_area_next(scn->area_index_old);
+		struct actor_door *door_new = actor_door_find_by_area_next(
+			scn->area_index_old, scn->area_index);
 		((struct actor_header *)door_new)->flags &=
 			~(ACTOR_FLAG_IS_ACTIVE);
 		return;
@@ -72,8 +77,8 @@ static void _scene_area_actor_update(struct actor_header *actor,
 	case ACTOR_RETURN_UNLOAD_PREV_AREA:
 		door = actor_doors + actor->type_index;
 		scn->flags &= ~(SCENE_FLAG_PROCESS_AREA_LAST);
-		struct actor_door *door_cur =
-			actor_door_find_by_area_next(scn->area_index_old);
+		struct actor_door *door_cur = actor_door_find_by_area_next(
+			scn->area_index_old, scn->area_index);
 		((struct actor_header *)door_cur)->flags |=
 			(ACTOR_FLAG_IS_ACTIVE);
 		return;
@@ -92,6 +97,13 @@ static void _scene_area_actor_update(struct actor_header *actor,
 void scene_update(struct scene *scn, const T3DVec3 *player_pos,
 		  const T3DVec3 *player_dir, const f32 dt)
 {
+	for (u16 i = 0; i < actor_door_count; i++) {
+		debugf("Door %d: %d\n", i,
+		       (((struct actor_header *)(actor_doors + i))->flags &
+			ACTOR_FLAG_IS_ACTIVE));
+	}
+	debugf("\n");
+
 	/*
   	 * This is to ensure all actors are only updated once per frame.
   	 * The reason this is done is because if, say, a door were to

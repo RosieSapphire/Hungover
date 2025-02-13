@@ -29,12 +29,17 @@ struct actor_header *actor_door_init(const u16 area_next, const u16 area_index)
 	return head;
 }
 
-struct actor_door *actor_door_find_by_area_next(const u16 area_next)
+struct actor_door *actor_door_find_by_area_next(const u16 door_area_next,
+						const u16 door_area_in)
 {
 	for (u16 i = 0; i < actor_door_count; i++) {
 		struct actor_door *d = actor_doors + i;
 
-		if (d->area_next != area_next) {
+		if (d->area_index != door_area_in) {
+			continue;
+		}
+
+		if (d->area_next != door_area_next) {
 			continue;
 		}
 
@@ -61,6 +66,45 @@ static void _actor_door_update_inside_range(struct actor_door *door,
 static void _actor_door_update_outside_range(struct actor_door *door)
 {
 	door->is_opening = false;
+}
+
+/*
+ * Returns what scene action to perform depending on which
+ * side the player is on. If the player doesn't change sides,
+ * it unloads the next room, and if they *did* change sides,
+ * the previous room would be unloaded.
+ */
+static u8
+_actor_door_player_side_determine(struct actor_door *door,
+				  const struct actor_update_params *params)
+{
+	T3DVec3 actor_to_player_dir;
+	f32 pass_door_dot;
+
+	t3d_vec3_negate(&actor_to_player_dir, params->player_to_actor_dir);
+	pass_door_dot = t3d_vec3_dot(&actor_to_player_dir, &T3D_VEC3_XUP);
+
+	/* door just opened */
+	if (door->swing_amount > 0.f && door->swing_amount_old <= 0.f) {
+		door->side_entered = pass_door_dot >= 0.f;
+		return ACTOR_RETURN_LOAD_NEXT_AREA;
+	}
+
+	/* door just closed */
+	if (door->swing_amount <= 0.f && door->swing_amount_old > 0.f) {
+		u8 side_old = door->side_entered;
+		door->side_entered = pass_door_dot >= 0.f;
+
+		/* we have moved to the other side of the door */
+		if (side_old ^ door->side_entered) {
+			return ACTOR_RETURN_UNLOAD_PREV_AREA;
+		}
+
+		/* ... we have not */
+		return ACTOR_RETURN_UNLOAD_NEXT_AREA;
+	}
+
+	return ACTOR_RETURN_NONE;
 }
 
 u8 actor_door_update(const u8 index, const struct actor_update_params *params)
@@ -94,33 +138,13 @@ u8 actor_door_update(const u8 index, const struct actor_update_params *params)
 	t3d_quat_rotate_euler(&head->rotation, (f32[3]){ 0, 0, 1 },
 			      T3D_DEG_TO_RAD(door->swing_amount));
 
-	T3DVec3 actor_to_player_dir;
-
-	t3d_vec3_negate(&actor_to_player_dir, params->player_to_actor_dir);
-	const f32 pass_door_dot =
-		t3d_vec3_dot(&actor_to_player_dir, &T3D_VEC3_XUP);
-
-	/* door just opened */
-	if (door->swing_amount > 0.f && door->swing_amount_old <= 0.f) {
-		door->side_entered = pass_door_dot >= 0.f;
-		return ACTOR_RETURN_LOAD_NEXT_AREA;
-	}
-
-	/* door just closed */
-	if (door->swing_amount <= 0.f && door->swing_amount_old > 0.f) {
-		u8 side_old = door->side_entered;
-		door->side_entered = pass_door_dot >= 0.f;
-
-		/* we have moved to the other side of the door */
-		if (side_old ^ door->side_entered) {
-			return ACTOR_RETURN_UNLOAD_PREV_AREA;
-		}
-
-		/* ... we have not */
-		return ACTOR_RETURN_UNLOAD_NEXT_AREA;
-	}
-
-	return ACTOR_RETURN_NONE;
+	/*
+	 * TODO/FIXME: Change the logic for this to, instead of being
+	 * the dot product of a perpendicular vector, two hitboxes
+	 * on either side of the door (which can be determined by
+	 * the vector in question. :3
+	 */
+	return _actor_door_player_side_determine(door, params);
 }
 
 void actor_door_free(struct actor_door *door)

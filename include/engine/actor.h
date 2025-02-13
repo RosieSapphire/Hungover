@@ -8,8 +8,11 @@
 #include <t3d/t3d.h>
 #include <t3d/t3dmodel.h>
 #else
+#include "t3d_def.h"
+#include "../../include/types.h"
+
 #define ACTOR_NAME_MAX_LEN 32
-#endif
+#endif /* IS_USING_SCENE_CONVERTER */
 
 enum {
 	ACTOR_TYPE_STATIC,
