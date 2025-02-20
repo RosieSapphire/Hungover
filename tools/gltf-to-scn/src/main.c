@@ -12,6 +12,7 @@
 #include "../../../include/engine/actor_static.h"
 #include "../../../include/engine/actor_door.h"
 #include "../../../include/engine/actor_microwave.h"
+#include "../../../include/engine/actor_pickup.h"
 
 #include "endian.h"
 
@@ -25,6 +26,7 @@ struct node {
 	unsigned int area_index;
 	unsigned int actor_type;
 	unsigned int area_dest;
+	unsigned int pickup_type;
 	char model_path[ACTOR_STATIC_MDLPATH_MAX_LEN];
 	float position[3];
 	float scale[3];
@@ -43,6 +45,9 @@ struct actor_door actor_doors[ACTOR_DOOR_MAX_COUNT];
 
 u8 actor_microwave_count;
 struct actor_microwave actor_microwaves[ACTOR_MICROWAVE_MAX_COUNT];
+
+u8 actor_pickup_count;
+struct actor_pickup actor_pickups[ACTOR_PICKUP_MAX_COUNT];
 
 static unsigned int _node_type_enum_from_str(const char *str)
 {
@@ -75,6 +80,10 @@ static unsigned int _actor_type_enum_from_str(const char *str)
 		return ACTOR_TYPE_MICROWAVE;
 	}
 
+	if (!strcmp(str, "Pickup")) {
+		return ACTOR_TYPE_PICKUP;
+	}
+
 	return -1;
 }
 
@@ -96,6 +105,9 @@ static const char *_actor_type_str_from_enum(const unsigned int enm)
 
 	case ACTOR_TYPE_MICROWAVE:
 		return "Microwave";
+
+	case ACTOR_TYPE_PICKUP:
+		return "Pickup";
 	}
 
 	return NULL;
@@ -194,6 +206,15 @@ static void _node_actor_process(struct node *node, struct json_object *extras)
 
 	case ACTOR_TYPE_MICROWAVE:
 		break;
+
+	case ACTOR_TYPE_PICKUP: {
+		struct json_object *js_node_pickup_type;
+		json_object_object_get_ex(extras, "PickupType",
+					  &js_node_pickup_type);
+		assert(js_node_pickup_type);
+		node->pickup_type = json_object_get_int(js_node_pickup_type);
+		break;
+	}
 	}
 
 	const struct aiNode *ainode =
@@ -415,6 +436,15 @@ static void _node_to_area(struct area *area, const struct node *node_array,
 			actor_cur->type_index = actor_microwave_count - 1;
 			break;
 		}
+
+		case ACTOR_TYPE_PICKUP: {
+			struct actor_pickup *pu =
+				actor_pickups + actor_pickup_count++;
+			assert(pu);
+			actor_cur->type_index = actor_pickup_count - 1;
+			pu->type = node_cur->pickup_type;
+			break;
+		}
 		}
 
 		actor_cur->position.v[0] = node_cur->position[0];
@@ -523,6 +553,14 @@ static void _scene_debug(const struct scene *scn)
 			case ACTOR_TYPE_MICROWAVE:
 				// TODO: IMPLEMENT
 				break;
+
+			case ACTOR_TYPE_PICKUP: {
+				struct actor_pickup *pu =
+					actor_pickups + actor->type_index;
+				_depth_print_tabs(2);
+				printf(" - PickupType: %d\n", pu->type);
+				break;
+			}
 			}
 		}
 	}
@@ -585,6 +623,13 @@ static void _scene_export(const char *path_out, const struct scene *scn)
 
 			case ACTOR_TYPE_MICROWAVE:
 				break;
+
+			case ACTOR_TYPE_PICKUP: {
+				const struct actor_pickup *pu =
+					actor_pickups + actor->type_index;
+				fwrite(&pu->type, 1, 1, file);
+				break;
+			}
 			}
 
 			for (unsigned int k = 0; k < 3; k++) {

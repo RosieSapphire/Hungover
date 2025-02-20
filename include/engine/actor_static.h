@@ -21,7 +21,7 @@ extern u8 actor_static_count;
 extern u8 actor_static_count_in_range;
 extern struct actor_static actor_statics[ACTOR_STATIC_MAX_COUNT];
 
-struct actor_header *actor_static_init(void);
+struct actor_header *actor_static_init(FILE *file);
 u8 actor_static_update(const u8 index,
 		       const struct actor_update_params *params);
 

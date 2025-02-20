@@ -1,11 +1,13 @@
 #include "input.h"
 #include "t3d_ext.h"
 
-#include "engine/actor.h"
+#include "engine/ui.h"
+#include "engine/actor_static.h"
 #include "engine/actor_door.h"
 #include "engine/actor_microwave.h"
-#include "engine/actor_static.h"
-#include "engine/ui.h"
+#include "engine/actor_pickup.h"
+
+#include "engine/actor.h"
 
 #define ACTOR_NAME_MAX_LENGTH 32
 
@@ -14,12 +16,15 @@ static u8 (*actor_update_funcs[ACTOR_TYPE_COUNT])(
 	actor_static_update,
 	actor_door_update,
 	actor_microwave_update,
+	actor_pickup_update,
 };
 
 void actor_static_vars_setup(void)
 {
+	actor_static_count_in_range = 0;
 	actor_door_count_in_range = 0;
 	actor_microwave_count_in_range = 0;
+	actor_pickup_count_in_range = 0;
 }
 
 void actor_static_vars_to_ui(void)
@@ -28,6 +33,7 @@ void actor_static_vars_to_ui(void)
 
 	a_button_prompt_visible += actor_door_count_in_range;
 	a_button_prompt_visible += actor_microwave_count_in_range;
+	a_button_prompt_visible += actor_pickup_count_in_range;
 
 	ui_elements_toggle(UI_ELEMENT_FLAG_A_BUTTON, a_button_prompt_visible);
 }
@@ -50,8 +56,9 @@ u8 actor_update(struct actor_header *act, const T3DVec3 *player_pos,
 	const f32 act_dist = t3d_vec3_len(&act_vec);
 	t3d_vec3_scale(&act_dir, &act_vec, 1.f / act_dist);
 
-	struct actor_update_params params = { .player_to_actor_dir = &act_vec,
+	struct actor_update_params params = { .player_to_actor_dir = &act_dir,
 					      .player_dir = player_dir,
+					      .player_pos = player_pos,
 					      .player_dist = act_dist,
 					      .dt = dt };
 

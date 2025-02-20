@@ -38,8 +38,6 @@ struct area {
 };
 
 #ifndef IS_USING_GLTF_TO_SCN
-struct area area_init_from_file(FILE *file, T3DModel *scene_model,
-				const u16 index);
 void area_render(const struct area *a, const f32 subtick);
 void area_free(struct area *a);
 #endif

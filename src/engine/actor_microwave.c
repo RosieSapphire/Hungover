@@ -15,6 +15,7 @@ struct actor_header *actor_microwave_init(void)
 	u8 ind = actor_microwave_count++;
 	struct actor_microwave *mic = actor_microwaves + ind;
 	struct actor_header *h = (struct actor_header *)mic;
+	h->mdl = t3d_model_load("rom:/Act.Microwave.t3dm");
 
 	mic->state = mic->state_old = MICROWAVE_STATE_IDLE;
 	mic->cook_time_left = 0.f;

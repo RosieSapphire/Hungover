@@ -10,14 +10,15 @@ u8 actor_door_count = 0;
 u8 actor_door_count_in_range = 0;
 struct actor_door actor_doors[ACTOR_DOOR_MAX_COUNT];
 
-struct actor_header *actor_door_init(const u16 area_dest, const u16 area_index)
+struct actor_header *actor_door_init(const u16 area_index, FILE *file)
 {
 	const u8 ind = actor_door_count++;
 	struct actor_door *door = actor_doors + ind;
 	struct actor_header *head = (struct actor_header *)door;
+	head->mdl = t3d_model_load("rom:/Act.Door.t3dm");
 
 	door->area_index = area_index;
-	door->area_dest = area_dest;
+	fread(&door->area_dest, 2, 1, file);
 	door->is_opening = false;
 	door->side_entered = -1;
 	door->swing_amount = 0.f;

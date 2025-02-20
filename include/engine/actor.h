@@ -18,6 +18,7 @@ enum {
 	ACTOR_TYPE_STATIC,
 	ACTOR_TYPE_DOOR,
 	ACTOR_TYPE_MICROWAVE,
+	ACTOR_TYPE_PICKUP,
 	ACTOR_TYPE_COUNT
 };
 
@@ -38,6 +39,7 @@ enum {
 struct actor_update_params {
 	const T3DVec3 *player_to_actor_dir;
 	const T3DVec3 *player_dir;
+	const T3DVec3 *player_pos;
 	f32 player_dist;
 	f32 dt;
 };

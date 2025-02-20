@@ -58,8 +58,8 @@
 			"name":"Scene",
 			"nodes":[
 				2,
-				8,
-				11
+				9,
+				12
 			]
 		}
 	],
@@ -179,7 +179,14 @@
 			"extras":{
 				"NodeType":"Actor",
 				"ActorType":"Static",
-				"ModelPath":"rom:/Act.Fridge.t3dm"
+				"ModelPath":"rom:/Act.Fridge.t3dm",
+				"fast64":{
+					"sm64":{
+						"geo_asm":{},
+						"game_object":{},
+						"version":3
+					}
+				}
 			},
 			"name":"Fridge",
 			"translation":[
@@ -214,12 +221,32 @@
 			]
 		},
 		{
+			"extras":{
+				"NodeType":"Actor",
+				"ActorType":"Pickup",
+				"PickupType":"Shotgun"
+			},
+			"name":"Shotgun",
+			"rotation":[
+				0.5038626194000244,
+				0.49045711755752563,
+				-0.45222964882850647,
+				0.5486918091773987
+			],
+			"translation":[
+				-1.1363105773925781,
+				0.28996437788009644,
+				0.24671043455600739
+			]
+		},
+		{
 			"children":[
 				3,
 				4,
 				5,
 				6,
-				7
+				7,
+				8
 			],
 			"extras":{
 				"fast64":{
@@ -280,8 +307,8 @@
 		},
 		{
 			"children":[
-				9,
-				10
+				10,
+				11
 			],
 			"extras":{
 				"fast64":{

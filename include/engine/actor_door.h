@@ -1,6 +1,8 @@
 #ifndef _ENGINE_ACTOR_DOOR_H_
 #define _ENGINE_ACTOR_DOOR_H_
 
+#include <stdio.h>
+
 #ifndef IS_USING_GLTF_TO_SCN
 #include "engine/actor.h"
 #else /* IS_USING_GLTF_TO_SCN */
@@ -22,7 +24,7 @@ extern u8 actor_door_count;
 extern u8 actor_door_count_in_range;
 extern struct actor_door actor_doors[ACTOR_DOOR_MAX_COUNT];
 
-struct actor_header *actor_door_init(const u16 area_dest, const u16 area_index);
+struct actor_header *actor_door_init(const u16 area_index, FILE *file);
 struct actor_door *actor_door_find_by_area_dest(const u16 door_area_dest,
 						const u16 door_area_in);
 u8 actor_door_update(const u8 index, const struct actor_update_params *params);

@@ -2,6 +2,7 @@
 #include "engine/actor_static.h"
 #include "engine/actor_door.h"
 #include "engine/actor_microwave.h"
+#include "engine/actor_pickup.h"
 
 #define SCENE_DEBUG
 
@@ -69,30 +70,20 @@ struct scene scene_init_from_file(const char *path)
 			struct actor_header **actor_ptr =
 				area->actor_headers + j;
 			switch (type) {
-			case ACTOR_TYPE_STATIC: {
-				*actor_ptr = actor_static_init();
-
-				char act_mdl_path[ACTOR_STATIC_MDLPATH_MAX_LEN];
-				fread(act_mdl_path, 1,
-				      ACTOR_STATIC_MDLPATH_MAX_LEN, file);
-				(*actor_ptr)->mdl =
-					t3d_model_load(act_mdl_path);
+			case ACTOR_TYPE_STATIC:
+				*actor_ptr = actor_static_init(file);
 				break;
-			}
 
-			case ACTOR_TYPE_DOOR: {
-				u16 door_area_dest;
-				fread(&door_area_dest, 2, 1, file);
-				*actor_ptr = actor_door_init(door_area_dest, i);
-				(*actor_ptr)->mdl =
-					t3d_model_load("rom:/Act.Door.t3dm");
+			case ACTOR_TYPE_DOOR:
+				*actor_ptr = actor_door_init(i, file);
 				break;
-			}
 
 			case ACTOR_TYPE_MICROWAVE:
 				*actor_ptr = actor_microwave_init();
-				(*actor_ptr)->mdl = t3d_model_load(
-					"rom:/Act.Microwave.t3dm");
+				break;
+
+			case ACTOR_TYPE_PICKUP:
+				*actor_ptr = actor_pickup_init(file);
 				break;
 			}
 
