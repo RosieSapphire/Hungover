@@ -31,7 +31,6 @@ u8 actor_microwave_update(const u8 index,
 			  const struct actor_update_params *params)
 {
 	struct actor_microwave *mic = actor_microwaves + index;
-
 	mic->state_old = mic->state;
 	if (params->player_dist < 80.f) {
 		actor_microwave_count_in_range++;

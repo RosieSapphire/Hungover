@@ -7,33 +7,6 @@
 
 struct scene scene_init_from_file(const char *path)
 {
-	/*
-	struct scene scn;
-	char mdl_name[32];
-	char mdl_path[64];
-
-	memset(mdl_name, 0, 32);
-	memset(mdl_path, 0, 64);
-
-	strncpy(mdl_name, path, strlen(path) - 4);
-	snprintf(mdl_path, 64, "%s.t3dm", mdl_name);
-	scn.mdl = t3d_model_load(mdl_path);
-
-	scn.area_index = scn.area_index_old = 0;
-	scn.flags = 0;
-
-	FILE *file = asset_fopen(path, NULL);
-	assertf(file, "Failed to load scene from '%s'\n", path);
-
-	fread(&scn.area_count, 2, 1, file);
-	scn.areas = calloc(scn.area_count, sizeof(*scn.areas));
-	for (u16 i = 0; i < scn.area_count; i++) {
-		scn.areas[i] = area_init_from_file(file, scn.mdl, i);
-	}
-
-	fclose(file);
-	*/
-
 	struct scene scn;
 	const char *ext_str = strrchr(path, '.');
 	assertf(ext_str, "Scene path '%s' has no extension!\n", path);
@@ -96,17 +69,21 @@ struct scene scene_init_from_file(const char *path)
 			struct actor_header **actor_ptr =
 				area->actor_headers + j;
 			switch (type) {
-			case ACTOR_TYPE_STATIC:
+			case ACTOR_TYPE_STATIC: {
 				*actor_ptr = actor_static_init();
+
+				char act_mdl_path[ACTOR_STATIC_MDLPATH_MAX_LEN];
+				fread(act_mdl_path, 1,
+				      ACTOR_STATIC_MDLPATH_MAX_LEN, file);
+				(*actor_ptr)->mdl =
+					t3d_model_load(act_mdl_path);
 				break;
+			}
 
 			case ACTOR_TYPE_DOOR: {
 				u16 door_area_dest;
 				fread(&door_area_dest, 2, 1, file);
 				*actor_ptr = actor_door_init(door_area_dest, i);
-				debugf("door %d area_dest=%d\n",
-				       (*actor_ptr)->type_index,
-				       door_area_dest);
 				(*actor_ptr)->mdl =
 					t3d_model_load("rom:/Act.Door.t3dm");
 				break;
@@ -165,7 +142,6 @@ struct scene scene_init_from_file(const char *path)
 			if (strncmp(iter.object->name, colmesh_name, 32)) {
 				continue;
 			}
-			debugf("Found %s\n", colmesh_name);
 			t3d_model_draw_material(iter.object->material, NULL);
 			t3d_model_draw_object(iter.object, NULL);
 		}
@@ -204,7 +180,6 @@ static void _scene_area_actor_update(struct actor_header *actor,
 	/* When we open a door and it leads to a new room. */
 	case ACTOR_RETURN_LOAD_NEXT_AREA:
 		door = actor_doors + actor->type_index;
-		debugf("LOADED NEXT AREA %d!\n", door->area_dest);
 		scn->area_index_old = scn->area_index;
 		scn->area_index = door->area_dest;
 		scn->flags |= SCENE_FLAG_PROCESS_AREA_LAST;
@@ -238,8 +213,6 @@ static void _scene_area_actor_update(struct actor_header *actor,
 void scene_update(struct scene *scn, const T3DVec3 *player_pos,
 		  const T3DVec3 *player_dir, const f32 dt)
 {
-	debugf("%d -> %d\n", scn->area_index_old, scn->area_index);
-
 	/*
   	 * This is to ensure all actors are only updated once per frame.
   	 * The reason this is done is because if, say, a door were to

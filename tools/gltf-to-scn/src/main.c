@@ -25,6 +25,7 @@ struct node {
 	unsigned int area_index;
 	unsigned int actor_type;
 	unsigned int area_dest;
+	char model_path[ACTOR_STATIC_MDLPATH_MAX_LEN];
 	float position[3];
 	float scale[3];
 	float rotation[4];
@@ -169,8 +170,18 @@ static void _node_actor_process(struct node *node, struct json_object *extras)
 		json_object_get_string(js_node_actor_type));
 
 	switch (node->actor_type) {
-	case ACTOR_TYPE_STATIC:
+	case ACTOR_TYPE_STATIC: {
+		struct json_object *js_node_model_path;
+		json_object_object_get_ex(extras, "ModelPath",
+					  &js_node_model_path);
+		assert(js_node_model_path);
+		memset(node->model_path, 0, ACTOR_STATIC_MDLPATH_MAX_LEN);
+		strncpy(node->model_path,
+			json_object_get_string(js_node_model_path),
+			ACTOR_STATIC_MDLPATH_MAX_LEN);
+		printf("%s: %s\n", node->name, node->model_path);
 		break;
+	}
 
 	case ACTOR_TYPE_DOOR: {
 		struct json_object *js_node_area_dest;
@@ -178,7 +189,6 @@ static void _node_actor_process(struct node *node, struct json_object *extras)
 					  &js_node_area_dest);
 		assert(js_node_area_dest);
 		node->area_dest = json_object_get_int(js_node_area_dest);
-		printf("%s: %d\n", node->name, node->area_dest);
 		break;
 	}
 
@@ -193,9 +203,9 @@ static void _node_actor_process(struct node *node, struct json_object *extras)
 	node->position[1] = ainode->mTransformation.b4 * T3DM_TO_N64_SCALE;
 	node->position[2] = ainode->mTransformation.c4 * T3DM_TO_N64_SCALE;
 
-	node->scale[0] = ainode->mTransformation.a1;
-	node->scale[1] = ainode->mTransformation.b2;
-	node->scale[2] = ainode->mTransformation.c3;
+	node->scale[0] = 1.f;
+	node->scale[1] = 1.f;
+	node->scale[2] = 1.f;
 
 	float matrix[4][4];
 	matrix[0][0] = ainode->mTransformation.a1;
@@ -382,9 +392,12 @@ static void _node_to_area(struct area *area, const struct node *node_array,
 		switch (actor_cur->type) {
 		case ACTOR_TYPE_STATIC: {
 			struct actor_static *stat =
-				actor_statics + ++actor_static_count;
+				actor_statics + actor_static_count++;
 			assert(stat);
 			actor_cur->type_index = actor_static_count - 1;
+			memset(stat->mdl_path, 0, ACTOR_STATIC_MDLPATH_MAX_LEN);
+			strncpy(stat->mdl_path, node_cur->model_path,
+				ACTOR_STATIC_MAX_COUNT);
 			break;
 		}
 		case ACTOR_TYPE_DOOR: {
@@ -397,7 +410,7 @@ static void _node_to_area(struct area *area, const struct node *node_array,
 		}
 		case ACTOR_TYPE_MICROWAVE: {
 			struct actor_microwave *mic =
-				actor_microwaves + ++actor_microwave_count;
+				actor_microwaves + actor_microwave_count++;
 			assert(mic);
 			actor_cur->type_index = actor_microwave_count - 1;
 			break;
@@ -491,9 +504,13 @@ static void _scene_debug(const struct scene *scn)
 			_depth_print_tabs(2);
 			printf(" - Type Index: %d\n", actor->type_index);
 			switch (actor->type) {
-			case ACTOR_TYPE_STATIC:
-				// TODO: IMPLEMENT
+			case ACTOR_TYPE_STATIC: {
+				struct actor_static *stat =
+					actor_statics + actor->type_index;
+				_depth_print_tabs(2);
+				printf(" - ModelPath: '%s'\n", stat->mdl_path);
 				break;
+			}
 
 			case ACTOR_TYPE_DOOR: {
 				struct actor_door *door =
@@ -551,8 +568,13 @@ static void _scene_export(const char *path_out, const struct scene *scn)
 			fwrite(&actor->type_index, 1, 1, file);
 
 			switch (actor->type) {
-			case ACTOR_TYPE_STATIC:
+			case ACTOR_TYPE_STATIC: {
+				const struct actor_static *stat =
+					actor_statics + actor->type_index;
+				fwrite(&stat->mdl_path, 1,
+				       ACTOR_STATIC_MDLPATH_MAX_LEN, file);
 				break;
+			}
 
 			case ACTOR_TYPE_DOOR: {
 				const struct actor_door *door =

@@ -57,9 +57,9 @@
 			},
 			"name":"Scene",
 			"nodes":[
-				3,
-				7,
-				10
+				2,
+				8,
+				11
 			]
 		}
 	],
@@ -99,29 +99,9 @@
 			]
 		},
 		{
-			"extras":{
-				"fast64":{
-					"sm64":{
-						"geo_asm":{},
-						"game_object":{},
-						"version":3
-					}
-				},
-				"NodeType":"Actor",
-				"ActorType":"Microwave"
-			},
-			"name":"Microwave",
-			"translation":[
-				1.1713204383850098,
-				-0.9204243421554565,
-				0
-			]
-		},
-		{
 			"children":[
 				0,
-				1,
-				2
+				1
 			],
 			"extras":{
 				"fast64":{
@@ -196,10 +176,50 @@
 			]
 		},
 		{
+			"extras":{
+				"NodeType":"Actor",
+				"ActorType":"Static",
+				"ModelPath":"rom:/Act.Fridge.t3dm"
+			},
+			"name":"Fridge",
+			"translation":[
+				3.4099502563476562,
+				-0.5460999011993408,
+				0
+			]
+		},
+		{
+			"extras":{
+				"fast64":{
+					"sm64":{
+						"geo_asm":{},
+						"game_object":{},
+						"version":3
+					}
+				},
+				"NodeType":"Actor",
+				"ActorType":"Microwave"
+			},
+			"name":"Microwave",
+			"rotation":[
+				0,
+				0,
+				-0.9995499849319458,
+				0.02999754250049591
+			],
+			"translation":[
+				1.8636293411254883,
+				-2.424283981323242,
+				0.9143999218940735
+			]
+		},
+		{
 			"children":[
+				3,
 				4,
 				5,
-				6
+				6,
+				7
 			],
 			"extras":{
 				"fast64":{
@@ -260,8 +280,8 @@
 		},
 		{
 			"children":[
-				8,
-				9
+				9,
+				10
 			],
 			"extras":{
 				"fast64":{
