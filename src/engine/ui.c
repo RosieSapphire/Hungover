@@ -7,7 +7,7 @@ static u8 element_flags = 0;
 
 void ui_init(void)
 {
-	spr_button_a = sprite_load("rom:/Tex.ButtonAOld.ci4.sprite");
+	spr_button_a = sprite_load("rom:/Tex.ButtonA.ci4.sprite");
 	element_flags = 0;
 }
 
