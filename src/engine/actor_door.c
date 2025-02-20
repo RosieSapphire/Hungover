@@ -10,14 +10,14 @@ u8 actor_door_count = 0;
 u8 actor_door_count_in_range = 0;
 struct actor_door actor_doors[ACTOR_DOOR_MAX_COUNT];
 
-struct actor_header *actor_door_init(const u16 area_next, const u16 area_index)
+struct actor_header *actor_door_init(const u16 area_dest, const u16 area_index)
 {
 	const u8 ind = actor_door_count++;
 	struct actor_door *door = actor_doors + ind;
 	struct actor_header *head = (struct actor_header *)door;
 
 	door->area_index = area_index;
-	door->area_next = area_next;
+	door->area_dest = area_dest;
 	door->is_opening = false;
 	door->side_entered = -1;
 	door->swing_amount = 0.f;
@@ -29,7 +29,7 @@ struct actor_header *actor_door_init(const u16 area_next, const u16 area_index)
 	return head;
 }
 
-struct actor_door *actor_door_find_by_area_next(const u16 door_area_next,
+struct actor_door *actor_door_find_by_area_dest(const u16 door_area_dest,
 						const u16 door_area_in)
 {
 	for (u16 i = 0; i < actor_door_count; i++) {
@@ -39,7 +39,7 @@ struct actor_door *actor_door_find_by_area_next(const u16 door_area_next,
 			continue;
 		}
 
-		if (d->area_next != door_area_next) {
+		if (d->area_dest != door_area_dest) {
 			continue;
 		}
 
@@ -152,7 +152,7 @@ void actor_door_free(struct actor_door *door)
 	door->swing_amount = door->swing_amount_old = 0.f;
 	door->side_entered = -1;
 	door->is_opening = false;
-	door->area_next = -1;
+	door->area_dest = -1;
 	door->area_index = -1;
 	actor_door_count--;
 }

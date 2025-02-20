@@ -72,9 +72,26 @@
 						"game_object":{},
 						"version":3
 					}
-				}
+				},
+				"NodeType":"ColMesh"
 			},
-			"name":"Act.Door.1",
+			"mesh":0,
+			"name":"Col.0"
+		},
+		{
+			"extras":{
+				"fast64":{
+					"sm64":{
+						"geo_asm":{},
+						"game_object":{},
+						"version":3
+					}
+				},
+				"AreaDest":1,
+				"NodeType":"Actor",
+				"ActorType":"Door"
+			},
+			"name":"Door",
 			"translation":[
 				1.719925880432129,
 				1.5874996185302734,
@@ -89,27 +106,16 @@
 						"game_object":{},
 						"version":3
 					}
-				}
+				},
+				"NodeType":"Actor",
+				"ActorType":"Microwave"
 			},
-			"name":"Act.Microwave",
+			"name":"Microwave",
 			"translation":[
 				1.1713204383850098,
 				-0.9204243421554565,
 				0
 			]
-		},
-		{
-			"extras":{
-				"fast64":{
-					"sm64":{
-						"geo_asm":{},
-						"game_object":{},
-						"version":3
-					}
-				}
-			},
-			"mesh":0,
-			"name":"Col.0"
 		},
 		{
 			"children":[
@@ -124,9 +130,11 @@
 						"game_object":{},
 						"version":3
 					}
-				}
+				},
+				"NodeType":"Area",
+				"AreaIndex":0
 			},
-			"name":"Area.0",
+			"name":"0",
 			"translation":[
 				0.5172390937805176,
 				-0.5063421726226807,
@@ -141,9 +149,26 @@
 						"game_object":{},
 						"version":3
 					}
-				}
+				},
+				"NodeType":"ColMesh"
 			},
-			"name":"Act.Door.0",
+			"mesh":1,
+			"name":"Col.1"
+		},
+		{
+			"extras":{
+				"fast64":{
+					"sm64":{
+						"geo_asm":{},
+						"game_object":{},
+						"version":3
+					}
+				},
+				"AreaDest":0,
+				"NodeType":"Actor",
+				"ActorType":"Door"
+			},
+			"name":"Door.001",
 			"translation":[
 				-3.5677742958068848,
 				1.7652997970581055,
@@ -158,27 +183,17 @@
 						"game_object":{},
 						"version":3
 					}
-				}
+				},
+				"AreaDest":2,
+				"NodeType":"Actor",
+				"ActorType":"Door"
 			},
-			"name":"Act.Door.2",
+			"name":"Door.002",
 			"translation":[
 				-2.3839542865753174,
 				-1.8922996520996094,
 				0
 			]
-		},
-		{
-			"extras":{
-				"fast64":{
-					"sm64":{
-						"geo_asm":{},
-						"game_object":{},
-						"version":3
-					}
-				}
-			},
-			"mesh":1,
-			"name":"Col.1"
 		},
 		{
 			"children":[
@@ -193,9 +208,11 @@
 						"game_object":{},
 						"version":3
 					}
-				}
+				},
+				"AreaIndex":1,
+				"NodeType":"Area"
 			},
-			"name":"Area.1",
+			"name":"1",
 			"translation":[
 				5.804939270019531,
 				-0.6841423511505127,
@@ -210,12 +227,14 @@
 						"game_object":{},
 						"version":3
 					}
-				}
+				},
+				"NodeType":"ColMesh"
 			},
-			"name":"Act.Door.01",
+			"mesh":2,
+			"name":"Col.2",
 			"translation":[
-				-2.3839542865753174,
-				-1.8922996520996094,
+				-1.9611194133758545,
+				-2.3432912826538086,
 				0
 			]
 		},
@@ -227,13 +246,15 @@
 						"game_object":{},
 						"version":3
 					}
-				}
+				},
+				"AreaDest":1,
+				"NodeType":"Actor",
+				"ActorType":"Door"
 			},
-			"mesh":2,
-			"name":"Col.2",
+			"name":"Door.003",
 			"translation":[
-				-1.9611194133758545,
-				-2.3432912826538086,
+				-2.3839542865753174,
+				-1.8922996520996094,
 				0
 			]
 		},
@@ -249,9 +270,11 @@
 						"game_object":{},
 						"version":3
 					}
-				}
+				},
+				"NodeType":"Area",
+				"AreaIndex":2
 			},
-			"name":"Area.2",
+			"name":"2",
 			"translation":[
 				5.804939270019531,
 				-0.6841423511505127,

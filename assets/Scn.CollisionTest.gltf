@@ -52,10 +52,11 @@
 						"game_object":{},
 						"version":3
 					}
-				}
+				},
+				"NodeType":"ColMesh"
 			},
 			"mesh":0,
-			"name":"Col.0"
+			"name":"Col"
 		},
 		{
 			"children":[
@@ -68,9 +69,11 @@
 						"game_object":{},
 						"version":3
 					}
-				}
+				},
+				"NodeType":"Area",
+				"AreaIndex":0
 			},
-			"name":"Area.0"
+			"name":"0"
 		}
 	],
 	"materials":[

@@ -1,7 +1,11 @@
 #ifndef _ENGINE_ACTOR_STATIC_H_
 #define _ENGINE_ACTOR_STATIC_H_
 
+#ifndef IS_USING_GLTF_TO_SCN
 #include "engine/actor.h"
+#else /* IS_USING_GLTF_TO_SCN */
+#include "../../../include/engine/actor.h"
+#endif /* IS_USING_GLTF_TO_SCN */
 
 #define ACTOR_STATIC_MAX_COUNT 32
 

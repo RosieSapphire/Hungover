@@ -1,7 +1,7 @@
 #ifndef _ENGINE_ACTOR_H_
 #define _ENGINE_ACTOR_H_
 
-#ifndef IS_USING_SCENE_CONVERTER
+#ifndef IS_USING_GLTF_TO_SCN
 #include "types.h"
 
 #include <libdragon.h>
@@ -9,10 +9,10 @@
 #include <t3d/t3dmodel.h>
 #else
 #include "t3d_def.h"
-#include "../../include/types.h"
+#include "../../../include/types.h"
 
 #define ACTOR_NAME_MAX_LEN 32
-#endif /* IS_USING_SCENE_CONVERTER */
+#endif /* IS_USING_GLTF_TO_SCN */
 
 enum {
 	ACTOR_TYPE_STATIC,
@@ -43,13 +43,14 @@ struct actor_update_params {
 };
 
 struct actor_header {
-#ifndef IS_USING_SCENE_CONVERTER
+#ifndef IS_USING_GLTF_TO_SCN
 	T3DModel *mdl;
 	T3DMat4FP *matrix;
 	rspq_block_t *displaylist;
-#else
+#else /* IS_USING_GLTF_TO_SCN */
+	/* TODO: REMOVE THIS */
 	char name[ACTOR_NAME_MAX_LEN];
-#endif
+#endif /* IS_USING_GLTF_TO_SCN */
 	T3DVec3 position;
 	T3DVec3 position_old;
 	T3DVec3 position_init;
@@ -64,7 +65,7 @@ struct actor_header {
 	u8 flags;
 };
 
-#ifndef IS_USING_SCENE_CONVERTER
+#ifndef IS_USING_GLTF_TO_SCN
 struct actor_header *actor_init_from_file(FILE *file, const T3DVec3 *offset,
 					  const u16 area_index);
 void actor_static_vars_setup(void);

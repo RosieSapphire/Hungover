@@ -3,11 +3,13 @@
 
 #include <stdio.h>
 
-#ifdef IS_USING_SCENE_CONVERTER
-#include "../../include/types.h"
+#ifdef IS_USING_GLTF_TO_SCN
+#define AREA_NAME_MAX_LEN 64
 
-#include "../../include/engine/actor.h"
-#include "../../include/engine/collision.h"
+#include "../../../include/types.h"
+
+#include "../../../include/engine/actor.h"
+#include "../../../include/engine/collision.h"
 #else
 #include "types.h"
 
@@ -21,20 +23,21 @@ struct area {
 	T3DVec3 offset;
 	struct collision_mesh colmesh;
 	u16 actor_header_count;
-#ifndef IS_USING_SCENE_CONVERTER
+#ifndef IS_USING_GLTF_TO_SCN
 	struct actor_header **actor_headers;
-	rspq_block_t *displaylist;
 	T3DMat4FP *matrix;
-#else
+	rspq_block_t *displaylist;
+#else /* IS_USING_GLTF_TO_SCN */
 	/*
 	 * I need to use single pointers for the scene converter because
 	 * otherwise it's a cocksucking motherfucking nightmare to work with.
 	 */
 	struct actor_header *actor_headers;
-#endif
+	char name[AREA_NAME_MAX_LEN];
+#endif /* IS_USING_GLTF_TO_SCN */
 };
 
-#ifndef IS_USING_SCENE_CONVERTER
+#ifndef IS_USING_GLTF_TO_SCN
 struct area area_init_from_file(FILE *file, T3DModel *scene_model,
 				const u16 index);
 void area_render(const struct area *a, const f32 subtick);

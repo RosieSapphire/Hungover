@@ -8,7 +8,7 @@
 
 u8 actor_microwave_count_in_range;
 u8 actor_microwave_count;
-struct actor_microwave actor_microwaves[ACTOR_MICROWAVE_COUNT_MAX];
+struct actor_microwave actor_microwaves[ACTOR_MICROWAVE_MAX_COUNT];
 
 struct actor_header *actor_microwave_init(void)
 {

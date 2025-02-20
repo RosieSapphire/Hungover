@@ -1,9 +1,15 @@
 #ifndef _ENGINE_MICROWAVE_ACTOR_H_
 #define _ENGINE_MICROWAVE_ACTOR_H_
 
+#ifndef IS_USING_GLTF_TO_SCN
 #include "types.h"
 
 #include "engine/actor.h"
+#else /* IS_USING_GLTF_TO_SCN */
+#include "../../../include/types.h"
+
+#include "../../../include/engine/actor.h"
+#endif /* IS_USING_GLTF_TO_SCN */
 
 enum {
 	MICROWAVE_STATE_IDLE,
@@ -15,7 +21,7 @@ enum {
 #define MICROWAVE_BEEP_INTERVAL 1.f
 #define MICROWAVE_NUM_BEEPS_WHEN_DONE 4
 
-#define ACTOR_MICROWAVE_COUNT_MAX 1
+#define ACTOR_MICROWAVE_MAX_COUNT 1
 
 struct actor_microwave {
 	struct actor_header header;
@@ -28,7 +34,7 @@ struct actor_microwave {
 
 extern u8 actor_microwave_count_in_range;
 extern u8 actor_microwave_count;
-extern struct actor_microwave actor_microwaves[ACTOR_MICROWAVE_COUNT_MAX];
+extern struct actor_microwave actor_microwaves[ACTOR_MICROWAVE_MAX_COUNT];
 
 struct actor_header *actor_microwave_init(void);
 u8 actor_microwave_update(const u8 index,

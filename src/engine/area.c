@@ -8,10 +8,10 @@ struct area area_init_from_file(FILE *file, T3DModel *scene_model,
 				const u16 index)
 {
 	struct area a;
-
 	for (u8 i = 0; i < 3; i++) {
 		fread(a.offset.v + i, 4, 1, file);
 	}
+
 	a.colmesh = collision_mesh_init_from_file(file, &a.offset);
 	fread(&a.actor_header_count, 2, 1, file);
 	a.actor_headers =

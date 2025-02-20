@@ -7,7 +7,7 @@
 
 #include <stdio.h>
 
-#include "../../include/types.h"
+#include "../../../include/types.h"
 
 u64 fwrite_ef16(const u16 *ptr, FILE *file);
 u64 fwrite_ef32(const float *ptr, FILE *file);

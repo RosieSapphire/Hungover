@@ -1,5 +1,5 @@
 DEBUG_ENABLED := 1
-BUILD_DIR := build
+BUILD_DIR := out
 
 include $(N64_INST)/include/n64.mk
 include $(T3D_INST)/t3d.mk
@@ -70,7 +70,7 @@ filesystem/Scn.%.scn: assets/Scn.%.gltf $(GLTF_TO_SCN)
 	@mkdir -p $(dir $@)
 	@echo "    [SCENE] $@"
 	$(GLTF_TO_SCN) $< $@
-	# $(N64_BINDIR)/mkasset -v $(GLTF_TO_SCN_FLAGS) -o filesystem $@
+	$(N64_BINDIR)/mkasset -v $(GLTF_TO_SCN_FLAGS) -o filesystem $@
 
 clean:
 	rm -rf $(ROM) $(BUILD_DIR) filesystem
