@@ -1,8 +1,11 @@
-build/
+out/
 filesystem/
 *.z64
 *.json
 *.sh
 assets/*.blend1
-tools/tmp
 tools/gltf-to-scn/gltf-to-scn
+tools/gltf-to-scn/out/
+tools/gltf-to-scn/*.sh
+tools/gltf-to-scn/*.scn
+tools/gltf-to-scn/*.json
