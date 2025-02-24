@@ -14,11 +14,9 @@
 #include "engine/ui.h"
 
 static f32 time_accumulated = 0.f;
-
-static struct player player;
-static struct scene scene;
-
 static s32 dfs_handle;
+
+static struct scene scene;
 
 static T3DViewport viewport;
 static u8 ambient_color[4] = { 0xFF, 0xFF, 0xFF, 0xFF };
@@ -74,7 +72,7 @@ static void _init(void)
 	t3d_init((T3DInitParams){ 0 });
 
 	scene = scene_init_from_file("rom:/Scn.ApartmentTest.scn");
-	player = player_init();
+	player_init();
 
 	time_accumulated = 0.f;
 }
@@ -83,12 +81,8 @@ static void _update(const f32 dt)
 {
 	input_poll();
 
-	player_update(&player, &scene, dt);
-
-	T3DVec3 player_eye, player_focus, player_dir;
-	player_look_values_get(&player_eye, &player_focus, &player, 1.f);
-	t3d_vec3_diff(&player_dir, &player_focus, &player_eye);
-	scene_update(&scene, &player.pos, &player_dir, dt);
+	player_update(&scene, dt);
+	scene_update(&scene, dt);
 }
 
 static f32 _update_renderer(const f32 dt)
@@ -98,7 +92,7 @@ static f32 _update_renderer(const f32 dt)
 	t3d_viewport_attach(&viewport);
 	t3d_viewport_set_projection(&viewport, T3D_DEG_TO_RAD(VIEWPORT_FOV),
 				    VIEWPORT_NEAR, VIEWPORT_FAR);
-	player_to_viewport(&viewport, &player, subtick);
+	player_to_viewport(&viewport, subtick);
 
 	return subtick;
 }
@@ -120,7 +114,7 @@ static void _render(const f32 subtick)
 
 static void _free(void)
 {
-	player_free(&player);
+	player_free();
 	scene_free(&scene);
 
 	t3d_destroy();

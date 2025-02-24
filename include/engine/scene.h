@@ -5,11 +5,11 @@
 #include "../../../include/types.h"
 
 #include "../../../include/engine/area.h"
-#else
+#else /* IS_USING_GLTF_TO_SCN */
 #include "types.h"
 
 #include "engine/area.h"
-#endif
+#endif /* IS_USING_GLTF_TO_SCN */
 
 enum { SCENE_FLAG_PROCESS_AREA_LAST = (1 << 0) };
 
@@ -25,8 +25,7 @@ struct scene {
 };
 
 struct scene scene_init_from_file(const char *path);
-void scene_update(struct scene *scn, const T3DVec3 *player_pos,
-		  const T3DVec3 *player_dir, const f32 dt);
+void scene_update(struct scene *scn, const f32 dt);
 void scene_render(const struct scene *scn, const f32 subtick);
 void scene_free(struct scene *scn);
 

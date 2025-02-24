@@ -1,10 +1,12 @@
-#include "engine/scene.h"
 #include "engine/actor_static.h"
 #include "engine/actor_door.h"
 #include "engine/actor_microwave.h"
 #include "engine/actor_pickup.h"
 
-#define SCENE_DEBUG
+#include "engine/player.h"
+#include "engine/scene.h"
+
+// #define SCENE_DEBUG
 
 struct scene scene_init_from_file(const char *path)
 {
@@ -165,12 +167,9 @@ static void _scene_area_actor_update(struct actor_header *actor,
 		return;
 	}
 
-	struct actor_door *door = NULL;
-
 	switch (actor_update(actor, player_pos, player_dir, dt)) {
-	/* When we open a door and it leads to a new room. */
-	case ACTOR_RETURN_LOAD_NEXT_AREA:
-		door = actor_doors + actor->type_index;
+	case ACTOR_RETURN_LOAD_NEXT_AREA: {
+		struct actor_door *door = actor_doors + actor->type_index;
 		scn->area_index_old = scn->area_index;
 		scn->area_index = door->area_dest;
 		scn->flags |= SCENE_FLAG_PROCESS_AREA_LAST;
@@ -179,31 +178,44 @@ static void _scene_area_actor_update(struct actor_header *actor,
 		((struct actor_header *)door_new)->flags &=
 			~(ACTOR_FLAG_IS_ACTIVE);
 		return;
+	}
 
-	/* When we close a door after entering through to the next area. */
-	case ACTOR_RETURN_UNLOAD_PREV_AREA:
-		door = actor_doors + actor->type_index;
+	case ACTOR_RETURN_UNLOAD_PREV_AREA: {
 		scn->flags &= ~(SCENE_FLAG_PROCESS_AREA_LAST);
 		struct actor_door *door_cur = actor_door_find_by_area_dest(
 			scn->area_index_old, scn->area_index);
 		((struct actor_header *)door_cur)->flags |=
 			(ACTOR_FLAG_IS_ACTIVE);
 		return;
+	}
 
-	/* When we close a door without going through it. */
 	case ACTOR_RETURN_UNLOAD_NEXT_AREA:
 		scn->flags &= ~(SCENE_FLAG_PROCESS_AREA_LAST);
 		scn->area_index = scn->area_index_old;
 		return;
+
+	case ACTOR_RETURN_PICKUP_WEAPON: {
+		struct actor_pickup *pu = actor_pickups + actor->type_index;
+		struct inventory_entry *ent = player.inventory.entries +
+					      player.inventory.entry_count++;
+		ent->type = INV_ENT_TYPE_SHOTGUN;
+		((struct actor_header *)pu)->flags &= ~(ACTOR_FLAG_IS_ACTIVE);
+		debugf("Added Shotgun to inventory\n");
+		player.inv_ent_cur = player.inventory.entry_count - 1;
+		return;
+	}
 
 	default:
 		return;
 	}
 }
 
-void scene_update(struct scene *scn, const T3DVec3 *player_pos,
-		  const T3DVec3 *player_dir, const f32 dt)
+void scene_update(struct scene *scn, const f32 dt)
 {
+	T3DVec3 player_eye, player_focus, player_dir;
+	player_look_values_get(&player_eye, &player_focus, 1.f);
+	t3d_vec3_diff(&player_dir, &player_focus, &player_eye);
+
 	/*
   	 * This is to ensure all actors are only updated once per frame.
   	 * The reason this is done is because if, say, a door were to
@@ -232,7 +244,7 @@ void scene_update(struct scene *scn, const T3DVec3 *player_pos,
 
 		for (u16 j = 0; j < area->actor_header_count; j++) {
 			_scene_area_actor_update(area->actor_headers[j], scn,
-						 player_pos, player_dir, dt);
+						 &player.pos, &player_dir, dt);
 		}
 	}
 	actor_static_vars_to_ui();

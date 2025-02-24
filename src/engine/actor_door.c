@@ -148,6 +148,7 @@ u8 actor_door_update(const u8 index, const struct actor_update_params *params)
 	return _actor_door_player_side_determine(door, params);
 }
 
+#if 0
 void actor_door_free(struct actor_door *door)
 {
 	door->swing_amount = door->swing_amount_old = 0.f;
@@ -157,3 +158,4 @@ void actor_door_free(struct actor_door *door)
 	door->area_index = -1;
 	actor_door_count--;
 }
+#endif /* 0 */

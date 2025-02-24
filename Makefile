@@ -4,8 +4,6 @@ BUILD_DIR := out
 include $(N64_INST)/include/n64.mk
 include $(T3D_INST)/t3d.mk
 
-CC := gcc
-
 INC_DIRS := include include/engine include/game
 INC_FLAGS := $(INC_DIRS:%=-I%)
 SRC_DIRS := src src/engine src/game
@@ -72,6 +70,8 @@ filesystem/Scn.%.scn: assets/Scn.%.gltf $(GLTF_TO_SCN)
 	$(GLTF_TO_SCN) $< $@
 	$(N64_BINDIR)/mkasset -v $(GLTF_TO_SCN_FLAGS) -o filesystem $@
 
+.PHONY: clean format todo cppcheck
+
 clean:
 	rm -rf $(ROM) $(BUILD_DIR) filesystem
 
@@ -81,5 +81,9 @@ format: $(H_FILES) $(C_FILES)
 todo: $(H_FILES) $(C_FILES)
 	grep -i "todo" $^
 	grep -i "fixme" $^
+
+cppcheck: $(H_FILES) $(C_FILES)
+	@cppcheck --quiet --enable=all --error-exitcode=1 \
+		-I $(INC_DIRS) $^
 
 -include $(wildcard $(BUILD_DIR)/*.d)

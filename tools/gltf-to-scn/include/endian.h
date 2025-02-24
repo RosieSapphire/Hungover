@@ -5,6 +5,7 @@
 #define IS_USING_SCENE_CONVERTER
 #endif /* IS_USING_SCENE_CONVERTER */
 
+// cppcheck-suppress missingInclude
 #include <stdio.h>
 
 #include "../../../include/types.h"

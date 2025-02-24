@@ -19,6 +19,7 @@ u64 fwrite_ef32(const float *ptr, FILE *file)
 	return fwrite(((float *)&bytes), 4, 1, file);
 }
 
+#if 0
 u64 fread_ef16(u16 *ptr, FILE *file)
 {
 	u64 ret = fread(ptr, 2, 1, file);
@@ -41,3 +42,4 @@ u64 fread_ef32(float *ptr, FILE *file)
 
 	return ret;
 }
+#endif /* 0 */

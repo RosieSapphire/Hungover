@@ -267,8 +267,10 @@ const struct node **_node_children_get_actors(const struct node *node_array,
 			continue;
 		}
 
-		children =
+		const struct node **result = 
 			realloc(children, sizeof(*children) * ++(*actor_count));
+		assert(result);
+		children = result;
 		children[(*actor_count) - 1] = cur;
 	}
 
@@ -403,11 +405,11 @@ static void _node_to_area(struct area *area, const struct node *node_array,
 		struct actor_header *actor_cur = area->actor_headers + i;
 		assert(actor_cur);
 
-		const struct node *node_cur = node_actors[i];
-		assert(node_cur);
+		const struct node *node_i = node_actors[i];
+		assert(node_i);
 
-		strncpy(actor_cur->name, node_cur->name, ACTOR_NAME_MAX_LEN);
-		actor_cur->type = node_cur->actor_type;
+		strncpy(actor_cur->name, node_i->name, ACTOR_NAME_MAX_LEN);
+		actor_cur->type = node_i->actor_type;
 
 		/* ALLOCATE OBJECTS */
 		switch (actor_cur->type) {
@@ -417,7 +419,7 @@ static void _node_to_area(struct area *area, const struct node *node_array,
 			assert(stat);
 			actor_cur->type_index = actor_static_count - 1;
 			memset(stat->mdl_path, 0, ACTOR_STATIC_MDLPATH_MAX_LEN);
-			strncpy(stat->mdl_path, node_cur->model_path,
+			strncpy(stat->mdl_path, node_i->model_path,
 				ACTOR_STATIC_MAX_COUNT);
 			break;
 		}
@@ -426,7 +428,7 @@ static void _node_to_area(struct area *area, const struct node *node_array,
 				actor_doors + actor_door_count++;
 			assert(door);
 			actor_cur->type_index = actor_door_count - 1;
-			door->area_dest = node_cur->area_dest;
+			door->area_dest = node_i->area_dest;
 			break;
 		}
 		case ACTOR_TYPE_MICROWAVE: {
@@ -442,21 +444,21 @@ static void _node_to_area(struct area *area, const struct node *node_array,
 				actor_pickups + actor_pickup_count++;
 			assert(pu);
 			actor_cur->type_index = actor_pickup_count - 1;
-			pu->type = node_cur->pickup_type;
+			pu->type = node_i->pickup_type;
 			break;
 		}
 		}
 
-		actor_cur->position.v[0] = node_cur->position[0];
-		actor_cur->position.v[1] = node_cur->position[1];
-		actor_cur->position.v[2] = node_cur->position[2];
-		actor_cur->scale.v[0] = node_cur->scale[0];
-		actor_cur->scale.v[1] = node_cur->scale[1];
-		actor_cur->scale.v[2] = node_cur->scale[2];
-		actor_cur->rotation.v[0] = node_cur->rotation[0];
-		actor_cur->rotation.v[1] = node_cur->rotation[1];
-		actor_cur->rotation.v[2] = node_cur->rotation[2];
-		actor_cur->rotation.v[3] = node_cur->rotation[3];
+		actor_cur->position.v[0] = node_i->position[0];
+		actor_cur->position.v[1] = node_i->position[1];
+		actor_cur->position.v[2] = node_i->position[2];
+		actor_cur->scale.v[0] = node_i->scale[0];
+		actor_cur->scale.v[1] = node_i->scale[1];
+		actor_cur->scale.v[2] = node_i->scale[2];
+		actor_cur->rotation.v[0] = node_i->rotation[0];
+		actor_cur->rotation.v[1] = node_i->rotation[1];
+		actor_cur->rotation.v[2] = node_i->rotation[2];
+		actor_cur->rotation.v[3] = node_i->rotation[3];
 	}
 
 	free(node_actors);
@@ -480,7 +482,7 @@ static void _scene_debug(const struct scene *scn)
 	for (unsigned int i = 0; i < scn->area_count; i++) {
 		struct area *area = scn->areas + i;
 		_depth_print_tabs(1);
-		printf("Area %d '%s': (%d)\n", i, area->name,
+		printf("Area %u '%s': (%u)\n", i, area->name,
 		       area->actor_header_count);
 		_depth_print_tabs(1);
 		printf(" - Offset: (%f, %f, %f)\n", area->offset.v[0],
@@ -517,7 +519,7 @@ static void _scene_debug(const struct scene *scn)
 		for (unsigned int j = 0; j < area->actor_header_count; j++) {
 			struct actor_header *actor = area->actor_headers + j;
 			_depth_print_tabs(2);
-			printf("Actor %d '%s':\n", j, actor->name);
+			printf("Actor %u '%s':\n", j, actor->name);
 			_depth_print_tabs(2);
 			printf(" - Pos: %f, %f, %f\n", actor->position.v[0],
 			       actor->position.v[1], actor->position.v[2]);

@@ -41,22 +41,19 @@ u8 actor_pickup_update(const u8 index, const struct actor_update_params *params)
 			     params->player_to_actor_dir->v[1], 0.f } };
 	t3d_vec3_norm(&pdir);
 	t3d_vec3_norm(&ptadir);
+
 	f32 pass_pickup_dot = t3d_vec3_dot(&pdir, &ptadir);
-	debugf("%f\n", pass_pickup_dot);
-	if (pass_pickup_dot <= 0.9f) {
+	if (pass_pickup_dot > 0.9f) {
+		actor_pickup_count_in_range++;
+
+		if (INPUT_GET_BTN(A, PRESSED)) {
+			((struct actor_header *)(actor_pickups + index))
+				->flags &= ~(ACTOR_FLAG_IS_ACTIVE);
+			return ACTOR_RETURN_PICKUP_WEAPON;
+		}
+
 		return ACTOR_RETURN_NONE;
 	}
-
-	actor_pickup_count_in_range++;
-
-	if (!INPUT_GET_BTN(A, PRESSED)) {
-		return ACTOR_RETURN_NONE;
-	}
-
-	/* TODO: Add the shotgun to their inventory */
-	struct actor_pickup *pu = actor_pickups + index;
-	((struct actor_header *)(pu))->flags &= ~(ACTOR_FLAG_IS_ACTIVE);
-	debugf("PICKUP SHOTGUN\n");
 
 	return ACTOR_RETURN_NONE;
 }
