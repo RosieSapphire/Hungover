@@ -1,4 +1,5 @@
-#include <assert.h>
+#include <stdlib.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <assimp/scene.h>
 #include <assimp/cimport.h>
@@ -48,6 +49,15 @@ struct actor_microwave actor_microwaves[ACTOR_MICROWAVE_MAX_COUNT];
 
 u8 actor_pickup_count;
 struct actor_pickup actor_pickups[ACTOR_PICKUP_MAX_COUNT];
+
+static void errorf(const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	vfprintf(stderr, fmt, args);
+	va_end(args);
+	exit(EXIT_FAILURE);
+}
 
 static unsigned int _node_type_enum_from_str(const char *str)
 {
@@ -116,6 +126,11 @@ static const char *_actor_type_str_from_enum(const unsigned int enm)
 static const struct aiNode *_ainode_from_name(const struct aiNode *ainode,
 					      const char *node_name)
 {
+	if (!node_name) {
+		errorf("node_name passed into function is NULL\n");
+		return NULL;
+	}
+
 	if (!strcmp(ainode->mName.data, node_name)) {
 		return ainode;
 	}
@@ -177,7 +192,10 @@ static void _node_actor_process(struct node *node, struct json_object *extras)
 {
 	struct json_object *js_node_actor_type;
 	json_object_object_get_ex(extras, "ActorType", &js_node_actor_type);
-	assert(js_node_actor_type);
+	if (!js_node_actor_type) {
+		errorf("Failed to get 'ActorType' from jsnode extras\n");
+	}
+
 	node->actor_type = _actor_type_enum_from_str(
 		json_object_get_string(js_node_actor_type));
 
@@ -186,7 +204,9 @@ static void _node_actor_process(struct node *node, struct json_object *extras)
 		struct json_object *js_node_model_path;
 		json_object_object_get_ex(extras, "ModelPath",
 					  &js_node_model_path);
-		assert(js_node_model_path);
+		if (!js_node_model_path) {
+			errorf("Failed to get 'ModelPath' from jsnode\n");
+		}
 		memset(node->model_path, 0, ACTOR_STATIC_MDLPATH_MAX_LEN);
 		strncpy(node->model_path,
 			json_object_get_string(js_node_model_path),
@@ -199,7 +219,9 @@ static void _node_actor_process(struct node *node, struct json_object *extras)
 		struct json_object *js_node_area_dest;
 		json_object_object_get_ex(extras, "AreaDest",
 					  &js_node_area_dest);
-		assert(js_node_area_dest);
+		if (!js_node_area_dest) {
+			errorf("Failed to get 'AreaDest' from jsnode\n");
+		}
 		node->area_dest = json_object_get_int(js_node_area_dest);
 		break;
 	}
@@ -211,7 +233,9 @@ static void _node_actor_process(struct node *node, struct json_object *extras)
 		struct json_object *js_node_pickup_type;
 		json_object_object_get_ex(extras, "PickupType",
 					  &js_node_pickup_type);
-		assert(js_node_pickup_type);
+		if (!js_node_pickup_type) {
+			errorf("Failed to get 'PickupType' from jsnode\n");
+		}
 		node->pickup_type = json_object_get_int(js_node_pickup_type);
 		break;
 	}
@@ -219,6 +243,9 @@ static void _node_actor_process(struct node *node, struct json_object *extras)
 
 	const struct aiNode *ainode =
 		_ainode_from_name(scene_in->mRootNode, node->name);
+	if (!ainode) {
+		errorf("ainode from name '%s' is invalid\n", node->name);
+	}
 
 	node->position[0] = ainode->mTransformation.a4 * T3DM_TO_N64_SCALE;
 	node->position[1] = ainode->mTransformation.b4 * T3DM_TO_N64_SCALE;
@@ -256,22 +283,33 @@ const struct node **_node_children_get_actors(const struct node *node_array,
 					      const struct node *node_cur,
 					      unsigned short *actor_count)
 {
-	const struct node **children = malloc(0);
+	const struct node **children = NULL;
 
 	for (unsigned int i = 0; i < node_cur->children_count; i++) {
 		const struct node *cur =
 			node_array + (node_cur->children_indices[i]);
-		assert(cur);
+		if (!cur) {
+			errorf("Array index %d of node array is invalid\n", i);
+		}
 
 		if (cur->node_type != NODE_TYPE_ACTOR) {
 			continue;
 		}
 
-		const struct node **result = 
-			realloc(children, sizeof(*children) * ++(*actor_count));
-		assert(result);
-		children = result;
-		children[(*actor_count) - 1] = cur;
+		if (!children) {
+			children = malloc(sizeof(*children) * ++(*actor_count));
+		} else {
+			children = realloc(children, sizeof(*children) *
+							     ++(*actor_count));
+		}
+
+		if (!children) {
+			errorf("Children array is invalid\n");
+		}
+
+		if (children[(*actor_count) - 1]) {
+			children[(*actor_count) - 1] = cur;
+		}
 	}
 
 	return children;
@@ -283,7 +321,9 @@ const struct node *_node_children_get_colmesh(const struct node *node_array,
 	for (unsigned int i = 0; i < node_cur->children_count; i++) {
 		const struct node *cur =
 			node_array + (node_cur->children_indices[i]);
-		assert(cur);
+		if (!cur) {
+			errorf("Node child %d is invalid\n", i);
+		}
 
 		if (cur->node_type == NODE_TYPE_COLMESH) {
 			return cur;
@@ -357,17 +397,24 @@ static struct collision_mesh _node_to_colmesh(const struct aiNode *ainode)
 	}
 
 	ret.triangle_count = 0;
-	ret.triangles = malloc(0);
+	ret.triangles = NULL;
 	for (unsigned int i = 0; i < mesh_count; i++) {
 		const struct collision_mesh *m = meshes_out + i;
 
 		ret.triangle_count += m->triangle_count;
-		ret.triangles =
-			realloc(ret.triangles,
-				sizeof *ret.triangles * ret.triangle_count);
+		if (!ret.triangles) {
+			ret.triangles = malloc(sizeof(*ret.triangles) *
+					       ret.triangle_count);
+		} else {
+			ret.triangles = realloc(ret.triangles,
+						sizeof(*ret.triangles) *
+							ret.triangle_count);
+		}
+
 		memcpy(ret.triangles + (ret.triangle_count - m->triangle_count),
 		       m->triangles, sizeof *m->triangles * m->triangle_count);
 	}
+
 	ret.offset.v[0] = ainode->mTransformation.a4 * T3DM_TO_N64_SCALE;
 	ret.offset.v[1] = ainode->mTransformation.b4 * T3DM_TO_N64_SCALE;
 	ret.offset.v[2] = ainode->mTransformation.c4 * T3DM_TO_N64_SCALE;
@@ -396,17 +443,25 @@ static void _node_to_area(struct area *area, const struct node *node_array,
 
 	const struct node **node_actors = _node_children_get_actors(
 		node_array, node_cur, &area->actor_header_count);
-	assert(node_actors);
+	if (!node_actors) {
+		errorf("Failed to get node children from node array\n");
+	}
 	area->actor_headers =
 		calloc(area->actor_header_count, sizeof(*area->actor_headers));
-	assert(area->actor_headers);
+	if (!area->actor_headers) {
+		errorf("Failed to allocate actor_headers\n");
+	}
 
 	for (unsigned int i = 0; i < area->actor_header_count; i++) {
 		struct actor_header *actor_cur = area->actor_headers + i;
-		assert(actor_cur);
+		if (!actor_cur) {
+			errorf("Actor ind %d is invalid\n", i);
+		}
 
 		const struct node *node_i = node_actors[i];
-		assert(node_i);
+		if (!node_i) {
+			errorf("Node ind %d is invalid\n", i);
+		}
 
 		strncpy(actor_cur->name, node_i->name, ACTOR_NAME_MAX_LEN);
 		actor_cur->type = node_i->actor_type;
@@ -416,7 +471,10 @@ static void _node_to_area(struct area *area, const struct node *node_array,
 		case ACTOR_TYPE_STATIC: {
 			struct actor_static *stat =
 				actor_statics + actor_static_count++;
-			assert(stat);
+			if (!stat) {
+				errorf("Static actor %d is invalid\n",
+				       actor_static_count - 1);
+			}
 			actor_cur->type_index = actor_static_count - 1;
 			memset(stat->mdl_path, 0, ACTOR_STATIC_MDLPATH_MAX_LEN);
 			strncpy(stat->mdl_path, node_i->model_path,
@@ -426,7 +484,10 @@ static void _node_to_area(struct area *area, const struct node *node_array,
 		case ACTOR_TYPE_DOOR: {
 			struct actor_door *door =
 				actor_doors + actor_door_count++;
-			assert(door);
+			if (!door) {
+				errorf("Door actor %d is invalid\n",
+				       actor_door_count - 1);
+			}
 			actor_cur->type_index = actor_door_count - 1;
 			door->area_dest = node_i->area_dest;
 			break;
@@ -434,7 +495,10 @@ static void _node_to_area(struct area *area, const struct node *node_array,
 		case ACTOR_TYPE_MICROWAVE: {
 			struct actor_microwave *mic =
 				actor_microwaves + actor_microwave_count++;
-			assert(mic);
+			if (!mic) {
+				errorf("Microwave actor %d is invalid\n",
+				       actor_microwave_count - 1);
+			}
 			actor_cur->type_index = actor_microwave_count - 1;
 			break;
 		}
@@ -442,7 +506,10 @@ static void _node_to_area(struct area *area, const struct node *node_array,
 		case ACTOR_TYPE_PICKUP: {
 			struct actor_pickup *pu =
 				actor_pickups + actor_pickup_count++;
-			assert(pu);
+			if (!pu) {
+				errorf("Pickup actor %d is invalid\n",
+				       actor_pickup_count - 1);
+			}
 			actor_cur->type_index = actor_pickup_count - 1;
 			pu->type = node_i->pickup_type;
 			break;
@@ -468,8 +535,14 @@ static void _node_to_scene(struct scene *scn, const struct node *node_array,
 			   const struct node *node_cur)
 {
 	if (node_cur->node_type == NODE_TYPE_AREA) {
-		scn->areas = realloc(scn->areas,
-				     sizeof(*scn->areas) * ++scn->area_count);
+		if (!scn->areas) {
+			scn->areas =
+				malloc(sizeof(*scn->areas) * ++scn->area_count);
+		} else {
+			scn->areas =
+				realloc(scn->areas, sizeof(*scn->areas) *
+							    ++scn->area_count);
+		}
 
 		struct area *area = scn->areas + scn->area_count - 1;
 		_node_to_area(area, node_array, node_cur);
@@ -571,7 +644,9 @@ static void _scene_debug(const struct scene *scn)
 static void _scene_export(const char *path_out, const struct scene *scn)
 {
 	FILE *file = fopen(path_out, "wb");
-	assert(file);
+	if (!file) {
+		errorf("File failed to load from '%s'\n", path_out);
+	}
 
 	fwrite_ef16(&scn->area_count, file);
 	for (unsigned int i = 0; i < scn->area_count; i++) {
@@ -748,7 +823,9 @@ static void _scene_free(struct scene *scn)
 
 int main(int argc, char **argv)
 {
-	assert(argc == 3);
+	if (argc != 3) {
+		errorf("Argc must equal 3!\n");
+	}
 
 	const char *path_in = argv[1];
 	const char *path_out = argv[2];
@@ -756,10 +833,14 @@ int main(int argc, char **argv)
 	// printf("path_in='%s' path_out='%s'\n", path_in, path_out);
 
 	scene_in = aiImportFile(path_in, aiProcess_Triangulate);
-	assert(scene_in);
+	if (!scene_in) {
+		errorf("Failed to load scene from '%s'\n", path_in);
+	}
 
 	FILE *gltf_file = fopen(path_in, "rb");
-	assert(gltf_file);
+	if (!gltf_file) {
+		errorf("Failed to load gltf file from '%s'\n", path_in);
+	}
 
 	fseek(gltf_file, 0, SEEK_END);
 
@@ -771,41 +852,60 @@ int main(int argc, char **argv)
 	fclose(gltf_file);
 
 	struct json_object *json_parsed = json_tokener_parse(gltf_buf);
-	assert(json_parsed);
+	if (!json_parsed) {
+		errorf("Failed to parse json file from gltf buf\n");
+	}
 	free(gltf_buf);
 
 	struct json_object *js_nodes;
 	json_object_object_get_ex(json_parsed, "nodes", &js_nodes);
-	assert(js_nodes);
+	if (!js_nodes) {
+		errorf("Failed to get 'nodes' from parsed json\n");
+	}
 
 	unsigned int js_nodes_len = json_object_array_length(js_nodes);
-	assert(js_nodes_len);
+	if (!js_nodes_len) {
+		errorf("json node array length is 0\n");
+	}
 
 	struct node *nodes = calloc(js_nodes_len, sizeof(*nodes));
-	assert(nodes);
+	if (!nodes) {
+		errorf("Failed to allocated 'nodes' array\n");
+	}
 
 	for (unsigned int i = 0; i < js_nodes_len; i++) {
 		struct json_object *js_node =
 			json_object_array_get_idx(js_nodes, i);
-		assert(js_nodes);
+		if (!js_node) {
+			errorf("Failed to get jsnode index %d\n", i);
+		}
 
 		struct node *node = nodes + i;
-		assert(node);
+		if (!node) {
+			errorf("Node %d is invalid\n", i);
+		}
 
 		struct json_object *js_node_name;
 		json_object_object_get_ex(js_node, "name", &js_node_name);
-		assert(js_node_name);
+		if (!js_node_name) {
+			errorf("Failed to get node %d's name\n", i);
+		}
+
 		strncpy(node->name, json_object_get_string(js_node_name),
 			NODE_NAME_MAX_LEN);
 
 		struct json_object *js_node_extras;
 		json_object_object_get_ex(js_node, "extras", &js_node_extras);
-		assert(js_node_extras);
+		if (!js_node_extras) {
+			errorf("Failed to get node extras for %d\n", i);
+		}
 
 		struct json_object *js_node_type;
 		json_object_object_get_ex(js_node_extras, "NodeType",
 					  &js_node_type);
-		assert(js_node_type);
+		if (!js_node_type) {
+			errorf("Failed to get node type from node %d\n", i);
+		}
 
 		node->node_type = _node_type_enum_from_str(
 			json_object_get_string(js_node_type));
@@ -815,7 +915,9 @@ int main(int argc, char **argv)
 			struct json_object *js_node_area_ind;
 			json_object_object_get_ex(js_node_extras, "AreaIndex",
 						  &js_node_area_ind);
-			assert(js_node_area_ind);
+			if (!js_node_area_ind) {
+				errorf("Failed to get node 'AreaIndex'\n");
+			}
 			node->area_index =
 				json_object_get_int(js_node_area_ind);
 			break;
@@ -837,7 +939,9 @@ int main(int argc, char **argv)
 		if (js_node_children) {
 			unsigned int js_node_children_len =
 				json_object_array_length(js_node_children);
-			assert(js_node_children_len);
+			if (!js_node_children_len) {
+				errorf("Failed to get jsnode children len\n");
+			}
 
 			node->children_count = js_node_children_len;
 			node->children_indices =
@@ -849,13 +953,17 @@ int main(int argc, char **argv)
 				struct json_object *js_node_child =
 					json_object_array_get_idx(
 						js_node_children, j);
-				assert(js_node_child);
+				if (!js_node_child) {
+					errorf("Failed to get jsnode child\n");
+				}
 
 				unsigned int js_node_child_idx =
 					json_object_get_int(js_node_child);
 				unsigned int *node_child =
 					node->children_indices + j;
-				assert(node_child);
+				if (!node_child) {
+					errorf("Failed to get node child\n");
+				}
 				*node_child = js_node_child_idx;
 			}
 		} else {
@@ -866,44 +974,65 @@ int main(int argc, char **argv)
 
 	struct json_object *js_scenes;
 	json_object_object_get_ex(json_parsed, "scenes", &js_scenes);
-	assert(js_scenes);
+	if (!js_scenes) {
+		errorf("Failed to get jsscenes from parsed json\n");
+	}
 
 	unsigned int js_scenes_len = json_object_array_length(js_scenes);
-	assert(js_scenes_len == 1);
+	if (js_scenes_len != 1) {
+		errorf("jsscene has more or less than 1 scene\n");
+	}
 
 	struct json_object *js_root = json_object_array_get_idx(js_scenes, 0);
-	assert(js_root);
+	if (!js_root) {
+		errorf("Failed to get jsroot\n");
+	}
 
 	struct json_object *js_root_name;
 	json_object_object_get_ex(js_root, "name", &js_root_name);
-	assert(js_root_name);
+	if (!js_root_name) {
+		errorf("Failed to get jsroot name\n");
+	}
 
 	struct json_object *js_root_nodes;
 	json_object_object_get_ex(js_root, "nodes", &js_root_nodes);
-	assert(js_root_nodes);
+	if (!js_root_nodes) {
+		errorf("Failed to get jsroot nodes\n");
+	}
 
 	unsigned int js_root_nodes_len =
 		json_object_array_length(js_root_nodes);
-	assert(js_root_nodes_len);
+	if (!js_root_nodes_len) {
+		errorf("Failed to get jsroot nodes array len\n");
+	}
 
 	struct node **root_nodes =
-		calloc(js_root_nodes_len, sizeof(**root_nodes));
+		calloc(js_root_nodes_len, sizeof(*root_nodes));
+	if (!root_nodes) {
+		errorf("Failed to allocate root nodes\n");
+	}
 
 	struct scene scene_out;
 	scene_out.area_count = 0;
-	scene_out.areas = malloc(0);
+	scene_out.areas = NULL;
 
 	for (unsigned int i = 0; i < js_root_nodes_len; i++) {
 		struct json_object *js_root_node =
 			json_object_array_get_idx(js_root_nodes, i);
-		assert(js_root_node);
+		if (!js_root_node) {
+			errorf("Failed to get jsroot index %d\n", i);
+		}
 
 		unsigned int js_root_node_idx =
 			json_object_get_int(js_root_node);
-		assert(js_root_node_idx);
+		if (!js_root_node_idx) {
+			errorf("Failed to get jsroot index\n");
+		}
 
 		root_nodes[i] = nodes + js_root_node_idx;
-		assert(root_nodes[i]);
+		if (!root_nodes[i]) {
+			errorf("root node %d is invalid\n", i);
+		}
 		_node_to_scene(&scene_out, nodes, root_nodes[i]);
 	}
 
