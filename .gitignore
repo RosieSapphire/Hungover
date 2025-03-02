@@ -9,3 +9,5 @@ tools/gltf-to-scn/out/
 tools/gltf-to-scn/*.sh
 tools/gltf-to-scn/*.scn
 tools/gltf-to-scn/*.json
+tools/gltf-to-scn/.cache/
+.cache/
