@@ -18,7 +18,7 @@ $(BUILD_DIR)/%.o: %.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -o $@ -c $<
 
-.PHONY: clean format tidy
+.PHONY: clean format cppcheck
 
 clean:
 	rm -rf $(BUILD_DIR) $(TARGET)
@@ -26,5 +26,6 @@ clean:
 format: $(H_FILES) $(C_FILES)
 	clang-format-15 --style=file -i $^
 
-tidy: $(H_FILES) $(C_FILES)
-	@clang-tidy-19 $^
+cppcheck: $(H_FILES) $(C_FILES)
+	@cppcheck --quiet --enable=all --error-exitcode=1 \
+		--inline-suppr --check-config $^
