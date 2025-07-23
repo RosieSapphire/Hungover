@@ -1,0 +1,9 @@
+# dirs
+.ccls-cache/
+.cache/
+build/
+filesystem/
+
+# files
+compile_commands.json
+hungover.z64
