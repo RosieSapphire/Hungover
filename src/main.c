@@ -2,7 +2,7 @@
 #include <t3d/t3d.h>
 #include <t3d/t3dmodel.h>
 
-#include "t3d_ext.h"
+#include "util.h"
 
 #define INTERPOLATION 1
 #define TICKRATE 24
@@ -70,9 +70,9 @@ int main(void)
         light_col[1] = 0xAA;
         light_col[2] = 0xAA;
         light_col[3] = 0xFF;
-        light_ambi[0] = 0x50;
-        light_ambi[1] = 0x50;
-        light_ambi[2] = 0x64;
+        light_ambi[0] = 0x19;
+        light_ambi[1] = 0x32;
+        light_ambi[2] = 0x4B;
         light_ambi[3] = 0xFF;
 
         /* Main loop. */
@@ -106,7 +106,8 @@ int main(void)
                 rdpq_attach(display_get(), display_get_zbuf());
                 t3d_frame_start();
                 t3d_viewport_attach(&viewport);
-                t3d_screen_clear_color(RGBA32(0xFF, 0x7F, 0x64, 0xFF));
+                t3d_screen_clear_color(
+                        color_from_packed32(U8_ARR_TO_U32_PACK(light_ambi)));
                 t3d_screen_clear_depth();
 
                 t3d_light_set_ambient(light_ambi);
@@ -159,7 +160,7 @@ static void test_cube_matrix_setup(struct test_cube *tc, const float subtick)
 
         rot[0] = 0.f;
         rot[1] = 0.f;
-        rot[2] = T3D_DEG_TO_RAD(t3d_lerpf(tc->rotdeg_old, tc->rotdeg, subtick));
+        rot[2] = T3D_DEG_TO_RAD(lerpf(tc->rotdeg_old, tc->rotdeg, subtick));
 
         pos[0] = 0.f;
         pos[1] = 0.f;

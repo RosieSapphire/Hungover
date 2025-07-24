@@ -1,6 +1,6 @@
-#include "t3d_ext.h"
+#include "util.h"
 
-float t3d_lerpf(const float a, const float b, const float t)
+float lerpf(const float a, const float b, const float t)
 {
         return a + (b - a) * t;
 }
