@@ -7,21 +7,51 @@
 #define INTERPOLATION 1
 #define TICKRATE 24
 
-#define TEST_CUBE_ROTSPD 90.f
+#define CUBE_ROTSPD 1.25f
 
-struct test_cube {
+enum {
+        OBJ_CUBE_IND,
+        OBJ_FLOOR_IND,
+        OBJ_CNT
+};
+
+struct object {
         T3DModel *mdl;
         T3DMat4FP *mtx;
         rspq_block_t *dl;
-        float rotdeg_old;
-        float rotdeg;
+        T3DVec3 pos_old;
+        T3DVec3 pos;
+        T3DVec3 roteul_old;
+        T3DVec3 roteul;
+        T3DVec3 scale_old;
+        T3DVec3 scale;
+        void (*update_func)(struct object *, const float fixedtime);
 };
 
-static struct test_cube test_cube_create(void);
-static void test_cube_matrix_setup(struct test_cube *tc, const float subtick);
-static void test_cube_destroy(struct test_cube *tc);
+static struct object object_create(const char *mdl_path,
+                                   const T3DVec3 *pos,
+                                   const T3DVec3 *roteul,
+                                   const T3DVec3 *scale,
+                                   void (*update_func)(struct object *,
+                                                       const float));
+static void objects_create(struct object *objs);
+static void object_setup_matrix(struct object *obj, const float subtick);
+static void objects_setup_matrices(struct object *objs, const int obj_cnt,
+                                   const float subtick);
+static void objects_render(struct object *objs, const int obj_cnt);
+static void object_destroy(struct object *obj);
+static void objects_destroy(struct object *objs);
 
-static void update_loop(struct test_cube *tc, const float fixedtime);
+static void obj_cube_update(struct object *tc, const float fixedtime);
+static void obj_floor_update(struct object *fl, const float fixedtime);
+
+static void update_loop(struct object *objs, const int obj_cnt,
+                        const float fixedtime);
+
+static void (*obj_update_funcs[OBJ_CNT])(struct object *, const float) = {
+        obj_cube_update,
+        obj_floor_update
+};
 
 int main(void)
 {
@@ -29,7 +59,7 @@ int main(void)
         int dfs_handle;
         float time_accum;
 
-        struct test_cube cube;
+        struct object objs[OBJ_CNT];
 
         T3DVec3 cam_eye, cam_foc, cam_up;
         T3DVec3 light_dir;
@@ -58,10 +88,10 @@ int main(void)
         viewport = t3d_viewport_create();
 
         /* Initialize game. */
-        cube = test_cube_create();
+        objects_create(objs);
 
-        cam_eye = t3d_vec3_make(0.f, 160.f, 40.f);
-        cam_foc = t3d_vec3_zero();
+        cam_eye = t3d_vec3_make(0.f, 200.f, 150.f);
+        cam_foc = t3d_vec3_make(0.f, 0.f, 50.f);
         cam_up = t3d_vec3_zup();
 
         light_dir = t3d_vec3_make(-1.f, 1.f, 0.f);
@@ -86,7 +116,7 @@ int main(void)
                 for (time_accum += display_get_delta_time();
                      time_accum >= fixedtime;
                      time_accum -= fixedtime) {
-                        update_loop(&cube, fixedtime);
+                        update_loop(objs, OBJ_CNT, fixedtime);
                 }
 
                 /* Updating -> Rendering */
@@ -100,7 +130,7 @@ int main(void)
                                             10.f, 150.f);
                 t3d_viewport_look_at(&viewport, &cam_eye, &cam_foc, &cam_up);
 
-                test_cube_matrix_setup(&cube, subtick);
+                objects_setup_matrices(objs, OBJ_CNT, subtick);
 
                 /* Rendering */
                 rdpq_attach(display_get(), display_get_zbuf());
@@ -114,13 +144,13 @@ int main(void)
                 t3d_light_set_directional(0, light_col, &light_dir);
                 t3d_light_set_count(1);
 
-                rspq_block_run(cube.dl);
+                objects_render(objs, OBJ_CNT);
 
                 rdpq_detach_show();
         }
 
         /* Terminate Tiny3D. */
-        test_cube_destroy(&cube);
+        objects_destroy(objs);
         t3d_destroy();
 
         /* Terminate Libdragon. */
@@ -132,56 +162,132 @@ int main(void)
         display_close();
 }
 
-static struct test_cube test_cube_create(void)
+static struct object object_create(const char *mdl_path,
+                                   const T3DVec3 *pos,
+                                   const T3DVec3 *roteul,
+                                   const T3DVec3 *scale,
+                                   void (*update_func)(struct object *,
+                                                       const float))
 {
-        struct test_cube tc;
+        struct object obj;
 
-        tc.mdl = t3d_model_load("rom:/cube.t3dm");
-        tc.mtx = malloc_uncached(sizeof(*tc.mtx));
-        tc.rotdeg_old = 0.f;
-        tc.rotdeg = 0.f;
+        obj.mdl = t3d_model_load(mdl_path);
+        obj.mtx = malloc_uncached(sizeof(*obj.mtx));
 
         rspq_block_begin();
-        t3d_matrix_push(tc.mtx);
-        t3d_model_draw(tc.mdl);
+        t3d_matrix_push(obj.mtx);
+        t3d_model_draw(obj.mdl);
         t3d_matrix_pop(1);
-        tc.dl = rspq_block_end();
+        obj.dl = rspq_block_end();
 
-        return tc;
+        obj.pos = *pos;
+        obj.pos_old = obj.pos;
+        obj.roteul = *roteul;
+        obj.roteul_old = obj.roteul;
+        obj.scale = *scale;
+        obj.scale_old = obj.scale;
+        obj.update_func = update_func;
+
+        return obj;
 }
 
-static void test_cube_matrix_setup(struct test_cube *tc, const float subtick)
+static void objects_create(struct object *objs)
 {
-        float scl[3], rot[3], pos[3];
+        const char *paths[OBJ_CNT] = {
+                "rom:/cube.t3dm",
+                "rom:/floor.t3dm"
+        };
 
-        scl[0] = 1.f;
-        scl[1] = 1.f;
-        scl[2] = 1.f;
+        T3DVec3 pos[OBJ_CNT], roteul[OBJ_CNT], scale[OBJ_CNT];
+        int i;
 
-        rot[0] = 0.f;
-        rot[1] = 0.f;
-        rot[2] = T3D_DEG_TO_RAD(lerpf(tc->rotdeg_old, tc->rotdeg, subtick));
-
-        pos[0] = 0.f;
-        pos[1] = 0.f;
-        pos[2] = 0.f;
-
-        t3d_mat4fp_from_srt_euler(tc->mtx, scl, rot, pos);
+        for (i = 0; i < OBJ_CNT; ++i) {
+                pos[i] = t3d_vec3_zero();
+                roteul[i] = t3d_vec3_zero();
+                scale[i] = t3d_vec3_one();
+                objs[i] = object_create(paths[i], pos + i,
+                                        roteul + i, scale + i,
+                                        obj_update_funcs[i]);
+        }
 }
 
-static void test_cube_destroy(struct test_cube *tc)
+static void object_setup_matrix(struct object *obj, const float subtick)
 {
-        rspq_block_free(tc->dl);
-        free_uncached(tc->mtx);
-        t3d_model_free(tc->mdl);
+        T3DVec3 scale, roteul, pos;
+
+        t3d_vec3_lerp(&pos, &obj->pos_old, &obj->pos, subtick);
+        t3d_vec3_lerp(&roteul, &obj->roteul_old, &obj->roteul, subtick);
+        t3d_vec3_lerp(&scale, &obj->scale_old, &obj->scale, subtick);
+        t3d_mat4fp_from_srt_euler(obj->mtx, scale.v, roteul.v, pos.v);
 }
 
-static void update_loop(struct test_cube *tc, const float fixedtime)
+static void objects_setup_matrices(struct object *objs, const int obj_cnt,
+                                   const float subtick)
 {
-        tc->rotdeg_old = tc->rotdeg;
-        tc->rotdeg += TEST_CUBE_ROTSPD * fixedtime;
-        if (tc->rotdeg >= 360.f) {
-                tc->rotdeg_old -= 360.f;
-                tc->rotdeg -= 360.f;
+        int i;
+
+        for (i = 0; i < obj_cnt; ++i)
+                object_setup_matrix(objs + i, subtick);
+}
+
+static void objects_render(struct object *objs, const int obj_cnt)
+{
+        int i;
+
+        for (i = 0; i < obj_cnt; ++i)
+                rspq_block_run(objs[i].dl);
+}
+
+static void object_destroy(struct object *obj)
+{
+        rspq_block_free(obj->dl);
+        free_uncached(obj->mtx);
+        t3d_model_free(obj->mdl);
+}
+
+static void objects_destroy(struct object *objs)
+{
+        int i;
+
+        for (i = 0; i < OBJ_CNT; ++i)
+                object_destroy(objs + i);
+}
+
+static void obj_cube_update(struct object *tc, const float fixedtime)
+{
+        tc->roteul_old = tc->roteul;
+
+        tc->roteul.v[2] += CUBE_ROTSPD * fixedtime;
+        if (tc->roteul.v[2] >= 2.f * T3D_PI) {
+                tc->roteul_old.v[2] -= 2.f * T3D_PI;
+                tc->roteul.v[2] -= 2.f * T3D_PI;
+        }
+}
+
+static void obj_floor_update(struct object *fl, const float fixedtime)
+{
+        static float t = 0.f;
+
+        fl->pos_old = fl->pos;
+
+        t += fixedtime * T3D_PI * 2.f;
+        fl->pos.v[2] = -fabsf(sinf(t)) * 50.f;
+        if (fl->pos.v[2] >= 2.f * T3D_PI) {
+                fl->pos_old.v[2] -= 2.f * T3D_PI;
+                fl->pos.v[2] -= 2.f * T3D_PI;
+        }
+}
+
+static void update_loop(struct object *objs, const int obj_cnt,
+                        const float fixedtime)
+{
+        int i;
+
+        for (i = 0; i < obj_cnt; ++i) {
+                struct object *obj;
+
+                obj = objs + i;
+                if (obj->update_func)
+                        obj->update_func(objs + i, fixedtime);
         }
 }

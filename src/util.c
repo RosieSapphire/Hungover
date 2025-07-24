@@ -35,3 +35,8 @@ T3DVec3 t3d_vec3_zero(void)
 {
         return t3d_vec3_make(0.f, 0.f, 0.f);
 }
+
+T3DVec3 t3d_vec3_one(void)
+{
+        return t3d_vec3_make(1.f, 1.f, 1.f);
+}

@@ -20,3 +20,4 @@ T3DVec3 t3d_vec3_xup(void);
 T3DVec3 t3d_vec3_yup(void);
 T3DVec3 t3d_vec3_zup(void);
 T3DVec3 t3d_vec3_zero(void);
+T3DVec3 t3d_vec3_one(void);

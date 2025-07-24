@@ -48,7 +48,7 @@
 				}
 			},
 			"mesh":0,
-			"name":"Cube"
+			"name":"Cube.001"
 		}
 	],
 	"materials":[
@@ -68,10 +68,10 @@
 					"name":"",
 					"combiner1":{
 						"name":"",
-						"A":1,
+						"A":8,
 						"B":8,
-						"C":4,
-						"D":7,
+						"C":16,
+						"D":4,
 						"A_alpha":7,
 						"B_alpha":7,
 						"C_alpha":7,
@@ -90,10 +90,7 @@
 					},
 					"tex0":{
 						"tex_set":1,
-						"tex":{
-							"name":"bubby.ci4.png",
-							"type":"Image"
-						},
+						"tex":null,
 						"tile_scroll":{},
 						"menu":1,
 						"S":{
@@ -278,7 +275,7 @@
 				"is_f3d":1,
 				"mat_ver":5,
 				"f3d_update_flag":0,
-				"menu_tab":1
+				"menu_tab":0
 			},
 			"name":"material",
 			"pbrMetallicRoughness":{}
@@ -286,7 +283,7 @@
 	],
 	"meshes":[
 		{
-			"name":"Cube",
+			"name":"Cube.001",
 			"primitives":[
 				{
 					"attributes":{
@@ -305,21 +302,21 @@
 		{
 			"bufferView":0,
 			"componentType":5126,
-			"count":24,
+			"count":4,
 			"type":"VEC4"
 		},
 		{
 			"bufferView":1,
 			"componentType":5126,
-			"count":24,
+			"count":4,
 			"max":[
-				0.5,
-				0.5,
-				1
+				1.403922200202942,
+				1.403922200202942,
+				0
 			],
 			"min":[
-				-0.5,
-				-0.5,
+				-1.403922200202942,
+				-1.403922200202942,
 				0
 			],
 			"type":"VEC3"
@@ -327,58 +324,58 @@
 		{
 			"bufferView":2,
 			"componentType":5126,
-			"count":24,
+			"count":4,
 			"type":"VEC3"
 		},
 		{
 			"bufferView":3,
 			"componentType":5126,
-			"count":24,
+			"count":4,
 			"type":"VEC2"
 		},
 		{
 			"bufferView":4,
 			"componentType":5123,
-			"count":36,
+			"count":6,
 			"type":"SCALAR"
 		}
 	],
 	"bufferViews":[
 		{
 			"buffer":0,
-			"byteLength":384,
+			"byteLength":64,
 			"byteOffset":0,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":288,
-			"byteOffset":384,
+			"byteLength":48,
+			"byteOffset":64,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":288,
-			"byteOffset":672,
+			"byteLength":48,
+			"byteOffset":112,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":192,
-			"byteOffset":960,
+			"byteLength":32,
+			"byteOffset":160,
 			"target":34962
 		},
 		{
 			"buffer":0,
-			"byteLength":72,
-			"byteOffset":1152,
+			"byteLength":12,
+			"byteOffset":192,
 			"target":34963
 		}
 	],
 	"buffers":[
 		{
-			"byteLength":1224,
-			"uri":"cube.bin"
+			"byteLength":204,
+			"uri":"floor.bin"
 		}
 	]
 }
