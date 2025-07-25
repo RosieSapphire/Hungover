@@ -21,3 +21,5 @@ T3DVec3 t3d_vec3_yup(void);
 T3DVec3 t3d_vec3_zup(void);
 T3DVec3 t3d_vec3_zero(void);
 T3DVec3 t3d_vec3_one(void);
+T3DVec3 t3d_vec3_scale(const T3DVec3 *inp, const float mul);
+void debugf_t3d_vec3(const char *name, const T3DVec3 *vec);

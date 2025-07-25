@@ -40,3 +40,20 @@ T3DVec3 t3d_vec3_one(void)
 {
         return t3d_vec3_make(1.f, 1.f, 1.f);
 }
+
+T3DVec3 t3d_vec3_scale(const T3DVec3 *inp, const float mul)
+{
+        int i;
+        T3DVec3 out;
+
+        out = *inp;
+        for (i = 0; i < 3; ++i)
+                out.v[i] *= mul;
+
+        return out;
+}
+
+void debugf_t3d_vec3(const char *name, const T3DVec3 *vec)
+{
+        debugf("%s=(%f, %f, %f)\n", name, vec->v[0], vec->v[1], vec->v[2]);
+}
