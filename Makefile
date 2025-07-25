@@ -1,5 +1,6 @@
 DEBUG_ENABLED := 1
 COMPRESS_LEVEL := 3
+MDL_SCALE := 100
 BUILD_DIR := build
 
 include $(N64_INST)/include/n64.mk
@@ -17,7 +18,7 @@ ROM := $(TARGET).z64
 ELF := $(BUILD_DIR)/$(TARGET).elf
 DFS := $(BUILD_DIR)/$(TARGET).dfs
 N64_CFLAGS += -Wall -Wextra -Werror -Ofast $(INC_FLAGS) \
-	      -DCOMPRESS_LEVEL=$(COMPRESS_LEVEL)
+	      -DCOMPRESS_LEVEL=$(COMPRESS_LEVEL) -DMDL_SCALE=$(MDL_SCALE)
 ifeq ($(DEBUG_ENABLED),1)
 	N64_CFLAGS += -DDEBUG
 endif
@@ -52,7 +53,7 @@ filesystem/%.wav64: assets/%.wav
 filesystem/%.t3dm: assets/%.gltf
 	@mkdir -p $(dir $@)
 	@echo "    [T3D-MODEL] $@"
-	$(T3D_GLTF_TO_3D) "$<" $@ --base-scale=100
+	$(T3D_GLTF_TO_3D) "$<" $@ --base-scale=$(MDL_SCALE)
 	$(N64_BINDIR)/mkasset $(MKMODEL_FLAGS) -o $(dir $@) $@
 
 .PHONY: clean todo

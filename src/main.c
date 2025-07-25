@@ -7,6 +7,10 @@
 #define INTERPOLATION 1
 #define TICKRATE 24
 
+#define VIEWPORT_NEAR ( .1f * MDL_SCALE)
+#define VIEWPORT_FAR (1.5f * MDL_SCALE)
+#define VIEWPORT_FOV_DEG 90.f
+
 #define CUBE_ROTSPD 1.25f
 
 enum {
@@ -90,8 +94,8 @@ int main(void)
         /* Initialize game. */
         objects_create(objs);
 
-        cam_eye = t3d_vec3_make(0.f, 200.f, 150.f);
-        cam_foc = t3d_vec3_make(0.f, 0.f, 50.f);
+        cam_eye = t3d_vec3_make(0.f, 1.25f, 1.25f);
+        cam_foc = t3d_vec3_make(0.f, 0.f, .5f);
         cam_up = t3d_vec3_zup();
 
         light_dir = t3d_vec3_make(-1.f, 1.f, 0.f);
@@ -126,15 +130,25 @@ int main(void)
                 subtick = 1.f;
 #endif
 
-                t3d_viewport_set_projection(&viewport, T3D_DEG_TO_RAD(90.f),
-                                            10.f, 150.f);
-                t3d_viewport_look_at(&viewport, &cam_eye, &cam_foc, &cam_up);
+                t3d_viewport_set_projection(&viewport,
+                                            T3D_DEG_TO_RAD(VIEWPORT_FOV_DEG),
+                                            VIEWPORT_NEAR, VIEWPORT_FAR);
+                {
+                        T3DVec3 cam_eye_scaled, cam_foc_scaled;
+
+                        cam_eye_scaled = t3d_vec3_scale(&cam_eye, MDL_SCALE);
+                        cam_foc_scaled = t3d_vec3_scale(&cam_foc, MDL_SCALE);
+                        t3d_viewport_look_at(&viewport, &cam_eye_scaled,
+                                             &cam_foc_scaled, &cam_up);
+                }
 
                 objects_setup_matrices(objs, OBJ_CNT, subtick);
 
                 /* Rendering */
                 rdpq_attach(display_get(), display_get_zbuf());
                 t3d_frame_start();
+                rdpq_mode_dithering(DITHER_NOISE_NONE);
+
                 t3d_viewport_attach(&viewport);
                 t3d_screen_clear_color(
                         color_from_packed32(U8_ARR_TO_U32_PACK(light_ambi)));
@@ -213,9 +227,11 @@ static void objects_create(struct object *objs)
 
 static void object_setup_matrix(struct object *obj, const float subtick)
 {
-        T3DVec3 scale, roteul, pos;
+        T3DVec3 scale, roteul, pos, pos_orig_old, pos_orig;
 
-        t3d_vec3_lerp(&pos, &obj->pos_old, &obj->pos, subtick);
+        pos_orig_old = t3d_vec3_scale(&obj->pos_old, MDL_SCALE);
+        pos_orig = t3d_vec3_scale(&obj->pos, MDL_SCALE);
+        t3d_vec3_lerp(&pos, &pos_orig_old, &pos_orig, subtick);
         t3d_vec3_lerp(&roteul, &obj->roteul_old, &obj->roteul, subtick);
         t3d_vec3_lerp(&scale, &obj->scale_old, &obj->scale, subtick);
         t3d_mat4fp_from_srt_euler(obj->mtx, scale.v, roteul.v, pos.v);
@@ -271,7 +287,7 @@ static void obj_floor_update(struct object *fl, const float fixedtime)
         fl->pos_old = fl->pos;
 
         t += fixedtime * T3D_PI * 2.f;
-        fl->pos.v[2] = -fabsf(sinf(t)) * 50.f;
+        fl->pos.v[2] = -fabsf(sinf(t)) * .5f;
         if (fl->pos.v[2] >= 2.f * T3D_PI) {
                 fl->pos_old.v[2] -= 2.f * T3D_PI;
                 fl->pos.v[2] -= 2.f * T3D_PI;

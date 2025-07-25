@@ -278,7 +278,7 @@
 				"is_f3d":1,
 				"mat_ver":5,
 				"f3d_update_flag":0,
-				"menu_tab":1
+				"menu_tab":3
 			},
 			"name":"material",
 			"pbrMetallicRoughness":{}
