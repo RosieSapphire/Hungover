@@ -111,11 +111,13 @@ int main(void)
                      time_accumulated >= fixed_time;
                      time_accumulated -= fixed_time) {
                         joypad_inputs_t input;
+                        T3DVec2 stick;
 
                         joypad_poll();
-                        /* TODO: Clamp joystick input. */
                         input = joypad_get_inputs(JOYPAD_PORT_1);
-                        player_update(&player, &input, fixed_time);
+                        stick = joystick_get_clamped(input.stick_x,
+                                                     input.stick_y);
+                        player_update(&player, &stick, fixed_time);
                         test_objects_run_updates(test_objects, fixed_time);
                 }
 

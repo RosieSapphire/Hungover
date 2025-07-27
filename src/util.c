@@ -27,6 +27,27 @@ void radian_wrap_2pi_dual(float *rad_a_ptr, float *rad_b_ptr)
         *rad_b_ptr = b;
 }
 
+T3DVec2 joystick_get_clamped(const int8_t stick_x, const int8_t stick_y)
+{
+        T3DVec2 v;
+        float mag;
+
+        v.v[0] = stick_x / 64.f;
+        v.v[1] = stick_y / 64.f;
+        mag = v.v[0] * v.v[0] + v.v[1] * v.v[1];
+        if (mag >= 1.f) {
+                float magsqrt;
+
+                magsqrt = sqrtf(mag);
+                v.v[0] /= magsqrt;
+                v.v[1] /= magsqrt;
+        }
+
+        debugf("%f, %f\n", v.v[0], v.v[1]);
+
+        return v;
+}
+
 T3DVec3 t3d_vec3_make(const float x, const float y, const float z)
 {
         T3DVec3 v;

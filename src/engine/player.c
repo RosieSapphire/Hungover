@@ -2,6 +2,8 @@
 
 #include "util.h"
 
+#define PLAYER_TURN_SPEED 4.f
+
 struct player player_create(const T3DVec3 *spawn_pos, const float spawn_yaw,
                             const float spawn_pitch)
 {
@@ -17,14 +19,21 @@ struct player player_create(const T3DVec3 *spawn_pos, const float spawn_yaw,
         return p;
 }
 
-void player_update(struct player *p, const joypad_inputs_t *inp,
-                   const float ft)
+void player_update(struct player *p, const T3DVec2 *stick, const float ft)
 {
+        float pitch_limit;
+
         p->yaw_a = p->yaw_b;
-        p->yaw_b -= (inp->stick_x * .0625f) * ft;
+        p->yaw_b -= stick->v[0] * PLAYER_TURN_SPEED * ft;
 
         p->pitch_a = p->pitch_b;
-        p->pitch_b -= (inp->stick_y * .0625f) * ft;
+        p->pitch_b -= stick->v[1] * PLAYER_TURN_SPEED * ft;
+        pitch_limit = T3D_DEG_TO_RAD(89.f);
+        if (p->pitch_b > pitch_limit)
+                p->pitch_b = pitch_limit;
+
+        if (p->pitch_b < -pitch_limit)
+                p->pitch_b = -pitch_limit;
 }
 
 T3DVec3 player_get_forward_dir(const struct player *p, const float subtick)
@@ -45,7 +54,6 @@ void player_to_view_matrix(const struct player *p, T3DViewport *vp,
                            const float subtick)
 {
         T3DVec3 head_offset, eye, forw_dir, focus, up;
-        float yaw, pitch;
 
         /* Eye. */
         head_offset = t3d_vec3_make(0.f, 0.f, PLAYER_HEIGHT);

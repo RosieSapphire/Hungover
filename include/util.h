@@ -12,8 +12,13 @@
                 U8ARROUT[3] = (U32P & 0x000000FF) >> 0; \
         } while (0)
 
+typedef struct {
+        float v[2];
+} T3DVec2;
+
 float lerpf(const float a, const float b, const float t);
 void radian_wrap_2pi_dual(float *rad_a_ptr, float *rad_b_ptr);
+T3DVec2 joystick_get_clamped(const int8_t stick_x, const int8_t stick_y);
 
 /* T3D custom functions for additional stuff. */
 T3DVec3 t3d_vec3_make(const float x, const float y, const float z);
