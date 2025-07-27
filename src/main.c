@@ -5,11 +5,12 @@
 #include "util.h"
 
 #include "engine/object.h"
+#include "engine/player.h"
 
 #define INTERPOLATION 1
 #define TICKRATE 24
 
-#define VIEWPORT_NEAR ( .1f * MODEL_SCALE)
+#define VIEWPORT_NEAR (.1f * MODEL_SCALE)
 #define VIEWPORT_FAR (1.5f * MODEL_SCALE)
 #define VIEWPORT_FOV_DEG 90.f
 
@@ -45,16 +46,17 @@ int main(void)
         int dfs_handle;
         float time_accumulated;
 
-        struct object test_objects[TEST_OBJECT_COUNT];
-
-        T3DVec3 camera_eye, camera_focus, camera_up;
         T3DVec3 light_direction;
         uint8_t light_col_direction[4], light_col_ambi[4];
+
+        struct object test_objects[TEST_OBJECT_COUNT];
+        struct player player;
 
         /* Initialize Libdragon. */
         display_init(RESOLUTION_320x240, DEPTH_16_BPP, 3,
                      GAMMA_NONE, FILTERS_RESAMPLE_ANTIALIAS);
         rdpq_init();
+        joypad_init();
 #ifdef DEBUG
         debug_init_usblog();
         debug_init_isviewer();
@@ -76,9 +78,15 @@ int main(void)
         /* Initialize game. */
         test_objects_create(test_objects);
 
-        camera_eye = t3d_vec3_make(0.f, 1.25f, 1.25f);
-        camera_focus = t3d_vec3_make(0.f, 0.f, .5f);
-        camera_up = t3d_vec3_zup();
+        {
+                T3DVec3 pos;
+                float yaw, pitch;
+
+                pos = t3d_vec3_make(0.f, 1.25f, 0.f);
+                yaw = -(M_PI * .5f);
+                pitch = 0.f;
+                player = player_create(&pos, yaw, pitch);
+        }
 
         light_direction = t3d_vec3_make(-1.f, 1.f, 0.f);
         t3d_vec3_norm(&light_direction);
@@ -102,6 +110,12 @@ int main(void)
                 for (time_accumulated += display_get_delta_time();
                      time_accumulated >= fixed_time;
                      time_accumulated -= fixed_time) {
+                        joypad_inputs_t input;
+
+                        joypad_poll();
+                        /* TODO: Clamp joystick input. */
+                        input = joypad_get_inputs(JOYPAD_PORT_1);
+                        player_update(&player, &input, fixed_time);
                         test_objects_run_updates(test_objects, fixed_time);
                 }
 
@@ -115,16 +129,7 @@ int main(void)
                 t3d_viewport_set_projection(&viewport,
                                             T3D_DEG_TO_RAD(VIEWPORT_FOV_DEG),
                                             VIEWPORT_NEAR, VIEWPORT_FAR);
-                {
-                        T3DVec3 camera_eye_scaled, camera_focus_scaled;
-
-                        camera_eye_scaled = t3d_vec3_scale(&camera_eye,
-                                                           MODEL_SCALE);
-                        camera_focus_scaled = t3d_vec3_scale(&camera_focus,
-                                                             MODEL_SCALE);
-                        t3d_viewport_look_at(&viewport, &camera_eye_scaled,
-                                             &camera_focus_scaled, &camera_up);
-                }
+                player_to_view_matrix(&player, &viewport, subtick);
 
                 test_objects_setup_matrices(test_objects, subtick);
 
@@ -158,6 +163,7 @@ int main(void)
 
         /* Terminate Libdragon. */
         dfs_close(dfs_handle);
+        joypad_close();
         rdpq_close();
 #ifdef DEBUG
         rdpq_debug_stop();
