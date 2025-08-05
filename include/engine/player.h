@@ -10,6 +10,7 @@
 struct player {
         T3DVec3 position_a;
         T3DVec3 position_b;
+        T3DVec3 velocity;
         float yaw_tar;
         float yaw_a;
         float yaw_b;
@@ -21,6 +22,7 @@ struct player {
 struct player player_create(const T3DVec3 *spawn_pos, const float spawn_yaw,
                             const float spawn_pitch);
 T3DVec3 player_get_forward_dir(const struct player *p, const float subtick);
+T3DVec3 player_get_right_dir(const struct player *p, const T3DVec3 *forw_dir);
 void player_update(struct player *p, const struct inputs *inp, const float ft);
 void player_to_view_matrix(const struct player *p, T3DViewport *vp,
                            const float subtick);

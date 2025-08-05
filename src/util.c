@@ -75,6 +75,40 @@ T3DVec2 t3d_vec2_scale(const T3DVec2 *inp, const float mul)
         return out;
 }
 
+float t3d_vec2_dot(const T3DVec2 *a, const T3DVec2 *b)
+{
+        float dot;
+        uint8_t i;
+
+        dot = 0.f;
+        for (i = 0; i < 2; ++i)
+                dot += a->v[i] * b->v[i];
+
+        return dot;
+}
+
+float t3d_vec2_get_length(const T3DVec2 *v)
+{
+        return sqrtf(t3d_vec2_dot(v, v));
+}
+
+T3DVec2 t3d_vec2_normalize(const T3DVec2 *v)
+{
+        T3DVec2 vec;
+        float mag;
+        uint8_t i;
+
+        vec = *v;
+        mag = t3d_vec2_get_length(v);
+        if (mag == 0.f || mag == 1.f)
+                return vec;
+
+        for (i = 0; i < 2; ++i)
+                vec.v[i] /= mag;
+
+        return vec;
+}
+
 void debugf_t3d_vec2(const char *name, const T3DVec2 *vec)
 {
         debugf("%s=(%f, %f)\n", name, vec->v[0], vec->v[1]);
@@ -127,6 +161,28 @@ T3DVec3 t3d_vec3_scale(const T3DVec3 *inp, const float mul)
                 out.v[i] *= mul;
 
         return out;
+}
+
+float t3d_vec3_get_length(const T3DVec3 *v)
+{
+        return sqrtf(t3d_vec3_dot(v, v));
+}
+
+T3DVec3 t3d_vec3_normalize(const T3DVec3 *v)
+{
+        T3DVec3 vec;
+        float mag;
+        uint8_t i;
+
+        vec = *v;
+        mag = t3d_vec3_get_length(v);
+        if (mag == 0.f || mag == 1.f)
+                return vec;
+
+        for (i = 0; i < 3; ++i)
+                vec.v[i] /= mag;
+
+        return vec;
 }
 
 void debugf_t3d_vec3(const char *name, const T3DVec3 *vec)

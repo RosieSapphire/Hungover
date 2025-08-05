@@ -5,6 +5,9 @@
 #define PLAYER_TURN_SPEED_SLOW 3.f
 #define PLAYER_TURN_SPEED_FAST 16.f
 #define PLAYER_TURN_LERP_SPEED 8.f
+#define PLAYER_TURN_EPSILON .001f
+
+#define PLAYER_MOVE_SPEED_SLOW 4.2f
 
 struct player player_create(const T3DVec3 *spawn_pos, const float spawn_yaw,
                             const float spawn_pitch)
@@ -47,11 +50,45 @@ static void player_update_turning(struct player *p, const struct inputs *inp,
         p->yaw_b = lerpf(p->yaw_b, p->yaw_tar, turn_lerp_t);
         p->pitch_a = p->pitch_b;
         p->pitch_b = lerpf(p->pitch_b, p->pitch_tar, turn_lerp_t);
+
+        if (fabsf(p->yaw_b - p->yaw_tar) < PLAYER_TURN_EPSILON)
+                p->yaw_b = p->yaw_tar;
+
+        if (fabsf(p->pitch_b - p->pitch_tar) < PLAYER_TURN_EPSILON)
+                p->pitch_b = p->pitch_tar;
+}
+
+static void player_update_moving(struct player *p, const struct inputs *inp,
+                                 const float ft)
+{
+        T3DVec3 forw_move, right_move, move_vec;
+        T3DVec2 accel_dir;
+
+        accel_dir.v[0] = inp->btn[BTN_C_RIGHT] - inp->btn[BTN_C_LEFT];
+        accel_dir.v[1] = inp->btn[BTN_C_UP] - inp->btn[BTN_C_DOWN];
+        accel_dir = t3d_vec2_normalize(&accel_dir);
+
+        forw_move = player_get_forward_dir(p, 1.f);
+        right_move = player_get_right_dir(p, &forw_move);
+
+        forw_move.v[2] = 0.f;
+        forw_move = t3d_vec3_normalize(&forw_move);
+
+        forw_move = t3d_vec3_scale(&forw_move, accel_dir.v[1]);
+        right_move = t3d_vec3_scale(&right_move, accel_dir.v[0]);
+
+        t3d_vec3_add(&move_vec, &forw_move, &right_move);
+        t3d_vec3_normalize(&move_vec);
+        move_vec = t3d_vec3_scale(&move_vec, PLAYER_MOVE_SPEED_SLOW * ft);
+
+        p->position_a = p->position_b;
+        t3d_vec3_add(&p->position_b, &p->position_b, &move_vec);
 }
 
 void player_update(struct player *p, const struct inputs *inp, const float ft)
 {
         player_update_turning(p, inp, ft);
+        player_update_moving(p, inp, ft);
 }
 
 T3DVec3 player_get_forward_dir(const struct player *p, const float subtick)
@@ -66,6 +103,16 @@ T3DVec3 player_get_forward_dir(const struct player *p, const float subtick)
                             sinf(yaw) * cos_pitch, sinf(pitch));
 
         return dir;
+}
+
+T3DVec3 player_get_right_dir(const struct player *p, const T3DVec3 *forw_dir)
+{
+        T3DVec3 up_dir, right_dir;
+
+        up_dir = t3d_vec3_zup();
+        t3d_vec3_cross(&right_dir, forw_dir, &up_dir);
+
+        return right_dir;
 }
 
 void player_to_view_matrix(const struct player *p, T3DViewport *vp,
