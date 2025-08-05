@@ -26,12 +26,14 @@ struct player player_create(const T3DVec3 *spawn_pos, const float spawn_yaw,
 static void player_update_turning(struct player *p, const struct inputs *inp,
                                   const float ft)
 {
-        float turn_speed, turn_lerp_t, pitch_limit;
+        float turn_speed, pitch_mul, turn_lerp_t, pitch_limit;
 
         turn_speed = (inp->btn[BTN_Z]) ? PLAYER_TURN_SPEED_FAST :
                                          PLAYER_TURN_SPEED_SLOW;
         p->yaw_tar -= inp->stick.v[0] * turn_speed * ft;
-        p->pitch_tar -= inp->stick.v[1] * turn_speed * ft;
+
+        pitch_mul = (inp->btn[BTN_Z]) ? .35f : 1.f;
+        p->pitch_tar -= inp->stick.v[1] * pitch_mul * turn_speed * ft;
 
         pitch_limit = T3D_DEG_TO_RAD(85.f);
         if (p->pitch_tar > pitch_limit)
