@@ -3,30 +3,31 @@
 #include <t3d/t3dmodel.h>
 
 #include "util.h"
+#include "inputs.h"
 
 #include "engine/object.h"
 #include "engine/player.h"
 
-#define INTERPOLATION 1
-#define TICKRATE 24
+#define USE_INTERPOLATION 1
+#define TICKRATE 60
 
-#define VIEWPORT_NEAR (.1f * MODEL_SCALE)
-#define VIEWPORT_FAR (1.5f * MODEL_SCALE)
+#define VIEWPORT_NEAR (.2f * MODEL_SCALE)
+#define VIEWPORT_FAR (3.2f * MODEL_SCALE)
 #define VIEWPORT_FOV_DEG 90.f
 
 #define CUBE_ROTATION_SPEED 1.25f
 
 enum {
         TEST_OBJECT_CUBE_INDEX,
-        TEST_OBJECT_FLOOR_INDEX,
+        TEST_OBJECT_ROOM_INDEX,
         TEST_OBJECT_COUNT
 };
 
 static void test_objects_create(struct object *objects);
 static void test_object_cube_update(struct object *cube,
                                     const float fixed_time);
-static void test_object_floor_update(struct object *floor,
-                                     const float fixed_time);
+static void test_object_room_update(struct object *room,
+                                    const float fixed_time);
 static void test_objects_run_updates(struct object *objects,
                                      const float fixed_time);
 static void test_objects_setup_matrices(struct object *objects,
@@ -37,7 +38,7 @@ static void test_objects_destroy(struct object *objects);
 static void (*test_object_update_functions[TEST_OBJECT_COUNT])
             (struct object *, const float) = {
         test_object_cube_update,
-        test_object_floor_update
+        test_object_room_update
 };
 
 int main(void)
@@ -103,6 +104,8 @@ int main(void)
         time_accumulated = 0.f;
 
         for (;;) {
+                static struct inputs inp_old;
+
                 const float fixed_time = 1.f / TICKRATE;
                 float subtick;
 
@@ -110,19 +113,18 @@ int main(void)
                 for (time_accumulated += display_get_delta_time();
                      time_accumulated >= fixed_time;
                      time_accumulated -= fixed_time) {
-                        joypad_inputs_t input;
-                        T3DVec2 stick;
+                        struct inputs inp_new, __attribute__((unused))inp_diff;
 
-                        joypad_poll();
-                        input = joypad_get_inputs(JOYPAD_PORT_1);
-                        stick = joystick_get_clamped(input.stick_x,
-                                                     input.stick_y);
-                        player_update(&player, &stick, fixed_time);
+                        inp_old = inp_new;
+                        inp_new = inputs_get_from_libdragon();
+                        inp_diff = inputs_get_diff(&inp_old, &inp_new);
+
+                        player_update(&player, &inp_new, fixed_time);
                         test_objects_run_updates(test_objects, fixed_time);
                 }
 
                 /* Updating -> Rendering */
-#if (INTERPOLATION == 1)
+#if (USE_INTERPOLATION == 1)
                 subtick = time_accumulated / fixed_time;
 #else
                 subtick = 1.f;
@@ -177,7 +179,7 @@ static void test_objects_create(struct object *objects)
 {
         const char *paths[TEST_OBJECT_COUNT] = {
                 "rom:/cube.t3dm",
-                "rom:/floor.t3dm"
+                "rom:/room.t3dm"
         };
 
         T3DVec3 positions[TEST_OBJECT_COUNT],
@@ -207,20 +209,11 @@ static void test_object_cube_update(struct object *cube,
         }
 }
 
-static void test_object_floor_update(struct object *floor,
-                                     const float fixed_time)
+static void test_object_room_update(__attribute__((unused))struct object *room,
+                                    __attribute__((unused))
+                                    const float fixed_time)
 {
-        static float t = 0.f;
-
-        floor->position_a = floor->position_b;
-
-        t += fixed_time * T3D_PI * 2.f;
-        floor->position_b.v[0] = cosf(t) * .25f;
-        floor->position_b.v[1] = sinf(t) * .25f;
-        /*
-        radian_wrap_2pi_dual(floor->position_a.v + 0, floor->position_b.v + 0);
-        radian_wrap_2pi_dual(floor->position_a.v + 1, floor->position_b.v + 1);
-        */
+        return;
 }
 
 static void test_objects_run_updates(struct object *objects,
