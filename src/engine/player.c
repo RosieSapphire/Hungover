@@ -10,6 +10,7 @@
 #define PLAYER_FRICTION 6.f
 
 #define PLAYER_MAX_SPEED_SLOW 0.8f
+#define PLAYER_MAX_SPEED_FAST 1.6f
 
 struct player player_create(const T3DVec3 *spawn_pos, const float spawn_yaw,
                             const float spawn_pitch)
@@ -32,9 +33,14 @@ static void player_update_turning(struct player *p, const struct inputs *inp,
                                   const float ft)
 {
         float turn_speed, pitch_mul, turn_lerp_t, pitch_limit;
+        bool is_trying_move;
 
-        turn_speed = (inp->btn[BTN_Z]) ? PLAYER_TURN_SPEED_FAST :
-                                         PLAYER_TURN_SPEED_SLOW;
+        turn_speed = PLAYER_TURN_SPEED_SLOW;
+        is_trying_move = inp->btn[BTN_C_UP] || inp->btn[BTN_C_DOWN] ||
+                         inp->btn[BTN_C_LEFT] || inp->btn[BTN_C_RIGHT];
+        if (!is_trying_move && inp->btn[BTN_Z])
+                turn_speed = PLAYER_TURN_SPEED_FAST;
+                                         ;
         p->yaw_tar -= inp->stick.v[0] * turn_speed * ft;
 
         pitch_mul = (inp->btn[BTN_Z]) ? .35f : 1.f;
@@ -83,6 +89,7 @@ static void player_update_moving(struct player *p, const struct inputs *inp,
 {
         T3DVec3 forw_move, right_move, move_vec;
         T3DVec2 accel_dir;
+        float move_speed;
 
         accel_dir.v[0] = inp->btn[BTN_C_RIGHT] - inp->btn[BTN_C_LEFT];
         accel_dir.v[1] = inp->btn[BTN_C_UP] - inp->btn[BTN_C_DOWN];
@@ -99,7 +106,9 @@ static void player_update_moving(struct player *p, const struct inputs *inp,
 
         t3d_vec3_add(&move_vec, &forw_move, &right_move);
         t3d_vec3_normalize(&move_vec);
-        move_vec = t3d_vec3_scale(&move_vec, PLAYER_MAX_SPEED_SLOW * ft);
+        move_speed = (inp->btn[BTN_Z]) ? PLAYER_MAX_SPEED_FAST :
+                                         PLAYER_MAX_SPEED_SLOW;
+        move_vec = t3d_vec3_scale(&move_vec, move_speed * ft);
 
         t3d_vec3_add(&p->velocity, &p->velocity, &move_vec);
 
