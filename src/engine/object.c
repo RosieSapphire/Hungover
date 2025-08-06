@@ -1,6 +1,6 @@
 #include "engine/object.h"
 
-#include "util.h"
+#include "t3d_ext.h"
 
 struct object object_create(const char *mdl_path, const T3DVec3 *pos,
                             const T3DVec3 *rot_eul, const T3DVec3 *scl,

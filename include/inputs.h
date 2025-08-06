@@ -1,6 +1,6 @@
 #pragma once
 
-#include "util.h"
+#include "t3d_ext.h"
 
 enum {
         BTN_A,
