@@ -163,11 +163,6 @@ T3DVec3 t3d_vec3_scale(const T3DVec3 *inp, const float mul)
         return out;
 }
 
-float t3d_vec3_get_length(const T3DVec3 *v)
-{
-        return sqrtf(t3d_vec3_dot(v, v));
-}
-
 T3DVec3 t3d_vec3_normalize(const T3DVec3 *v)
 {
         T3DVec3 vec;
@@ -175,7 +170,7 @@ T3DVec3 t3d_vec3_normalize(const T3DVec3 *v)
         uint8_t i;
 
         vec = *v;
-        mag = t3d_vec3_get_length(v);
+        mag = t3d_vec3_len(v);
         if (mag == 0.f || mag == 1.f)
                 return vec;
 

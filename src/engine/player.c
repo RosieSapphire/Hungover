@@ -6,8 +6,10 @@
 #define PLAYER_TURN_SPEED_FAST 16.f
 #define PLAYER_TURN_LERP_SPEED 8.f
 #define PLAYER_TURN_EPSILON .001f
+#define PLAYER_STOP_SPEED .01f
+#define PLAYER_FRICTION 6.f
 
-#define PLAYER_MOVE_SPEED_SLOW 4.2f
+#define PLAYER_MAX_SPEED_SLOW 0.8f
 
 struct player player_create(const T3DVec3 *spawn_pos, const float spawn_yaw,
                             const float spawn_pitch)
@@ -58,6 +60,24 @@ static void player_update_turning(struct player *p, const struct inputs *inp,
                 p->pitch_b = p->pitch_tar;
 }
 
+static void player_update_friction(struct player *p, const float ft)
+{
+        float control, drop, speed, new_speed;
+
+        speed = t3d_vec3_len(&p->velocity);
+        if (speed <= 0.f)
+                return;
+
+        control = (speed < PLAYER_STOP_SPEED) ? PLAYER_STOP_SPEED : speed;
+        drop = control * PLAYER_FRICTION * ft;
+        new_speed = speed - drop;
+        if (new_speed < 0.f)
+                new_speed = 0.f;
+
+        new_speed /= speed;
+        p->velocity = t3d_vec3_scale(&p->velocity, new_speed);
+}
+
 static void player_update_moving(struct player *p, const struct inputs *inp,
                                  const float ft)
 {
@@ -69,7 +89,7 @@ static void player_update_moving(struct player *p, const struct inputs *inp,
         accel_dir = t3d_vec2_normalize(&accel_dir);
 
         forw_move = player_get_forward_dir(p, 1.f);
-        right_move = player_get_right_dir(p, &forw_move);
+        right_move = player_get_right_dir(&forw_move);
 
         forw_move.v[2] = 0.f;
         forw_move = t3d_vec3_normalize(&forw_move);
@@ -79,16 +99,20 @@ static void player_update_moving(struct player *p, const struct inputs *inp,
 
         t3d_vec3_add(&move_vec, &forw_move, &right_move);
         t3d_vec3_normalize(&move_vec);
-        move_vec = t3d_vec3_scale(&move_vec, PLAYER_MOVE_SPEED_SLOW * ft);
+        move_vec = t3d_vec3_scale(&move_vec, PLAYER_MAX_SPEED_SLOW * ft);
+
+        t3d_vec3_add(&p->velocity, &p->velocity, &move_vec);
 
         p->position_a = p->position_b;
-        t3d_vec3_add(&p->position_b, &p->position_b, &move_vec);
+        t3d_vec3_add(&p->position_b, &p->position_b, &p->velocity);
 }
 
 void player_update(struct player *p, const struct inputs *inp, const float ft)
 {
         player_update_turning(p, inp, ft);
+        player_update_friction(p, ft);
         player_update_moving(p, inp, ft);
+        debugf("p->velocity (magnitude)=%f\n", t3d_vec3_len(&p->velocity));
 }
 
 T3DVec3 player_get_forward_dir(const struct player *p, const float subtick)
@@ -105,7 +129,7 @@ T3DVec3 player_get_forward_dir(const struct player *p, const float subtick)
         return dir;
 }
 
-T3DVec3 player_get_right_dir(const struct player *p, const T3DVec3 *forw_dir)
+T3DVec3 player_get_right_dir(const T3DVec3 *forw_dir)
 {
         T3DVec3 up_dir, right_dir;
 

@@ -9,7 +9,7 @@
 #include "engine/player.h"
 
 #define USE_INTERPOLATION 1
-#define TICKRATE 60
+#define TICKRATE 30
 
 #define VIEWPORT_NEAR (.5f * MODEL_SCALE)
 #define VIEWPORT_FAR (10.f * MODEL_SCALE)

@@ -43,6 +43,5 @@ T3DVec3 t3d_vec3_zero(void);
 T3DVec3 t3d_vec3_one(void);
 T3DVec3 t3d_vec3_scale(const T3DVec3 *inp, const float mul);
 float t3d_vec3_dot(const T3DVec3 *a, const T3DVec3 *b);
-float t3d_vec3_get_length(const T3DVec3 *v);
 T3DVec3 t3d_vec3_normalize(const T3DVec3 *v);
 void debugf_t3d_vec3(const char *name, const T3DVec3 *vec);
