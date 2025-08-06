@@ -49,7 +49,6 @@ static void player_update_turning(struct player *p, const struct inputs *inp,
         turn_speed = PLAYER_TURN_SPEED_SLOW;
         if ((p->state == PLAYER_STATE_STANDING) && inp->btn[BTN_Z])
                 turn_speed = PLAYER_TURN_SPEED_FAST;
-                                         ;
         p->yaw_tar -= inp->stick.v[0] * turn_speed * ft;
 
         pitch_mul = (inp->btn[BTN_Z]) ? .35f : 1.f;
